@@ -1,0 +1,135 @@
+/* ==================== Components ==================== */
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border: none;
+  background: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  width: 100%;
+  background: var(--color-primary);
+  color: var(--color-bg);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: var(--color-bg);
+  color: var(--color-primary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-secondary);
+}
+
+.btn-ghost:hover {
+  color: var(--color-primary);
+}
+
+/* Input */
+.input {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+  color: var(--color-primary);
+  border: var(--border-width) solid var(--color-border);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-tertiary);
+}
+
+.input-label {
+  display: block;
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-secondary);
+}
+
+/* Card */
+.card {
+  background: var(--color-bg);
+  padding: var(--space-lg);
+}
+
+.card-sm {
+  padding: var(--space-md);
+}
+
+.card-hover {
+  transition: opacity var(--transition-fast);
+}
+
+.card-hover:hover {
+  opacity: 0.8;
+}
+
+.card-error {
+  background: rgba(127, 29, 29, 0.2);
+  color: #fca5a5;
+  padding: var(--space-md);
+}
+
+.light .card-error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  background: var(--color-primary);
+  color: var(--color-bg);
+}
+
+/* Tabs */
+.tab-nav {
+  display: flex;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding-bottom: var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.tab-btn:hover {
+  color: var(--color-primary);
+}
+
+.tab-btn.active {
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}

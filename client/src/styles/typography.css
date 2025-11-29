@@ -1,0 +1,54 @@
+/* ==================== Typography ==================== */
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-secondary {
+  color: var(--color-secondary);
+}
+
+.text-muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-secondary);
+}
+
+/* Headings */
+.heading-1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-heaviest);
+  color: var(--color-primary);
+}
+
+@media (min-width: 1024px) {
+  .heading-1 {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+.heading-2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bolder);
+  color: var(--color-primary);
+}
+
+.heading-3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+/* Gradient */
+.gradient-text {
+  background: linear-gradient(to right, #fafafa, #a1a1aa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.light .gradient-text {
+  background: linear-gradient(to right, #000, #52525b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
