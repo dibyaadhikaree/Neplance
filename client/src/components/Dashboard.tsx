@@ -1,6 +1,6 @@
 "use client";
 
-import type { User } from "./AuthPanel";
+import type { User } from "./auth/AuthPanel";
 import { EverestLogo } from "./EverestLogo";
 
 interface DashboardProps {
