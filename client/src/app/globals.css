@@ -306,7 +306,9 @@ html {
 
 .hidden-animate {
   display: grid;
-  transition: grid-template-rows var(--transition-normal), opacity var(--transition-normal);
+  transition:
+    grid-template-rows var(--transition-normal),
+    opacity var(--transition-normal);
 }
 
 .hidden-animate.show {
@@ -319,23 +321,23 @@ html {
   opacity: 0;
 }
 
-.hidden-animate>* {
+.hidden-animate > * {
   overflow: hidden;
 }
 
-.space-y-3>*+* {
+.space-y-3 > * + * {
   margin-top: var(--space-md);
 }
 
-.space-y-4>*+* {
+.space-y-4 > * + * {
   margin-top: var(--space-md);
 }
 
-.space-y-8>*+* {
+.space-y-8 > * + * {
   margin-top: var(--space-2xl);
 }
 
-.space-y-14>*+* {
+.space-y-14 > * + * {
   margin-top: calc(var(--space-2xl) + var(--space-xl));
 }
 

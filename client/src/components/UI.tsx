@@ -1,5 +1,5 @@
-import { useId } from "react";
 import type { ButtonHTMLAttributes, InputHTMLAttributes } from "react";
+import { useId } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
