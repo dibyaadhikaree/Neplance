@@ -12,7 +12,7 @@ export const AuthTabs = ({ activeTab, onTabChange }: AuthTabsProps) => {
         type="button"
         onClick={() => onTabChange("login")}
         className={`tab-btn ${activeTab === "login" ? "active" : ""}`}
-        aria-selected={activeTab === "login"}
+        aria-current={activeTab === "login" ? "page" : undefined}
       >
         Login
       </button>
@@ -20,7 +20,7 @@ export const AuthTabs = ({ activeTab, onTabChange }: AuthTabsProps) => {
         type="button"
         onClick={() => onTabChange("signup")}
         className={`tab-btn ${activeTab === "signup" ? "active" : ""}`}
-        aria-selected={activeTab === "signup"}
+        aria-current={activeTab === "signup" ? "page" : undefined}
       >
         Sign Up
       </button>

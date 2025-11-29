@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthPanel, Dashboard, HeroSection, type User } from "@/components";
 
 export default function Home() {
@@ -17,7 +17,7 @@ export default function Home() {
         const { user: savedUser, token: savedToken } = JSON.parse(saved);
         setUser(savedUser);
         setToken(savedToken);
-      } catch (e) {
+      } catch (_e) {
         localStorage.removeItem("auth_session");
       }
     }
