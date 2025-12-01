@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { setAuthCookies } from "@/lib/auth-cookies";
 import { EverestLogo } from "../EverestLogo";
 import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
@@ -55,6 +56,8 @@ export const AuthPanel = ({
       if (response.ok) {
         const user = data.data || data.user;
         if (user && onAuthSuccess) {
+          // Store token and user in cookies
+          setAuthCookies(data.token, user);
           onAuthSuccess(user, data.token);
         }
       } else {
@@ -99,6 +102,8 @@ export const AuthPanel = ({
       if (response.ok) {
         const user = data.data || data.user;
         if (user && onAuthSuccess) {
+          // Store token and user in cookies
+          setAuthCookies(data.token, user);
           onAuthSuccess(user, data.token);
         }
       } else {
