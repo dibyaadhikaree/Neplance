@@ -60,9 +60,14 @@ export function useFreelancerDashboard(token) {
           // Filter pending proposals
           setProposedJobs(proposals.filter((p) => p.status === "pending"));
 
-          // Filter and map accepted proposals (ongoing jobs)
+          // Filter and map accepted proposals (ongoing jobs) - exclude completed jobs
           const ongoing = proposals
-            .filter((p) => p.status === "accepted" && p.job)
+            .filter(
+              (p) =>
+                p.status === "accepted" &&
+                p.job &&
+                p.job.status === "in-progress",
+            )
             .map((p) => ({
               ...p.job,
               client: p.job.client,

@@ -74,6 +74,17 @@ export const FreelancerDashboard = ({ user, onLogout }) => {
     }
   };
 
+  const handleMarkComplete = async (job) => {
+    try {
+      await apiCall(`/jobs/${job._id}/markCompleted`, token, {
+        method: "PATCH",
+      });
+      refetch?.();
+    } catch (err) {
+      console.error("Failed to mark job complete:", err);
+    }
+  };
+
   const renderJobCards = (jobs, variant = "find") =>
     jobs.length > 0 ? (
       jobs.map((job) => (
@@ -82,6 +93,7 @@ export const FreelancerDashboard = ({ user, onLogout }) => {
           job={job}
           variant={variant}
           onSubmitProposal={handleOpenProposalModal}
+          onMarkComplete={handleMarkComplete}
         />
       ))
     ) : (
