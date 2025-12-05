@@ -1,5 +1,11 @@
 import { EverestLogo } from "./EverestLogo";
 
+const FEATURES = [
+  { title: "Verified", desc: "All profiles thoroughly vetted" },
+  { title: "Global", desc: "Work with talent worldwide" },
+  { title: "Secure", desc: "Based on blockchain technology" },
+];
+
 export const HeroSection = () => (
   <div className="hero-section">
     <div className="space-y-8">
@@ -23,12 +29,7 @@ export const HeroSection = () => (
       </div>
 
       {/* Mission */}
-      <div
-        style={{
-          borderLeft: "2px solid var(--color-primary)",
-          paddingLeft: "1.5rem",
-        }}
-      >
+      <div className="mission-block">
         <p className="input-label mb-3">Our Mission</p>
         <p className="text-primary">
           We're reshaping how work gets done. By removing intermediaries and
@@ -39,16 +40,12 @@ export const HeroSection = () => (
 
       {/* Features */}
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { title: "Verified", desc: "All profiles thoroughly vetted" },
-          { title: "Global", desc: "Work with talent worldwide" },
-          { title: "Secure", desc: "Based on blockchain technology" },
-        ].map((f) => (
-          <div key={f.title} className="card-sm card-hover">
+        {FEATURES.map(({ title, desc }) => (
+          <div key={title} className="card-sm card-hover">
             <div className="text-sm font-bold uppercase tracking-wide text-primary">
-              {f.title}
+              {title}
             </div>
-            <p className="text-muted mt-2">{f.desc}</p>
+            <p className="text-muted mt-2">{desc}</p>
           </div>
         ))}
       </div>

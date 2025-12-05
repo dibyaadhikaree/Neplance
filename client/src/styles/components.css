@@ -1,6 +1,6 @@
 /* ==================== Components ==================== */
 
-/* Button */
+/* Button Base */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -9,7 +9,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-normal);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
   border: none;
   background: none;
 }
@@ -19,9 +19,10 @@
   cursor: not-allowed;
 }
 
+/* Button Variants */
 .btn-primary {
   width: 100%;
-  background: var(--color-primary);
+  background: var(--color-accent);
   color: var(--color-bg);
 }
 
@@ -50,7 +51,7 @@
   font-size: var(--font-size-sm);
   background: var(--color-bg);
   color: var(--color-primary);
-  border: var(--border-width) solid var(--color-border);
+  border: 1px solid var(--color-border);
   outline: none;
 }
 
@@ -87,14 +88,14 @@
 }
 
 .card-error {
-  background: rgba(127, 29, 29, 0.2);
-  color: #fca5a5;
+  background: rgba(191, 6, 3, 0.15);
+  color: var(--color-red);
   padding: var(--space-md);
 }
 
 .light .card-error {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: rgba(141, 8, 1, 0.1);
+  color: var(--color-red-dark);
 }
 
 /* Badge */
@@ -110,12 +111,13 @@
 /* Tabs */
 .tab-nav {
   display: flex;
-  border-bottom: var(--border-width) solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-lg);
 }
 
 .tab-btn {
   flex: 1;
-  padding-bottom: var(--space-md);
+  padding: var(--space-md);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-normal);
   color: var(--color-secondary);
@@ -132,4 +134,13 @@
 .tab-btn.active {
   color: var(--color-primary);
   border-bottom: 2px solid var(--color-primary);
+}
+
+/* Border utilities for role toggle buttons */
+.border-border {
+  border-color: var(--color-border);
+}
+
+.border-primary {
+  border-color: var(--color-primary);
 }
