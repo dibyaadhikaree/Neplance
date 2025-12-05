@@ -1,25 +1,15 @@
 const catchAsync = require("../utils/catchAsync");
-
 const User = require("../models/User");
-
 const AppError = require("../utils/appError");
-
 const jwt = require("jsonwebtoken");
-const { cookie } = require("express-validator");
 
-//creating a jwt token for the user with userId
-
+// Create JWT token for user
 const createToken = (userId) => {
-  const token = jwt.sign({ id: userId }, process.env.JWT_SECRET);
-
-  return token;
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET);
 };
 
 const register = catchAsync(async (req, res, next) => {
-  //registering in a user
-
   const { name, email, password, passwordConfirm, role } = req.body;
-  console.log("In register", req.body);
 
   const freshUser = await User.create({
     name,
@@ -39,8 +29,6 @@ const register = catchAsync(async (req, res, next) => {
 });
 
 const login = catchAsync(async (req, res, next) => {
-  //logging in a user
-
   const { email, password } = req.body;
 
   if (!email || !password)
@@ -49,12 +37,12 @@ const login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password)))
-    throw new AppError("Please enter an valid password or email", 401);
+    throw new AppError("Invalid email or password", 401);
 
   user.password = undefined;
 
   res.status(200).json({
-    status: "Login Sucessfull",
+    status: "success",
     user,
     token: createToken(user._id),
   });
@@ -73,7 +61,7 @@ const protect = catchAsync(async (req, res, next) => {
   } else
     throw new AppError(
       "You are not logged in, Please login to continue (No bearer token in headers)",
-      404
+      401
     );
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -91,17 +79,16 @@ const protect = catchAsync(async (req, res, next) => {
 const restrictTo =
   (...roles) =>
   (req, res, next) => {
-    console.log(req.user, "in restrict to ", roles);
-    if (!req.user) throw new AppError("You are not logged in ");
+    if (!req.user) throw new AppError("You are not logged in ", 401);
 
-    if (
-      Array.isArray(req.user.role) &&
-      !roles.some((el) => req.user.role.includes(el))
-    ) {
-      throw new AppError("You are not authorized to view this");
+    // Check if user's role(s) match any of the allowed roles
+    const userRoles = Array.isArray(req.user.role) ? req.user.role : [req.user.role];
+    const hasPermission = userRoles.some((role) => roles.includes(role));
+
+    if (!hasPermission) {
+      throw new AppError("You are not authorized to view this", 403);
     }
 
-    // if (roles.includes(...req.user.role))
     next();
   };
 

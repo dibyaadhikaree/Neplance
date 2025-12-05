@@ -1,17 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AuthPanel, Dashboard, HeroSection } from "@/components";
-import {
-  clearAuthCookies,
-  getAuthToken,
-  getAuthUser,
-} from "@/lib/auth-cookies";
+import { AuthPanel, HeroSection } from "@/components";
+import { getAuthToken, getAuthUser } from "@/lib/auth-cookies";
 
 export default function Home() {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [isHydrated, setIsHydrated] = useState(false);
+  const router = useRouter();
 
   // Load session from cookies on mount
   useEffect(() => {
@@ -19,27 +15,15 @@ export default function Home() {
     const storedUser = getAuthUser();
 
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(storedUser);
+      // Redirect to dashboard if already logged in
+      router.push("/dashboard");
+      return;
     }
     setIsHydrated(true);
-  }, []);
+  }, [router]);
 
   if (!isHydrated) {
     return null; // Prevent hydration mismatch
-  }
-
-  if (user && token) {
-    return (
-      <Dashboard
-        user={user}
-        onLogout={() => {
-          clearAuthCookies();
-          setUser(null);
-          setToken(null);
-        }}
-      />
-    );
   }
 
   return (
@@ -47,9 +31,9 @@ export default function Home() {
       <main className="container-main section-gap">
         <HeroSection />
         <AuthPanel
-          onAuthSuccess={(u, t) => {
-            setUser(u);
-            setToken(t);
+          onAuthSuccess={() => {
+            // Redirect to dashboard after successful auth
+            router.push("/dashboard");
           }}
         />
       </main>

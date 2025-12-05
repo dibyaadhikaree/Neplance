@@ -50,3 +50,8 @@
 .space-y-8 > * + * {
   margin-top: var(--space-2xl);
 }
+
+/* Border utilities */
+.border-dashed {
+  border-style: dashed;
+}

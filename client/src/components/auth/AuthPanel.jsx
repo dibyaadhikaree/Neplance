@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { APIError, apiAuthCall } from "@/lib/api";
 import { setAuthCookies } from "@/lib/auth-cookies";
 import { EverestLogo } from "../EverestLogo";
 import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -19,25 +18,19 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const data = await apiAuthCall(`/auth/${endpoint}`, body);
+      const user = data.data || data.user;
 
-      const data = await response.json();
-
-      if (response.ok) {
-        const user = data.data || data.user;
-        if (user && onAuthSuccess) {
-          setAuthCookies(data.token, user);
-          onAuthSuccess(user, data.token);
-        }
-      } else {
-        setError(data.message || "Authentication failed. Please try again.");
+      if (user && onAuthSuccess) {
+        setAuthCookies(data.token, user);
+        onAuthSuccess(user, data.token);
       }
-    } catch {
-      setError("Network error. Please check your connection.");
+    } catch (err) {
+      if (err instanceof APIError) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

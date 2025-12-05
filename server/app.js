@@ -25,7 +25,7 @@ app.use("/proposals", proposalRouter);
 
 //for catching all the errors
 app.all("*", (req, res, next) => {
-  res.status(400).json({
+  res.status(404).json({
     status: "error",
     message: `No route found for ${req.url}`,
   });

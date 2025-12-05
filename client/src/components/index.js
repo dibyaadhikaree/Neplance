@@ -1,10 +1,6 @@
-// Layout
-
 // Auth
-export * from "./auth";
-export * from "./Dashboard";
+export { AuthPanel } from "./auth/AuthPanel";
 
 // Common
-export * from "./EverestLogo";
-export * from "./HeroSection";
-export * from "./UI";
+export { EverestLogo } from "./EverestLogo";
+export { HeroSection } from "./HeroSection";
