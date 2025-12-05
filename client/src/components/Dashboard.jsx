@@ -2,10 +2,19 @@
 
 import { EverestLogo } from "./EverestLogo";
 
+const QuickStartCard = ({ title, description }) => (
+  <div className="card-sm card-hover cursor-pointer">
+    <h3 className="heading-3 mb-1">{title}</h3>
+    <p className="text-muted">{description}</p>
+  </div>
+);
+
 export const Dashboard = ({ user, onLogout }) => {
+  const isFreelancer = user.role?.includes("freelancer");
+  const isClient = user.role?.includes("client");
+
   return (
     <div className="container-page">
-      {/* Header */}
       <header className="header">
         <div className="header-content">
           <div className="flex items-center gap-3">
@@ -18,10 +27,8 @@ export const Dashboard = ({ user, onLogout }) => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container-content">
         <div className="grid gap-8 lg:grid-cols-2 items-center">
-          {/* Welcome Section */}
           <div>
             <h1 className="heading-1 mb-4">Welcome, {user.name}</h1>
             <p className="text-secondary text-lg mb-8">
@@ -29,7 +36,6 @@ export const Dashboard = ({ user, onLogout }) => {
               journey.
             </p>
 
-            {/* User Info Card */}
             <div className="card mb-8">
               <div className="space-y-4">
                 <div>
@@ -41,7 +47,7 @@ export const Dashboard = ({ user, onLogout }) => {
                 <div>
                   <p className="text-muted mb-2">Your Roles</p>
                   <div className="flex flex-wrap gap-2">
-                    {user.role && user.role.length > 0 ? (
+                    {user.role?.length > 0 ? (
                       user.role.map((role) => (
                         <span key={role} className="badge capitalize">
                           {role}
@@ -56,36 +62,29 @@ export const Dashboard = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {/* Features Section */}
           <div className="card">
             <h2 className="heading-2 mb-6">Quick Start</h2>
             <div className="space-y-4">
-              {user.role?.includes("freelancer") && (
-                <div className="card-sm card-hover cursor-pointer">
-                  <h3 className="heading-3 mb-1">Find Projects</h3>
-                  <p className="text-muted">
-                    Browse and apply for available projects
-                  </p>
-                </div>
+              {isFreelancer && (
+                <QuickStartCard
+                  title="Find Projects"
+                  description="Browse and apply for available projects"
+                />
               )}
-              {user.role?.includes("client") && (
-                <div className="card-sm card-hover cursor-pointer">
-                  <h3 className="heading-3 mb-1">Post a Job</h3>
-                  <p className="text-muted">
-                    Create a new job and find the perfect freelancer
-                  </p>
-                </div>
+              {isClient && (
+                <QuickStartCard
+                  title="Post a Job"
+                  description="Create a new job and find the perfect freelancer"
+                />
               )}
-              <div className="card-sm card-hover cursor-pointer">
-                <h3 className="heading-3 mb-1">View Profile</h3>
-                <p className="text-muted">
-                  Update your profile and manage settings
-                </p>
-              </div>
-              <div className="card-sm card-hover cursor-pointer">
-                <h3 className="heading-3 mb-1">Notifications</h3>
-                <p className="text-muted">Stay updated with your activities</p>
-              </div>
+              <QuickStartCard
+                title="View Profile"
+                description="Update your profile and manage settings"
+              />
+              <QuickStartCard
+                title="Notifications"
+                description="Stay updated with your activities"
+              />
             </div>
           </div>
         </div>
