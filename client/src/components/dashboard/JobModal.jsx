@@ -36,15 +36,6 @@ export const JobModal = ({
 
   return (
     <div className="proposal-modal-overlay">
-      <button
-        type="button"
-        className="proposal-modal-close"
-        onClick={onClose}
-        aria-label="Close modal"
-      >
-        ✕
-      </button>
-
       <div
         className="proposal-modal"
         role="dialog"
@@ -143,6 +134,7 @@ export const JobModal = ({
                 variant="secondary"
                 onClick={onClose}
                 disabled={loading}
+                className="modal-close-btn"
                 style={{ border: "1px solid var(--color-primary)" }}
               >
                 Cancel
@@ -155,6 +147,7 @@ export const JobModal = ({
               type="button"
               variant="secondary"
               onClick={onClose}
+              className="modal-close-btn"
               style={{ border: "1px solid var(--color-primary)" }}
             >
               Close

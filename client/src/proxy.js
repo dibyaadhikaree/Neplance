@@ -51,5 +51,7 @@ export const config = {
   matcher: [
     // Protect dashboard routes
     "/dashboard/:path*",
+    "/profile/:path*",
+    "/settings/:path*",
   ],
 };
