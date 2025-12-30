@@ -1,6 +1,6 @@
 /* ==================== Utilities ==================== */
 
-/* Responsive Sections */
+/* Hero Section (hidden on mobile, visible on desktop) */
 .hero-section {
   display: none;
   flex: 1;
@@ -14,7 +14,7 @@
   }
 }
 
-/* Animations */
+/* Animated visibility toggle */
 .hidden-animate {
   display: grid;
   transition:
@@ -36,35 +36,13 @@
   overflow: hidden;
 }
 
-/* Spacing Utilities */
-.mb-5 {
-  margin-bottom: var(--space-lg);
+/* Mission block for hero section */
+.mission-block {
+  border-left: 2px solid var(--color-primary);
+  padding-left: var(--space-lg);
 }
 
-.mt-6 {
-  margin-top: calc(var(--space-lg) + var(--space-sm));
-}
-
-.mb-8 {
-  margin-bottom: var(--space-2xl);
-}
-
-.mb-4 {
-  margin-bottom: var(--space-md);
-}
-
-.mb-2 {
-  margin-bottom: var(--space-sm);
-}
-
-.gap-3 {
-  gap: var(--space-md);
-}
-
-.gap-8 {
-  gap: var(--space-2xl);
-}
-
+/* Spacing utilities - only custom ones not in Tailwind */
 .space-y-4 > * + * {
   margin-top: var(--space-md);
 }
@@ -73,6 +51,7 @@
   margin-top: var(--space-2xl);
 }
 
-.space-y-14 > * + * {
-  margin-top: calc(var(--space-2xl) + var(--space-xl));
+/* Border utilities */
+.border-dashed {
+  border-style: dashed;
 }

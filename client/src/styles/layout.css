@@ -20,21 +20,21 @@
   padding: var(--space-2xl) var(--space-lg);
 }
 
-@media (min-width: 1024px) {
-  .container-main {
-    gap: calc(var(--space-xl) * 1.5);
-  }
-}
-
 .container-content {
   max-width: 72rem;
   margin: 0 auto;
   padding: var(--space-2xl) var(--space-md);
 }
 
+@media (min-width: 1024px) {
+  .container-main {
+    gap: calc(var(--space-xl) * 1.5);
+  }
+}
+
 /* Header */
 .header {
-  border-bottom: var(--border-width) solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
   background: var(--color-bg);
 }
 

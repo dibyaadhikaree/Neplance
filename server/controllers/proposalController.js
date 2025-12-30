@@ -4,7 +4,10 @@ const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
 const getMyProposals = catchAsync(async (req, res) => {
-  const data = await Proposal.find({ freelancer: req.user.id });
+  const data = await Proposal.find({ freelancer: req.user.id }).populate({
+    path: "job",
+    populate: { path: "client", select: "name email" },
+  });
 
   if (!data) throw new AppError(400, "No Proposals found ");
 
@@ -16,8 +19,6 @@ const getMyProposals = catchAsync(async (req, res) => {
 
 const createProposal = catchAsync(async (req, res) => {
   const { job, status, amount } = req.body;
-
-  console.log(req.user, "user");
 
   const data = await Proposal.create({
     freelancer: req.user.id,
@@ -49,7 +50,7 @@ const getProposalForJob = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: "success",
-    data: data,
+    data,
   });
 });
 
@@ -68,9 +69,8 @@ const acceptProposal = catchAsync(async (req, res, next) => {
 
   const jobId = job._id;
 
-  // ✅ only job owner client
-  if (job.client.toString() != req.user.id.toString()) {
-    console.log("current user", req.user, job.client, "job clieent");
+  // Only allow job owner (client) to accept proposals
+  if (job.client.toString() !== req.user.id.toString()) {
     throw new AppError("You can't accept proposals for this job", 403);
   }
 

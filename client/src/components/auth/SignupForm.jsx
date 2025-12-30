@@ -3,41 +3,52 @@
 import { useState } from "react";
 import { Button, Input } from "../UI";
 
+const ROLES = ["freelancer", "client"];
+
+const RoleButton = ({ role, selected, disabled, onClick }) => (
+  <button
+    type="button"
+    onClick={() => onClick(role)}
+    disabled={disabled}
+    className={`btn border border-solid ${
+      selected ? "btn-primary border-primary" : "btn-secondary border-border"
+    }`}
+    aria-pressed={selected}
+  >
+    {role.charAt(0).toUpperCase() + role.slice(1)}
+  </button>
+);
+
 export const SignupForm = ({ onSubmit, loading = false }) => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
+  });
   const [selectedRoles, setSelectedRoles] = useState(new Set());
+
+  const updateField = (field) => (e) =>
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
 
   const toggleRole = (role) => {
     setSelectedRoles((prev) => {
-      const newRoles = new Set(prev);
-      if (newRoles.has(role)) {
-        newRoles.delete(role);
-      } else {
-        newRoles.add(role);
-      }
-      return newRoles;
+      const next = new Set(prev);
+      next.has(role) ? next.delete(role) : next.add(role);
+      return next;
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    await onSubmit({
-      name,
-      email,
-      password,
-      passwordConfirm,
-      roles: Array.from(selectedRoles),
-    });
+    onSubmit({ ...formData, roles: Array.from(selectedRoles) });
   };
 
-  const isFormValid =
-    name.trim() &&
-    email.trim() &&
-    password &&
-    passwordConfirm &&
+  const isValid =
+    formData.name.trim() &&
+    formData.email.trim() &&
+    formData.password &&
+    formData.passwordConfirm &&
     selectedRoles.size > 0;
 
   return (
@@ -45,8 +56,8 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       <Input
         type="text"
         placeholder="Full name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        value={formData.name}
+        onChange={updateField("name")}
         required
         autoComplete="name"
         disabled={loading}
@@ -54,8 +65,8 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       <Input
         type="email"
         placeholder="Email address"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        value={formData.email}
+        onChange={updateField("email")}
         required
         autoComplete="email"
         disabled={loading}
@@ -63,8 +74,8 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       <Input
         type="password"
         placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        value={formData.password}
+        onChange={updateField("password")}
         required
         autoComplete="new-password"
         disabled={loading}
@@ -72,8 +83,8 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       <Input
         type="password"
         placeholder="Confirm password"
-        value={passwordConfirm}
-        onChange={(e) => setPasswordConfirm(e.target.value)}
+        value={formData.passwordConfirm}
+        onChange={updateField("passwordConfirm")}
         required
         autoComplete="new-password"
         disabled={loading}
@@ -82,36 +93,19 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       <div className="space-y-3">
         <div className="input-label">Select your role</div>
         <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => toggleRole("freelancer")}
-            disabled={loading}
-            className={`btn border border-solid ${
-              selectedRoles.has("freelancer")
-                ? "btn-primary border-primary"
-                : "btn-secondary border-border"
-            }`}
-            aria-pressed={selectedRoles.has("freelancer")}
-          >
-            Freelancer
-          </button>
-          <button
-            type="button"
-            onClick={() => toggleRole("client")}
-            disabled={loading}
-            className={`btn border border-solid ${
-              selectedRoles.has("client")
-                ? "btn-primary border-primary"
-                : "btn-secondary border-border"
-            }`}
-            aria-pressed={selectedRoles.has("client")}
-          >
-            Client
-          </button>
+          {ROLES.map((role) => (
+            <RoleButton
+              key={role}
+              role={role}
+              selected={selectedRoles.has(role)}
+              disabled={loading}
+              onClick={toggleRole}
+            />
+          ))}
         </div>
       </div>
 
-      <Button type="submit" disabled={loading || !isFormValid}>
+      <Button type="submit" disabled={loading || !isValid}>
         {loading ? "Creating account..." : "Create account"}
       </Button>
     </form>

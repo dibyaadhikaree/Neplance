@@ -1,62 +1,51 @@
 /**
  * Authentication utilities for cookie management
- * These are client-side helpers since we're in a "use client" environment
+ * Client-side helpers for "use client" environment
  */
+
+const COOKIE_OPTIONS = "path=/; secure; samesite=strict";
+const EXPIRY_DAYS = 7;
+
+// Helper to parse cookies into an object
+const parseCookies = () =>
+  Object.fromEntries(
+    document.cookie
+      .split("; ")
+      .filter(Boolean)
+      .map((c) => {
+        const idx = c.indexOf("=");
+        return [c.slice(0, idx), c.slice(idx + 1)];
+      }),
+  );
 
 export function setAuthCookies(token, user) {
-  // Set token cookie with security flags
-  const expiresDate = new Date();
-  expiresDate.setDate(expiresDate.getDate() + 7); // 7 days
+  const expires = new Date(
+    Date.now() + EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+  ).toUTCString();
 
-  document.cookie = `auth_token=${token}; path=/; expires=${expiresDate.toUTCString()}; secure; samesite=strict`;
-
-  // Store user data separately (can't store in httpOnly cookie)
-  document.cookie = `auth_user=${JSON.stringify(user)}; path=/; expires=${expiresDate.toUTCString()}; secure; samesite=strict`;
+  document.cookie = `auth_token=${token}; ${COOKIE_OPTIONS}; expires=${expires}`;
+  document.cookie = `auth_user=${encodeURIComponent(JSON.stringify(user))}; ${COOKIE_OPTIONS}; expires=${expires}`;
 }
 
-/**
- * Get auth token from cookies
- */
 export function getAuthToken() {
-  const cookies = document.cookie.split(";");
-  for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split("=");
-    if (name === "auth_token") {
-      return value || null;
-    }
-  }
-  return null;
+  return parseCookies().auth_token || null;
 }
 
-/**
- * Get user data from cookies
- */
 export function getAuthUser() {
-  const cookies = document.cookie.split(";");
-  for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split("=");
-    if (name === "auth_user") {
-      try {
-        return JSON.parse(decodeURIComponent(value));
-      } catch (_e) {
-        return null;
-      }
-    }
+  const userCookie = parseCookies().auth_user;
+  if (!userCookie) return null;
+
+  try {
+    return JSON.parse(decodeURIComponent(userCookie));
+  } catch {
+    return null;
   }
-  return null;
 }
 
-/**
- * Clear all auth cookies
- */
 export function clearAuthCookies() {
-  document.cookie = `auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-  document.cookie = `auth_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
+  const expired = "Thu, 01 Jan 1970 00:00:00 UTC";
+  document.cookie = `auth_token=; path=/; expires=${expired}`;
+  document.cookie = `auth_user=; path=/; expires=${expired}`;
 }
 
-/**
- * Check if user is authenticated
- */
-export function isAuthenticated() {
-  return !!getAuthToken() && !!getAuthUser();
-}
+export const isAuthenticated = () => !!getAuthToken() && !!getAuthUser();

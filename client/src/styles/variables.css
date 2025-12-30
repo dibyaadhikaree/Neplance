@@ -1,12 +1,27 @@
 /* ==================== CSS Variables ==================== */
 
 :root {
-  /* Colors */
-  --color-primary: #fafafa;
-  --color-secondary: #a1a1aa;
-  --color-tertiary: #71717a;
-  --color-bg: #000;
-  --color-border: #27272a;
+  /* Brand Colors */
+  --color-primary: #f4d58d;
+  --color-secondary: #f9e5b5;
+  --color-tertiary: #fdf2d9;
+  --color-bg: #001427;
+  --color-border: #0a2540;
+  --color-accent: #708d81;
+
+  /* Status Colors - Deep, rich tones matching red */
+  --color-red: #bf0603;
+  --color-red-dark: #8d0801;
+  --color-blue: #0546a8;
+  --color-blue-dark: #033a8a;
+  --color-green: #057a40;
+  --color-green-dark: #045c30;
+  --color-yellow: #b8860b;
+  --color-yellow-dark: #8b6508;
+  --color-purple: #7b2cbf;
+  --color-purple-dark: #5b21a8;
+  --color-gray: #4b5563;
+  --color-gray-dark: #374151;
 
   /* Spacing */
   --space-xs: 0.25rem;
@@ -19,7 +34,6 @@
   /* Typography */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.5rem;
   --font-size-2xl: 2.25rem;
@@ -33,15 +47,13 @@
   /* Transitions */
   --transition-fast: 0.2s;
   --transition-normal: 0.3s;
-
-  /* Border */
-  --border-width: 1px;
 }
 
+/* Light theme overrides */
 .light {
-  --color-primary: #000;
-  --color-secondary: #52525b;
-  --color-tertiary: #71717a;
-  --color-bg: #fafafa;
-  --color-border: #e4e4e7;
+  --color-primary: #001427;
+  --color-secondary: #0a2540;
+  --color-tertiary: #1a3550;
+  --color-bg: #fdf2d9;
+  --color-border: #f9e5b5;
 }

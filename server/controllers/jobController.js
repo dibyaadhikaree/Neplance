@@ -19,7 +19,7 @@ const createJob = catchAsync(async (req, res) => {
 });
 
 const findJobs = catchAsync(async (req, res) => {
-  const data = await Job.find({});
+  const data = await Job.find({}).populate("client", "name email");
 
   if (!data) throw new AppError(400, "No Job found ");
 

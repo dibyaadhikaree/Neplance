@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { APIError, apiAuthCall } from "@/lib/api";
 import { setAuthCookies } from "@/lib/auth-cookies";
 import { EverestLogo } from "../EverestLogo";
 import { AuthTabs } from "./AuthTabs";
@@ -12,77 +13,42 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLoginSubmit = async (email, password) => {
+  const handleAuth = async (endpoint, body) => {
     setError("");
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        },
-      );
+      const data = await apiAuthCall(`/auth/${endpoint}`, body);
+      const user = data.data || data.user;
 
-      const data = await response.json();
-
-      if (response.ok) {
-        const user = data.data || data.user;
-        if (user && onAuthSuccess) {
-          // Store token and user in cookies
-          setAuthCookies(data.token, user);
-          onAuthSuccess(user, data.token);
-        }
-      } else {
-        setError(data.message || "Login failed. Please try again.");
+      if (user && onAuthSuccess) {
+        setAuthCookies(data.token, user);
+        onAuthSuccess(user, data.token);
       }
-    } catch (_err) {
-      setError("Network error. Please check your connection and try again.");
+    } catch (err) {
+      if (err instanceof APIError) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignupSubmit = async (formData) => {
-    setError("");
-    setLoading(true);
+  const handleLogin = (email, password) =>
+    handleAuth("login", { email, password });
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            passwordConfirm: formData.passwordConfirm,
-            role: formData.roles,
-          }),
-        },
-      );
+  const handleSignup = ({ name, email, password, passwordConfirm, roles }) =>
+    handleAuth("register", {
+      name,
+      email,
+      password,
+      passwordConfirm,
+      role: roles,
+    });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        const user = data.data || data.user;
-        if (user && onAuthSuccess) {
-          // Store token and user in cookies
-          setAuthCookies(data.token, user);
-          onAuthSuccess(user, data.token);
-        }
-      } else {
-        setError(data.message || "Registration failed. Please try again.");
-      }
-    } catch (_err) {
-      setError("Network error. Please check your connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isLogin = activeTab === "login";
 
   return (
     <div className="card w-full lg:w-[400px]">
@@ -95,44 +61,36 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
       {/* Header */}
       <div className="mb-8">
         <h2 className="heading-2">
-          {activeTab === "login" ? "Welcome back" : "Create account"}
+          {isLogin ? "Welcome back" : "Create account"}
         </h2>
         <p className="text-muted mt-4">
-          {activeTab === "login"
+          {isLogin
             ? "Enter your credentials to continue"
             : "Start your freelancing journey"}
         </p>
       </div>
 
-      {/* Error Message */}
       {error && <div className="card-error mb-6 text-sm">{error}</div>}
 
-      {/* Tabs */}
       <AuthTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Forms */}
       <div className="mb-8">
-        {activeTab === "login" ? (
-          <LoginForm onSubmit={handleLoginSubmit} loading={loading} />
+        {isLogin ? (
+          <LoginForm onSubmit={handleLogin} loading={loading} />
         ) : (
-          <SignupForm onSubmit={handleSignupSubmit} loading={loading} />
+          <SignupForm onSubmit={handleSignup} loading={loading} />
         )}
       </div>
 
-      {/* Footer */}
       <p className="text-center text-muted text-sm">
-        {activeTab === "login"
-          ? "Don't have an account? "
-          : "Already have an account? "}
+        {isLogin ? "Don't have an account? " : "Already have an account? "}
         <button
           type="button"
-          onClick={() =>
-            setActiveTab(activeTab === "login" ? "signup" : "login")
-          }
+          onClick={() => setActiveTab(isLogin ? "signup" : "login")}
           className="text-primary font-medium hover:underline"
           disabled={loading}
         >
-          {activeTab === "login" ? "Sign up" : "Sign in"}
+          {isLogin ? "Sign up" : "Sign in"}
         </button>
       </p>
     </div>
