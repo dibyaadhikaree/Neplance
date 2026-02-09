@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ClientDashboard } from "@/components/dashboards/client/ClientDashboard";
-import { FreelancerDashboard } from "@/components/dashboards/freelancer/FreelancerDashboard";
+import { ClientDashboard } from "@/features/dashboard/screens/ClientDashboard";
+import { FreelancerDashboard } from "@/features/dashboard/screens/FreelancerDashboard";
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -22,7 +22,7 @@ export default function DashboardPage() {
         } else {
           router.push("/");
         }
-      } catch (error) {
+      } catch (_error) {
         router.push("/");
       }
     };

@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiCall } from "../services/api";
+import { apiCall } from "@/services/api";
 
 const EMPTY_STATES = {
   available: {

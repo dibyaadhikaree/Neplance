@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input } from "../UI";
+import { Button, Input } from "@/shared/ui/UI";
 
 export const JobModal = ({
   job,

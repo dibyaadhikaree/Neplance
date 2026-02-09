@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { EmptyState } from "../../components/dashboard/EmptyState";
-import { Header } from "../../components/dashboard/Header";
-import { JobCard } from "../../components/dashboard/JobCard";
-import { JobModal } from "../../components/dashboard/JobModal";
-import { apiCall } from "../../services/api";
+import { EmptyState } from "@/features/dashboard/components/EmptyState";
+import { Header } from "@/features/dashboard/components/Header";
+import { JobCard } from "@/features/dashboard/components/JobCard";
+import { JobModal } from "@/features/dashboard/components/JobModal";
+import { apiCall } from "@/services/api";
 import "../../styles/dashboard.css";
 
 export default function ProfilePage() {
@@ -29,7 +29,7 @@ export default function ProfilePage() {
         } else {
           router.push("/");
         }
-      } catch (error) {
+      } catch (_error) {
         router.push("/");
       }
     };

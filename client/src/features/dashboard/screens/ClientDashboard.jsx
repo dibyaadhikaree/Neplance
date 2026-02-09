@@ -1,6 +1,6 @@
 "use client";
 
-import { Header } from "../../dashboard/Header";
+import { Header } from "@/features/dashboard/components/Header";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   return (

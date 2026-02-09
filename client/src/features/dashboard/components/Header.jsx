@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-// import { setAuthCookies } from "../../utils/auth-cookies";
-import { EverestLogo } from "../EverestLogo";
+import { EverestLogo } from "@/shared/brand/EverestLogo";
+import { AvailableIcon, OngoingIcon, ProposedIcon } from "./TabNav";
 
 export const Header = ({ user, onLogout, onRoleSwitch }) => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -45,18 +45,6 @@ export const Header = ({ user, onLogout, onRoleSwitch }) => {
       ...user,
       role: [newRole, ...user.role.filter((r) => r !== newRole)],
     };
-
-    // Update cookies with the new user data
-    const token =
-      localStorage.getItem("auth_token") ||
-      document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth_token="))
-        ?.split("=")[1];
-
-    if (token) {
-      setAuthCookies(token, updatedUser);
-    }
 
     // Trigger parent component to re-render with new role
     onRoleSwitch?.(updatedUser);
@@ -133,8 +121,6 @@ export const Header = ({ user, onLogout, onRoleSwitch }) => {
     </header>
   );
 };
-
-import { AvailableIcon, OngoingIcon, ProposedIcon } from "./TabNav";
 
 // Mobile Menu Component
 export const MobileMenu = ({ activeTab, onTabChange }) => {

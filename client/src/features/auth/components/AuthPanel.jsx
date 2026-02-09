@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { APIError, apiAuthCall } from "@/services/api";
-import { EverestLogo } from "../EverestLogo";
+import { EverestLogo } from "@/shared/brand/EverestLogo";
 import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";

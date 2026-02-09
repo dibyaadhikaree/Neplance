@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { apiCall } from "../../../services/api";
-import { useFreelancerDashboard } from "../../../hooks/useFreelancerDashboard";
-import { EmptyState } from "../../dashboard/EmptyState";
-import { Header, MobileMenu } from "../../dashboard/Header";
-import { JobCard, ProposalCard } from "../../dashboard/JobCard";
-import { JobModal } from "../../dashboard/JobModal";
+import { EmptyState } from "@/features/dashboard/components/EmptyState";
+import { Header, MobileMenu } from "@/features/dashboard/components/Header";
+import { JobCard, ProposalCard } from "@/features/dashboard/components/JobCard";
+import { JobModal } from "@/features/dashboard/components/JobModal";
 import {
   AvailableIcon,
   OngoingIcon,
   ProposedIcon,
   TabNav,
-} from "../../dashboard/TabNav";
+} from "@/features/dashboard/components/TabNav";
+import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancerDashboard";
+import { apiCall } from "@/services/api";
 
 export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const [activeTab, setActiveTab] = useState("available");

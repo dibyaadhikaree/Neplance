@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AuthPanel, HeroSection } from "@/components";
+import { AuthPanel } from "@/features/auth/components/AuthPanel";
+import { HeroSection } from "@/shared/brand/HeroSection";
 
 export default function Home() {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -19,7 +20,7 @@ export default function Home() {
         } else {
           setIsHydrated(true);
         }
-      } catch (error) {
+      } catch (_error) {
         // Not logged in or error
         setIsHydrated(true);
       }
