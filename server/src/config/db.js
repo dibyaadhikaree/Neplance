@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 
 const connectDB = async () => {
     try {
         const DbUri = process.env.DB_URL;
         await mongoose.connect(DbUri);
-        console.log("Sucessfully connected to Neplance Database");
+        logger.info("Successfully connected to the Neplance database.");
     } catch (error) {
-        console.log("Error connecting to database", error);
+        logger.error("Failed to connect to the Neplance database.", error);
         process.exit(1);
     }
 };

@@ -1,11 +1,11 @@
 const app = require("./src/app");
 
 const dotenv = require("dotenv");
+const logger = require("./src/utils/logger");
 dotenv.config({ path: "./.env" });
 
 process.on("uncaughtException", (err) => {
-  console.log("UNCAUGHT EXCEPTION! 💥 Shutting down...");
-  console.log(err.name, err.message);
+  logger.error("Uncaught exception detected; terminating process.", err);
   process.exit(1);
 });
 
@@ -16,21 +16,21 @@ const connectDB = require("./src/config/db");
 // Connect to Database
 connectDB();
 
-app.listen(port, "127.0.0.1", () => {
-  console.log(`Server has started on Port : ${port}`);
+const server = app.listen(port, "127.0.0.1", () => {
+  logger.info(`Server listening on 127.0.0.1:${port}`);
 });
 
 process.on("unhandledRejection", (err) => {
-  console.log("UNHANDLED REJECTION! 💥 Shutting down...");
-  console.log(err.name, err.message);
+  logger.error("Unhandled rejection detected; shutting down the server.", err);
   server.close(() => {
+    logger.info("Server closed after unhandled rejection.");
     process.exit(1);
   });
 });
 
 process.on("SIGTERM", () => {
-  console.log("👋 SIGTERM RECEIVED. Shutting down gracefully");
+  logger.warn("SIGTERM received. Initiating graceful shutdown.");
   server.close(() => {
-    console.log("💥 Process terminated!");
+    logger.info("Process terminated gracefully.");
   });
 });

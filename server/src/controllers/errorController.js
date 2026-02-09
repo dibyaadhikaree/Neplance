@@ -1,5 +1,7 @@
+const logger = require("../utils/logger");
+
 module.exports = (err, req, res, next) => {
-  console.error("ERROR 💥", err);
+  logger.error("Error encountered while processing request.", err);
 
   let statusCode = err.statusCode || 500;
   let status = err.status || "error";
