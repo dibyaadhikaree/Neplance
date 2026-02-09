@@ -11,7 +11,7 @@ export function proxy(request) {
   const pathname = request.nextUrl.pathname;
 
   // Get auth token from cookies
-  const authToken = request.cookies.get("auth_token")?.value;
+  const authToken = request.cookies.get("jwt")?.value;
 
   // Protected routes that require authentication
   const protectedRoutes = ["/dashboard", "/profile", "/settings"];

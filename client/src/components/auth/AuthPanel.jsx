@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { APIError, apiAuthCall } from "@/lib/api";
-import { setAuthCookies } from "@/lib/auth-cookies";
+import { APIError, apiAuthCall } from "@/services/api";
 import { EverestLogo } from "../EverestLogo";
 import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
@@ -19,11 +18,10 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
 
     try {
       const data = await apiAuthCall(`/auth/${endpoint}`, body);
-      const user = data.data || data.user;
+      const user = data.data?.user || data.user;
 
       if (user && onAuthSuccess) {
-        setAuthCookies(data.token, user);
-        onAuthSuccess(user, data.token);
+        onAuthSuccess(user);
       }
     } catch (err) {
       if (err instanceof APIError) {

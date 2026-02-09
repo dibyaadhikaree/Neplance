@@ -1,4 +1,4 @@
-const app = require("./app");
+const app = require("./src/app");
 
 const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
@@ -11,14 +11,10 @@ process.on("uncaughtException", (err) => {
 
 const port = process.env.PORT;
 
-const DbUri = process.env.DB_URL;
+const connectDB = require("./src/config/db");
 
-const mongoose = require("mongoose");
-
-mongoose
-  .connect(DbUri)
-  .then(() => console.log("Sucessfully connected to Neplance Database"))
-  .catch((error) => console.log("Error connecting to database", error));
+// Connect to Database
+connectDB();
 
 app.listen(port, "127.0.0.1", () => {
   console.log(`Server has started on Port : ${port}`);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { setAuthCookies } from "../../lib/auth-cookies";
+// import { setAuthCookies } from "../../utils/auth-cookies";
 import { EverestLogo } from "../EverestLogo";
 
 export const Header = ({ user, onLogout, onRoleSwitch }) => {

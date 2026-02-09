@@ -6,12 +6,7 @@ import { EmptyState } from "../../components/dashboard/EmptyState";
 import { Header } from "../../components/dashboard/Header";
 import { JobCard } from "../../components/dashboard/JobCard";
 import { JobModal } from "../../components/dashboard/JobModal";
-import { apiCall } from "../../lib/api";
-import {
-  clearAuthCookies,
-  getAuthToken,
-  getAuthUser,
-} from "../../lib/auth-cookies";
+import { apiCall } from "../../services/api";
 import "../../styles/dashboard.css";
 
 export default function ProfilePage() {
@@ -24,31 +19,36 @@ export default function ProfilePage() {
 
   const router = useRouter();
 
-  // Load user from cookies initially
+  // Load user from server initially
   useEffect(() => {
-    const storedUser = getAuthUser();
-    if (!storedUser) {
-      router.push("/");
-      return;
-    }
-    setUser(storedUser);
+    const fetchUser = async () => {
+      try {
+        const data = await apiCall("/auth/me");
+        if (data.data?.user) {
+          setUser(data.data.user);
+        } else {
+          router.push("/");
+        }
+      } catch (error) {
+        router.push("/");
+      }
+    };
+    fetchUser();
   }, [router]);
 
   const fetchProfileData = useCallback(async () => {
-    const token = getAuthToken();
-    const currentUser = getAuthUser();
-
-    if (!token || !currentUser) return;
+    if (!user) return;
 
     try {
       setLoading(true);
 
       // Check active role (first in array)
-      const isFreelancer = currentUser.role?.[0] === "freelancer";
+      const isFreelancer = user.role?.[0] === "freelancer";
       let completed = [];
 
       if (isFreelancer) {
-        const proposalsData = await apiCall("/proposals/myProposals", token);
+        // Token is handled by HttpOnly cookie
+        const proposalsData = await apiCall("/proposals/myProposals");
         if (proposalsData.status === "success") {
           completed = proposalsData.data
             .filter(
@@ -67,7 +67,7 @@ export default function ProfilePage() {
             }));
         }
       } else {
-        const jobsData = await apiCall("/jobs/myJobs", token);
+        const jobsData = await apiCall("/jobs/myJobs");
         if (jobsData.status === "success") {
           completed = jobsData.data
             .filter(
@@ -78,7 +78,7 @@ export default function ProfilePage() {
               client:
                 job.client && typeof job.client === "object" && job.client.name
                   ? job.client
-                  : currentUser,
+                  : user,
               review: null,
             }));
         }
@@ -90,7 +90,7 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -98,9 +98,14 @@ export default function ProfilePage() {
     }
   }, [user, fetchProfileData]);
 
-  const handleLogout = () => {
-    clearAuthCookies();
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await apiCall("/auth/logout");
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed", error);
+      router.push("/");
+    }
   };
 
   const handleRoleSwitch = (updatedUser) => {

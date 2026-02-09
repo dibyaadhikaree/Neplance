@@ -5,7 +5,7 @@ const {
   acceptProposal,
   getMyProposals,
 } = require("../controllers/proposalController");
-const { restrictTo, protect } = require("../controllers/authController");
+const { restrictTo, protect } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 

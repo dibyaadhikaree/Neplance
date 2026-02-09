@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiCall } from "./api";
+import { apiCall } from "../services/api";
 
 const EMPTY_STATES = {
   available: {
@@ -20,7 +20,7 @@ const EMPTY_STATES = {
   },
 };
 
-export function useFreelancerDashboard(token) {
+export function useFreelancerDashboard() {
   const [availableJobs, setAvailableJobs] = useState([]);
   const [proposedJobs, setProposedJobs] = useState([]);
   const [ongoingJobs, setOngoingJobs] = useState([]);
@@ -29,24 +29,18 @@ export function useFreelancerDashboard(token) {
   const fetchFunctionRef = useRef(null);
 
   const fetchDashboardData = useCallback(async () => {
-    if (!token) {
-      setError("Authentication token required");
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
 
       // Fetch available jobs
-      const jobsData = await apiCall("/jobs", token);
+      const jobsData = await apiCall("/jobs");
       if (jobsData.status === "success") {
         setAvailableJobs(jobsData.data.filter((job) => job.status === "open"));
       }
 
       // Fetch my proposals
-      const proposalsData = await apiCall("/proposals/myProposals", token);
+      const proposalsData = await apiCall("/proposals/myProposals");
       if (proposalsData.status === "success") {
         const proposals = proposalsData.data;
 
@@ -75,7 +69,7 @@ export function useFreelancerDashboard(token) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   // Store the fetch function in a ref so refetch can call it
   useEffect(() => {

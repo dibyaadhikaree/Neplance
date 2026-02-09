@@ -9,7 +9,7 @@ const {
   approveCompletion,
   findMyJobs,
 } = require("../controllers/jobController");
-const { protect, restrictTo } = require("../controllers/authController");
+const { protect, restrictTo } = require("../middlewares/authMiddleware");
 
 router.use(protect);
 

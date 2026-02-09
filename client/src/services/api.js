@@ -19,19 +19,15 @@ export class APIError extends Error {
  * @returns {Promise<any>} Response data
  * @throws {APIError} If request fails
  */
-export async function apiCall(endpoint, token, options = {}) {
-  if (!token) {
-    throw new APIError("Authentication token required", 401);
-  }
-
+export async function apiCall(endpoint, options = {}) {
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      credentials: "include",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         ...options.headers,
       },
-      ...options,
     });
 
     const data = await response.json();
@@ -68,6 +64,7 @@ export async function apiAuthCall(endpoint, body) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      credentials: "include",
     });
 
     const data = await response.json();

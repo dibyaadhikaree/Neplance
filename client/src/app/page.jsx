@@ -3,23 +3,28 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthPanel, HeroSection } from "@/components";
-import { getAuthToken, getAuthUser } from "@/lib/auth-cookies";
 
 export default function Home() {
   const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
 
-  // Load session from cookies on mount
+  // Load session from server on mount
   useEffect(() => {
-    const storedToken = getAuthToken();
-    const storedUser = getAuthUser();
-
-    if (storedToken && storedUser) {
-      // Redirect to dashboard if already logged in
-      router.push("/dashboard");
-      return;
-    }
-    setIsHydrated(true);
+    const checkSession = async () => {
+      try {
+        const { apiCall } = await import("@/services/api");
+        const data = await apiCall("/auth/me");
+        if (data.status === "success" && data.data.user) {
+          router.push("/dashboard");
+        } else {
+          setIsHydrated(true);
+        }
+      } catch (error) {
+        // Not logged in or error
+        setIsHydrated(true);
+      }
+    };
+    checkSession();
   }, [router]);
 
   if (!isHydrated) {

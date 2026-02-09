@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { apiCall } from "../../../lib/api";
-import { getAuthToken } from "../../../lib/auth-cookies";
-import { useFreelancerDashboard } from "../../../lib/useFreelancerDashboard";
+import { apiCall } from "../../../services/api";
+import { useFreelancerDashboard } from "../../../hooks/useFreelancerDashboard";
 import { EmptyState } from "../../dashboard/EmptyState";
 import { Header, MobileMenu } from "../../dashboard/Header";
 import { JobCard, ProposalCard } from "../../dashboard/JobCard";
@@ -23,7 +22,6 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const [modalMode, setModalMode] = useState("view"); // 'view' | 'proposal'
   const [submitting, setSubmitting] = useState(false);
 
-  const token = getAuthToken();
   const {
     availableJobs,
     proposedJobs,
@@ -32,7 +30,7 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
     error,
     EMPTY_STATES,
     refetch,
-  } = useFreelancerDashboard(token);
+  } = useFreelancerDashboard();
 
   if (loading) {
     return (
@@ -73,7 +71,7 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const handleSubmitProposal = async (proposalData) => {
     setSubmitting(true);
     try {
-      await apiCall("/proposals", token, {
+      await apiCall("/proposals", {
         method: "POST",
         body: JSON.stringify(proposalData),
       });
@@ -86,7 +84,7 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
   const handleMarkComplete = async (job) => {
     try {
-      await apiCall(`/jobs/${job._id}/markCompleted`, token, {
+      await apiCall(`/jobs/${job._id}/markCompleted`, {
         method: "PATCH",
       });
       refetch?.();
