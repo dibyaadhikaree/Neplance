@@ -55,11 +55,10 @@ export default function ProfilePage() {
               (p) =>
                 p.status === "accepted" &&
                 p.job &&
-                (p.job.status === "completed" || p.job.status === "closed"),
+                p.job.status === "COMPLETED",
             )
             .map((p) => ({
               ...p.job,
-              client: p.job.client,
               status: p.job.status,
               // Since we don't have a review API, we'll attach a null review property
               // which can be populated later if API allows
@@ -70,15 +69,9 @@ export default function ProfilePage() {
         const jobsData = await apiCall("/jobs/myJobs");
         if (jobsData.status === "success") {
           completed = jobsData.data
-            .filter(
-              (job) => job.status === "completed" || job.status === "closed",
-            )
+            .filter((job) => job.status === "COMPLETED")
             .map((job) => ({
               ...job,
-              client:
-                job.client && typeof job.client === "object" && job.client.name
-                  ? job.client
-                  : user,
               review: null,
             }));
         }
@@ -177,9 +170,9 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Lower Half: Completed Jobs */}
+        {/* Lower Half: Completed Contracts */}
         <section className="completed-jobs-section">
-          <h2 className="section-title">Completed Jobs</h2>
+          <h2 className="section-title">Completed Contracts</h2>
 
           {loading ? (
             <div className="p-8 text-center text-gray-500">
@@ -226,14 +219,14 @@ export default function ProfilePage() {
             ))
           ) : (
             <EmptyState
-              title="No Completed Jobs"
-              description="Jobs you have successfully completed will appear here along with their reviews."
+              title="No Completed Contracts"
+              description="Contracts you have successfully completed will appear here along with their reviews."
             />
           )}
         </section>
       </main>
 
-      {/* Job Details Modal for Profile */}
+      {/* Contract Details Modal for Profile */}
       {selectedJob && (
         <JobModal job={selectedJob} mode="view" onClose={handleCloseModal} />
       )}

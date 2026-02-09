@@ -1,27 +1,73 @@
 const mongoose = require("mongoose");
 
+const milestoneSchema = new mongoose.Schema(
+  {
+    id: mongoose.Schema.Types.Buffer,
+    title: String,
+    description: String,
+    value: Number,
+    dueDate: Number,
+    status: {
+      type: String,
+      enum: ["ACTIVE", "SUBMITTED", "COMPLETED", "CANCELLED"],
+      default: "ACTIVE",
+    },
+    createdAt: {
+      type: Number,
+      default: () => Date.now(),
+    },
+    completedAt: Number,
+    evidence: String,
+    approvedBy: [String],
+  },
+  { _id: false }
+);
+
+const partySchema = new mongoose.Schema(
+  {
+    address: {
+      type: String,
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: ["CONTRACTOR", "ARBITRATOR", "CREATOR"],
+      required: true,
+    },
+    publicKey: mongoose.Schema.Types.Buffer,
+    signature: mongoose.Schema.Types.Buffer,
+  },
+  { _id: false }
+);
+
 const jobSchema = new mongoose.Schema({
-  title: String,
+  title: {
+    type: String,
+    required: true,
+  },
   description: String,
-  client: {
-    type: mongoose.Schema.ObjectId,
-    ref: "User",
-    required: "true",
-  }, // user reference here , which is restricted to Clients only
-  budget: Number, //Npr
-  // hiredFreelancer: {
-  //   type: mongoose.Schema.ObjectId,
-  //   ref: "User",
-  // },
-  hiredFreelancer: {
-    type: mongoose.Schema.ObjectId,
-    ref: "User",
+  createdAt: {
+    type: Number,
+    default: () => Date.now(),
+  },
+  updatedAt: {
+    type: Number,
+    default: () => Date.now(),
   },
   status: {
     type: String,
-    enum: ["open", "in-progress", "completed-request", "completed", "closed"],
-    default: "open",
+    enum: ["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"],
+    default: "DRAFT",
   },
+  milestones: [milestoneSchema],
+  parties: [partySchema],
+  terms: mongoose.Schema.Types.Buffer,
+  creatorAddress: {
+    type: mongoose.Schema.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  attachments: [mongoose.Schema.Types.Buffer],
 });
 
 const Job = mongoose.model("Job", jobSchema);

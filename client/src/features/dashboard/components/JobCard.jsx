@@ -1,3 +1,20 @@
+const formatStatus = (status) => {
+  if (!status) return "Unknown";
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
+const getTotalValue = (milestones) => {
+  if (!Array.isArray(milestones) || milestones.length === 0) return null;
+  return milestones.reduce((total, milestone) => {
+    const value = Number(milestone?.value ?? 0);
+    return total + (Number.isNaN(value) ? 0 : value);
+  }, 0);
+};
+
 export const JobCard = ({
   job,
   variant = "default",
@@ -5,20 +22,25 @@ export const JobCard = ({
   onMarkComplete,
   onViewDetails,
 }) => {
-  const { title, description, budget, status, client } = job;
-  const clientName = client?.name || "Unknown Client";
+  const { title, description, milestones, status, creatorAddress } = job;
+  const totalValue = getTotalValue(milestones);
+  const creatorLabel =
+    creatorAddress?.name ||
+    creatorAddress?.email ||
+    creatorAddress ||
+    "Unknown Creator";
 
   return (
     <article className="job-card">
       <div className="job-card-header">
         <div className="job-card-avatar">
-          {clientName.charAt(0).toUpperCase()}
+          {creatorLabel.charAt(0).toUpperCase()}
         </div>
         <div className="job-card-meta">
-          <span className="job-card-client">{clientName}</span>
+          <span className="job-card-client">{creatorLabel}</span>
         </div>
-        <span className={`status-badge status-${status}`}>
-          {status?.replace("-", " ") || "Unknown"}
+        <span className={`status-badge status-${status?.toLowerCase()}`}>
+          {formatStatus(status)}
         </span>
       </div>
 
@@ -35,9 +57,9 @@ export const JobCard = ({
 
       <div className="job-card-footer">
         <div className="job-card-budget-wrapper">
-          <span className="job-card-budget-label">Budget</span>
+          <span className="job-card-budget-label">Total Value</span>
           <span className="job-card-budget">
-            NPR {budget?.toLocaleString() || "N/A"}
+            {totalValue !== null ? `NPR ${totalValue.toLocaleString()}` : "N/A"}
           </span>
         </div>
 
@@ -60,13 +82,13 @@ export const JobCard = ({
             </button>
           )}
 
-          {variant === "current" && status === "in-progress" && (
+          {variant === "current" && status === "ACTIVE" && onMarkComplete && (
             <button
               type="button"
               className="job-card-btn job-card-btn-secondary"
               onClick={() => onMarkComplete?.(job)}
             >
-              Mark Complete
+              Mark Milestone Complete
             </button>
           )}
         </div>
@@ -77,20 +99,25 @@ export const JobCard = ({
 
 export const ProposalCard = ({ proposal, onViewDetails }) => {
   const { job, amount, status } = proposal;
-  const jobTitle = job?.title || "Unknown Job";
-  const clientName = job?.client?.name || "Unknown Client";
+  const jobTitle = job?.title || "Unknown Contract";
+  const creatorLabel =
+    job?.creatorAddress?.name ||
+    job?.creatorAddress?.email ||
+    job?.creatorAddress ||
+    "Unknown Creator";
+  const totalValue = getTotalValue(job?.milestones);
 
   return (
     <article className="job-card">
       <div className="job-card-header">
         <div className="job-card-avatar">
-          {clientName.charAt(0).toUpperCase()}
+          {creatorLabel.charAt(0).toUpperCase()}
         </div>
         <div className="job-card-meta">
-          <span className="job-card-client">{clientName}</span>
+          <span className="job-card-client">{creatorLabel}</span>
         </div>
-        <span className={`status-badge status-${status}`}>
-          {status || "Unknown"}
+        <span className={`status-badge status-${status?.toLowerCase()}`}>
+          {formatStatus(status)}
         </span>
       </div>
 
@@ -113,9 +140,9 @@ export const ProposalCard = ({ proposal, onViewDetails }) => {
 
       <div className="job-card-footer">
         <div className="job-card-budget-wrapper">
-          <span className="job-card-budget-label">Job Budget</span>
+          <span className="job-card-budget-label">Contract Value</span>
           <span className="job-card-budget">
-            NPR {job?.budget?.toLocaleString() || "N/A"}
+            {totalValue !== null ? `NPR ${totalValue.toLocaleString()}` : "N/A"}
           </span>
         </div>
         {/* Always show View Details for consistency, or keep logic */}

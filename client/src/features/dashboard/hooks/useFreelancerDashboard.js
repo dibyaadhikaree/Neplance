@@ -7,16 +7,16 @@ import { apiCall } from "@/services/api";
 
 const EMPTY_STATES = {
   available: {
-    title: "No Jobs Available",
+    title: "No Contracts Available",
     description: "Check back later for new opportunities.",
   },
   proposed: {
     title: "No Proposals",
-    description: "Submit proposals on available jobs to see them here.",
+    description: "Submit proposals on available contracts to see them here.",
   },
   ongoing: {
-    title: "No Ongoing Jobs",
-    description: "Jobs you're currently working on will appear here.",
+    title: "No Ongoing Contracts",
+    description: "Contracts you're currently working on will appear here.",
   },
 };
 
@@ -33,10 +33,10 @@ export function useFreelancerDashboard() {
       setLoading(true);
       setError(null);
 
-      // Fetch available jobs
+      // Fetch available contracts
       const jobsData = await apiCall("/jobs");
       if (jobsData.status === "success") {
-        setAvailableJobs(jobsData.data.filter((job) => job.status === "open"));
+        setAvailableJobs(jobsData.data.filter((job) => job.status === "DRAFT"));
       }
 
       // Fetch my proposals
@@ -47,17 +47,16 @@ export function useFreelancerDashboard() {
         // Filter pending proposals
         setProposedJobs(proposals.filter((p) => p.status === "pending"));
 
-        // Filter and map accepted proposals (ongoing jobs) - exclude completed jobs
+        // Filter and map accepted proposals (ongoing contracts)
         const ongoing = proposals
           .filter(
             (p) =>
               p.status === "accepted" &&
               p.job &&
-              p.job.status === "in-progress",
+              p.job.status === "ACTIVE",
           )
           .map((p) => ({
             ...p.job,
-            client: p.job.client,
             status: p.job.status,
           }));
 

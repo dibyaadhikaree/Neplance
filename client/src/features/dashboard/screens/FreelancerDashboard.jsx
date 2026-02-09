@@ -82,14 +82,15 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
     }
   };
 
-  const handleMarkComplete = async (job) => {
+  const handleSubmitMilestone = async (jobId, milestoneIndex, evidence) => {
     try {
-      await apiCall(`/jobs/${job._id}/markCompleted`, {
+      await apiCall(`/jobs/${jobId}/milestones/${milestoneIndex}/submit`, {
         method: "PATCH",
+        body: JSON.stringify({ evidence }),
       });
       refetch?.();
     } catch (err) {
-      console.error("Failed to mark job complete:", err);
+      console.error("Failed to submit milestone:", err);
     }
   };
 
@@ -101,7 +102,6 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
           job={job}
           variant={variant}
           onSubmitProposal={handleOpenProposalModal}
-          onMarkComplete={handleMarkComplete}
           onViewDetails={handleViewJobDetails}
         />
       ))
@@ -151,7 +151,7 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
             <OngoingIcon />
           )}
           {activeTab === "available"
-            ? "Available Jobs"
+            ? "Available Contracts"
             : activeTab === "proposed"
               ? "Proposed"
               : "Ongoing"}
@@ -173,7 +173,7 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
               <circle cx="11" cy="11" r="8" />
               <path d="M21 21l-4.35-4.35" />
             </svg>
-            <h2 className="panel-title">Available Jobs</h2>
+            <h2 className="panel-title">Available Contracts</h2>
           </div>
           <div className="panel-content">
             {renderJobCards(availableJobs, "find")}
@@ -207,8 +207,10 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
           job={selectedJob}
           mode={modalMode}
           onSubmit={handleSubmitProposal}
+          onSubmitMilestone={handleSubmitMilestone}
           onClose={handleCloseModal}
           loading={submitting}
+          userRole={user?.role?.[0]}
         />
       )}
     </div>

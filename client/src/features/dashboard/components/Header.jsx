@@ -160,7 +160,7 @@ export const MobileMenu = ({ activeTab, onTabChange }) => {
             className={`mobile-menu-item ${activeTab === "available" ? "active" : ""}`}
             onClick={() => handleTabClick("available")}
           >
-            <AvailableIcon /> Available Jobs
+            <AvailableIcon /> Available Contracts
           </button>
           <button
             type="button"

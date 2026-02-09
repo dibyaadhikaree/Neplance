@@ -7,6 +7,8 @@ const {
   findJobs,
   markCompleted,
   approveCompletion,
+  submitMilestone,
+  approveMilestone,
   findMyJobs,
 } = require("../controllers/jobController");
 const { protect, restrictTo } = require("../middlewares/authMiddleware");
@@ -26,5 +28,13 @@ router
 router
   .route("/:id/approveCompletion")
   .patch(restrictTo("client"), approveCompletion);
+
+router
+  .route("/:id/milestones/:index/submit")
+  .patch(restrictTo("freelancer"), submitMilestone);
+
+router
+  .route("/:id/milestones/:index/approve")
+  .patch(restrictTo("client"), approveMilestone);
 
 module.exports = router;

@@ -590,6 +590,11 @@
   color: #4a9eff;
 }
 
+.status-active {
+  background: rgba(5, 70, 168, 0.2);
+  color: #4a9eff;
+}
+
 .status-completed-request {
   background: rgba(123, 44, 191, 0.2);
   color: #b366e0;
@@ -600,7 +605,17 @@
   color: #2dd881;
 }
 
+.status-draft {
+  background: rgba(5, 122, 64, 0.2);
+  color: #2dd881;
+}
+
 .status-pending {
+  background: rgba(184, 134, 11, 0.2);
+  color: #e6b422;
+}
+
+.status-submitted {
   background: rgba(184, 134, 11, 0.2);
   color: #e6b422;
 }
@@ -618,6 +633,11 @@
 .status-completed {
   background: rgba(112, 141, 129, 0.2);
   color: var(--color-accent);
+}
+
+.status-cancelled {
+  background: rgba(191, 6, 3, 0.2);
+  color: #ff4a47;
 }
 
 .status-closed {

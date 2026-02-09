@@ -6,7 +6,7 @@ const catchAsync = require("../utils/catchAsync");
 const getMyProposals = catchAsync(async (req, res) => {
   const data = await Proposal.find({ freelancer: req.user.id }).populate({
     path: "job",
-    populate: { path: "client", select: "name email" },
+    populate: { path: "creatorAddress", select: "name email" },
   });
 
   if (!data) throw new AppError(400, "No Proposals found ");
@@ -41,7 +41,8 @@ const getProposalForJob = catchAsync(async (req, res) => {
   const job = await Job.findById(jobId);
   if (!job) throw new AppError("Job not found", 404);
 
-  if (job.client.toString() !== req.user.id.toString())
+  const creatorId = job.creatorAddress?._id || job.creatorAddress;
+  if (creatorId.toString() !== req.user.id.toString())
     throw new AppError(
       "You are not authorized to do this. Only creator of Job can get a proposal "
     );
@@ -69,13 +70,14 @@ const acceptProposal = catchAsync(async (req, res, next) => {
 
   const jobId = job._id;
 
-  // Only allow job owner (client) to accept proposals
-  if (job.client.toString() !== req.user.id.toString()) {
+  // Only allow job owner (creator) to accept proposals
+  const creatorId = job.creatorAddress?._id || job.creatorAddress;
+  if (creatorId.toString() !== req.user.id.toString()) {
     throw new AppError("You can't accept proposals for this job", 403);
   }
 
-  if (job.status !== "open") {
-    throw new AppError("Job is not open for hiring", 400);
+  if (job.status !== "DRAFT") {
+    throw new AppError("Contract is not open for hiring", 400);
   }
 
   // 2) Accept this proposal
@@ -88,12 +90,19 @@ const acceptProposal = catchAsync(async (req, res, next) => {
     { $set: { status: "rejected" } }
   );
 
-  // 4) Update job status + hired freelancer
+  // 4) Update job status + add contractor party
+  const contractorAddress = proposal.freelancer.toString();
   const updatedJob = await Job.findByIdAndUpdate(
     jobId,
     {
-      status: "in-progress",
-      hiredFreelancer: proposal.freelancer,
+      status: "ACTIVE",
+      updatedAt: Date.now(),
+      $addToSet: {
+        parties: {
+          address: contractorAddress,
+          role: "CONTRACTOR",
+        },
+      },
     },
     { new: true }
   );
@@ -101,7 +110,7 @@ const acceptProposal = catchAsync(async (req, res, next) => {
   // 5) Response
   res.status(200).json({
     status: "success",
-    message: "Proposal accepted and job moved to in-progress",
+    message: "Proposal accepted and contract activated",
     acceptedProposal: proposal,
     job: updatedJob,
   });
