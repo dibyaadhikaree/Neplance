@@ -3,13 +3,13 @@ import { useId } from "react";
 export const Input = ({ label, className = "", ...props }) => {
   const id = useId();
   return (
-    <div>
+    <div className="form-group">
       {label && (
-        <label htmlFor={id} className="input-label">
+        <label htmlFor={id} className="form-label">
           {label}
         </label>
       )}
-      <input id={id} className={`input ${className}`} {...props} />
+      <input id={id} className={`form-input ${className}`} {...props} />
     </div>
   );
 };
@@ -27,7 +27,7 @@ export const Button = ({
   };
 
   return (
-    <button className={`${variantClass[variant]} ${className}`} {...props}>
+    <button className={`${variantClass[variant] || "btn btn-primary"} ${className}`} {...props}>
       {children}
     </button>
   );

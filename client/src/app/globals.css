@@ -1,28 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap");
-@import "tailwindcss";
+/* ===================================
+   NEPLANCE DESIGN SYSTEM
+   Modular CSS - import order matters
+   =================================== */
 
-/* Import modular styles */
 @import "../styles/variables.css";
 @import "../styles/base.css";
-@import "../styles/typography.css";
 @import "../styles/components.css";
-@import "../styles/layout.css";
-@import "../styles/utilities.css";
+@import "../styles/navigation.css";
 @import "../styles/dashboard.css";
-@import "../styles/profile.css";
-
-/* Brand Title - unique to this file */
-.brand-title {
-  font-family: "Playfair Display", serif;
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: -0.02em;
-  line-height: 1;
-}
-
-@media (min-width: 1024px) {
-  .brand-title {
-    font-size: 3.5rem;
-  }
-}
+@import "../styles/layout.css";

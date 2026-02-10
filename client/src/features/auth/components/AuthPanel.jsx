@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { APIError, apiAuthCall } from "@/services/api";
-import { EverestLogo } from "@/shared/brand/EverestLogo";
 import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
@@ -49,30 +48,37 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
   const isLogin = activeTab === "login";
 
   return (
-    <div className="card w-full lg:w-[400px]">
-      {/* Mobile Logo */}
-      <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-        <EverestLogo className="h-10 w-10" />
-        <span className="heading-2">Neplance</span>
-      </div>
-
+    <div className="card" style={{ maxWidth: "480px", width: "100%" }}>
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="heading-2">
-          {isLogin ? "Welcome back" : "Create account"}
+      <div className="mb-6">
+        <h2 style={{ fontSize: "var(--text-3xl)", fontWeight: "var(--font-weight-semibold)", marginBottom: "var(--space-2)" }}>
+          {isLogin ? "Log in to Neplance" : "Sign up for Neplance"}
         </h2>
-        <p className="text-muted mt-4">
+        <p className="text-light">
           {isLogin
-            ? "Enter your credentials to continue"
-            : "Start your freelancing journey"}
+            ? "Welcome back! Please enter your details."
+            : "Join the world's work marketplace"}
         </p>
       </div>
 
-      {error && <div className="card-error mb-6 text-sm">{error}</div>}
+      {error && (
+        <div 
+          className="mb-6" 
+          style={{ 
+            padding: "var(--space-3) var(--space-4)", 
+            backgroundColor: "#ffebee", 
+            color: "var(--color-error)", 
+            borderRadius: "var(--radius-md)",
+            fontSize: "var(--text-sm)"
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       <AuthTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="mb-8">
+      <div className="mt-6">
         {isLogin ? (
           <LoginForm onSubmit={handleLogin} loading={loading} />
         ) : (
@@ -80,17 +86,23 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
         )}
       </div>
 
-      <p className="text-center text-muted text-sm">
+      <div className="text-center text-light" style={{ marginTop: "var(--space-6)", paddingTop: "var(--space-6)", borderTop: "1px solid var(--color-border-light)" }}>
         {isLogin ? "Don't have an account? " : "Already have an account? "}
         <button
           type="button"
           onClick={() => setActiveTab(isLogin ? "signup" : "login")}
-          className="text-primary font-medium hover:underline"
+          className="text-primary font-medium"
+          style={{
+            textDecoration: "underline",
+            backgroundColor: "transparent",
+            border: "none",
+            padding: 0,
+          }}
           disabled={loading}
         >
-          {isLogin ? "Sign up" : "Sign in"}
+          {isLogin ? "Sign up" : "Log in"}
         </button>
-      </p>
+      </div>
     </div>
   );
 };

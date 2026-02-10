@@ -1,19 +1,9 @@
-const formatStatus = (status) => {
-  if (!status) return "Unknown";
-  return status
-    .toLowerCase()
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
-
-const getTotalValue = (milestones) => {
-  if (!Array.isArray(milestones) || milestones.length === 0) return null;
-  return milestones.reduce((total, milestone) => {
-    const value = Number(milestone?.value ?? 0);
-    return total + (Number.isNaN(value) ? 0 : value);
-  }, 0);
-};
+import {
+  formatStatus,
+  getCreatorLabel,
+  getMilestoneTotal,
+  hasMilestones,
+} from "@/shared/utils/job";
 
 export const JobCard = ({
   job,
@@ -23,50 +13,78 @@ export const JobCard = ({
   onViewDetails,
 }) => {
   const { title, description, milestones, status, creatorAddress } = job;
-  const totalValue = getTotalValue(milestones);
-  const creatorLabel =
-    creatorAddress?.name ||
-    creatorAddress?.email ||
-    creatorAddress ||
-    "Unknown Creator";
+  const totalValue = hasMilestones(milestones)
+    ? getMilestoneTotal(milestones)
+    : null;
+  const creatorLabel = getCreatorLabel(creatorAddress);
+
+  const getStatusBadgeClass = (status) => {
+    const statusLower = status?.toLowerCase();
+    if (statusLower === 'draft' || statusLower === 'open') return 'badge-success';
+    if (statusLower === 'active') return 'badge-primary';
+    if (statusLower === 'completed') return 'badge-info';
+    if (statusLower === 'cancelled') return 'badge-error';
+    return '';
+  };
 
   return (
-    <article className="job-card">
-      <div className="job-card-header">
-        <div className="job-card-avatar">
-          {creatorLabel.charAt(0).toUpperCase()}
+    <article className="card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "var(--space-4)" }}>
+        <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
+          <div 
+            style={{ 
+              width: "40px", 
+              height: "40px", 
+              borderRadius: "50%", 
+              backgroundColor: "var(--color-primary-lightest)", 
+              color: "var(--color-primary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "var(--font-weight-semibold)",
+              fontSize: "var(--text-lg)"
+            }}
+          >
+            {creatorLabel.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style={{ fontWeight: "var(--font-weight-medium)", color: "var(--color-text)" }}>
+              {creatorLabel}
+            </div>
+          </div>
         </div>
-        <div className="job-card-meta">
-          <span className="job-card-client">{creatorLabel}</span>
-        </div>
-        <span className={`status-badge status-${status?.toLowerCase()}`}>
+        <span className={`badge ${getStatusBadgeClass(status)}`}>
           {formatStatus(status)}
         </span>
       </div>
 
-      <div className="job-card-content">
-        <h3 className="job-card-title">{title}</h3>
+      <div style={{ marginBottom: "var(--space-4)" }}>
+        <h3 style={{ fontSize: "var(--text-xl)", fontWeight: "var(--font-weight-semibold)", marginBottom: "var(--space-2)" }}>
+          {title}
+        </h3>
         {description && (
-          <p className="job-card-description">
-            {description.length > 120
-              ? `${description.slice(0, 120)}...`
+          <p className="text-light">
+            {description.length > 150
+              ? `${description.slice(0, 150)}...`
               : description}
           </p>
         )}
       </div>
 
-      <div className="job-card-footer">
-        <div className="job-card-budget-wrapper">
-          <span className="job-card-budget-label">Total Value</span>
-          <span className="job-card-budget">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "var(--space-4)", borderTop: "1px solid var(--color-border-light)" }}>
+        <div>
+          <div style={{ fontSize: "var(--text-sm)", color: "var(--color-text-light)", marginBottom: "var(--space-1)" }}>
+            Budget
+          </div>
+          <div style={{ fontSize: "var(--text-lg)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-text)" }}>
             {totalValue !== null ? `NPR ${totalValue.toLocaleString()}` : "N/A"}
-          </span>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "var(--space-2)" }}>
           <button
             type="button"
-            className="job-card-btn job-card-btn-secondary"
+            className="btn btn-ghost btn-sm"
             onClick={() => onViewDetails?.(job)}
           >
             View Details
@@ -75,20 +93,20 @@ export const JobCard = ({
           {variant === "find" && (
             <button
               type="button"
-              className="job-card-btn job-card-btn-primary"
+              className="btn btn-primary btn-sm"
               onClick={() => onSubmitProposal?.(job)}
             >
-              Submit Proposal
+              Apply Now
             </button>
           )}
 
           {variant === "current" && status === "ACTIVE" && onMarkComplete && (
             <button
               type="button"
-              className="job-card-btn job-card-btn-secondary"
+              className="btn btn-secondary btn-sm"
               onClick={() => onMarkComplete?.(job)}
             >
-              Mark Milestone Complete
+              Complete
             </button>
           )}
         </div>
@@ -100,64 +118,87 @@ export const JobCard = ({
 export const ProposalCard = ({ proposal, onViewDetails }) => {
   const { job, amount, status } = proposal;
   const jobTitle = job?.title || "Unknown Contract";
-  const creatorLabel =
-    job?.creatorAddress?.name ||
-    job?.creatorAddress?.email ||
-    job?.creatorAddress ||
-    "Unknown Creator";
-  const totalValue = getTotalValue(job?.milestones);
+  const creatorLabel = getCreatorLabel(job?.creatorAddress);
+  const totalValue = hasMilestones(job?.milestones)
+    ? getMilestoneTotal(job?.milestones)
+    : null;
+
+  const getProposalStatusBadgeClass = (status) => {
+    const statusLower = status?.toLowerCase();
+    if (statusLower === 'accepted') return 'badge-success';
+    if (statusLower === 'pending') return 'badge-warning';
+    if (statusLower === 'rejected') return 'badge-error';
+    return '';
+  };
 
   return (
-    <article className="job-card">
-      <div className="job-card-header">
-        <div className="job-card-avatar">
-          {creatorLabel.charAt(0).toUpperCase()}
+    <article className="card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "var(--space-4)" }}>
+        <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
+          <div 
+            style={{ 
+              width: "40px", 
+              height: "40px", 
+              borderRadius: "50%", 
+              backgroundColor: "var(--color-primary-lightest)", 
+              color: "var(--color-primary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "var(--font-weight-semibold)",
+              fontSize: "var(--text-lg)"
+            }}
+          >
+            {creatorLabel.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style={{ fontWeight: "var(--font-weight-medium)", color: "var(--color-text)" }}>
+              {creatorLabel}
+            </div>
+          </div>
         </div>
-        <div className="job-card-meta">
-          <span className="job-card-client">{creatorLabel}</span>
-        </div>
-        <span className={`status-badge status-${status?.toLowerCase()}`}>
+        <span className={`badge ${getProposalStatusBadgeClass(status)}`}>
           {formatStatus(status)}
         </span>
       </div>
 
-      <div className="job-card-content">
-        <h3 className="job-card-title">{jobTitle}</h3>
-        <div className="job-card-proposal-info">
-          <span className="job-card-proposal-label">Your Proposal</span>
-          <span className="job-card-proposal-amount">
-            NPR {amount?.toLocaleString() || "N/A"}
-          </span>
+      <div style={{ marginBottom: "var(--space-4)" }}>
+        <h3 style={{ fontSize: "var(--text-xl)", fontWeight: "var(--font-weight-semibold)", marginBottom: "var(--space-2)" }}>
+          {jobTitle}
+        </h3>
+        <div style={{ display: "flex", gap: "var(--space-4)", marginBottom: "var(--space-3)" }}>
+          <div>
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-light)" }}>Your Proposal: </span>
+            <span style={{ fontSize: "var(--text-base)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-primary)" }}>
+              NPR {amount?.toLocaleString() || "N/A"}
+            </span>
+          </div>
         </div>
         {job?.description && (
-          <p className="job-card-description">
-            {job.description.length > 100
-              ? `${job.description.slice(0, 100)}...`
+          <p className="text-light">
+            {job.description.length > 120
+              ? `${job.description.slice(0, 120)}...`
               : job.description}
           </p>
         )}
       </div>
 
-      <div className="job-card-footer">
-        <div className="job-card-budget-wrapper">
-          <span className="job-card-budget-label">Contract Value</span>
-          <span className="job-card-budget">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "var(--space-4)", borderTop: "1px solid var(--color-border-light)" }}>
+        <div>
+          <div style={{ fontSize: "var(--text-sm)", color: "var(--color-text-light)", marginBottom: "var(--space-1)" }}>
+            Contract Value
+          </div>
+          <div style={{ fontSize: "var(--text-lg)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-text)" }}>
             {totalValue !== null ? `NPR ${totalValue.toLocaleString()}` : "N/A"}
-          </span>
+          </div>
         </div>
-        {/* Always show View Details for consistency, or keep logic */}
         <button
           type="button"
-          className="job-card-btn job-card-btn-secondary"
+          className="btn btn-ghost btn-sm"
           onClick={() => onViewDetails?.(job)}
         >
           View Details
         </button>
-        {status === "accepted" && (
-          <span className="job-card-status-label status-accepted-label">
-            Accepted
-          </span>
-        )}
       </div>
     </article>
   );

@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { Button, Input } from "@/shared/ui/UI";
+import {
+  formatStatus,
+  getCreatorLabel,
+  getMilestoneTotal,
+  hasMilestones,
+} from "@/shared/utils/job";
 
 export const JobModal = ({
   job,
@@ -38,29 +44,14 @@ export const JobModal = ({
 
   const isProposalMode = mode === "proposal";
   const milestones = Array.isArray(job.milestones) ? job.milestones : [];
-  const totalValue = milestones.reduce((total, milestone) => {
-    const value = Number(milestone?.value ?? 0);
-    return total + (Number.isNaN(value) ? 0 : value);
-  }, 0);
+  const totalValue = getMilestoneTotal(milestones);
   const completedCount = milestones.filter(
     (milestone) => milestone?.status === "COMPLETED"
   ).length;
-    const canSubmitMilestone =
-      userRole === "freelancer" && job.status === "ACTIVE";
-    const canApproveMilestone = userRole === "client";
-  const formatStatus = (status) => {
-    if (!status) return "Unknown";
-    return status
-      .toLowerCase()
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-  const creatorLabel =
-    job.creatorAddress?.name ||
-    job.creatorAddress?.email ||
-    job.creatorAddress ||
-    "Unknown Creator";
+  const canSubmitMilestone =
+    userRole === "freelancer" && job.status === "ACTIVE";
+  const canApproveMilestone = userRole === "client";
+  const creatorLabel = getCreatorLabel(job.creatorAddress);
 
   const handleEvidenceChange = (index, value) => {
     setEvidenceInputs((prev) => ({
@@ -112,7 +103,7 @@ export const JobModal = ({
               className="job-card-budget"
               style={{ fontSize: "1.1rem", whiteSpace: "nowrap" }}
             >
-              {milestones.length > 0
+              {hasMilestones(milestones)
                 ? `NPR ${totalValue.toLocaleString()}`
                 : "N/A"}
             </span>
@@ -144,7 +135,7 @@ export const JobModal = ({
                 </span>
               </span>
             )}
-            {milestones.length > 0 && (
+            {hasMilestones(milestones) && (
               <span
                 className="profile-role-badge"
                 style={{ background: "transparent", padding: 0 }}
@@ -182,10 +173,22 @@ export const JobModal = ({
                         Evidence: {milestone.evidence}
                       </span>
                     )}
-                    {canSubmitMilestone &&
-                      milestone?.status === "ACTIVE" &&
-                      onSubmitMilestone && (
-                        <span style={{ display: "inline-flex", gap: "0.5rem" }}>
+                    {(() => {
+                      const previousCompleted =
+                        index === 0 ||
+                        milestones[index - 1]?.status === "COMPLETED";
+                      const canSubmitThis =
+                        canSubmitMilestone &&
+                        milestone?.status === "ACTIVE" &&
+                        onSubmitMilestone &&
+                        previousCompleted;
+
+                      if (!canSubmitMilestone || milestone?.status !== "ACTIVE") {
+                        return null;
+                      }
+
+                      return (
+                        <span className="milestone-action-row">
                           <Input
                             type="text"
                             label="Evidence"
@@ -194,7 +197,7 @@ export const JobModal = ({
                             onChange={(e) =>
                               handleEvidenceChange(index, e.target.value)
                             }
-                            disabled={loading}
+                            disabled={loading || !previousCompleted}
                           />
                           <Button
                             type="button"
@@ -202,12 +205,14 @@ export const JobModal = ({
                             onClick={() =>
                               handleSubmitMilestoneClick(job._id, index)
                             }
-                            className="modal-close-btn"
+                            className="milestone-action"
+                            disabled={loading || !previousCompleted}
                           >
                             Submit
                           </Button>
                         </span>
-                      )}
+                      );
+                    })()}
                     {canApproveMilestone &&
                       milestone?.status === "SUBMITTED" &&
                       onApproveMilestone && (
@@ -215,7 +220,7 @@ export const JobModal = ({
                           type="button"
                           variant="secondary"
                           onClick={() => onApproveMilestone(job._id, index)}
-                          className="modal-close-btn"
+                          className="milestone-action"
                           style={{ marginLeft: "0.5rem" }}
                         >
                           Approve

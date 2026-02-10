@@ -1,25 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Navbar } from "@/shared/navigation/Navbar";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
-import { Header, MobileMenu } from "@/features/dashboard/components/Header";
 import { JobCard, ProposalCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
-import {
-  AvailableIcon,
-  OngoingIcon,
-  ProposedIcon,
-  TabNav,
-} from "@/features/dashboard/components/TabNav";
 import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancerDashboard";
 import { apiCall } from "@/services/api";
 
-export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
+export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
   const [activeTab, setActiveTab] = useState("available");
-
-  // selectedJob is now used for both "proposal" and "view" modes
   const [selectedJob, setSelectedJob] = useState(null);
-  const [modalMode, setModalMode] = useState("view"); // 'view' | 'proposal'
+  const [modalMode, setModalMode] = useState("view");
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -34,23 +26,29 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
   if (loading) {
     return (
-      <div className="dashboard">
-        <Header user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
-        <div className="flex items-center justify-center h-[calc(100vh-65px)]">
-          <div className="text-xl font-bold text-primary">Loading...</div>
+      <>
+        <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+        <div className="dashboard">
+          <div className="dashboard-content" style={{ textAlign: "center", padding: "var(--space-16)" }}>
+            <div style={{ fontSize: "var(--text-xl)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-primary)" }}>
+              Loading...
+            </div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="dashboard">
-        <Header user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
-        <div className="flex items-center justify-center h-[calc(100vh-65px)]">
-          <div className="text-red-500 font-bold">{error}</div>
+      <>
+        <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+        <div className="dashboard">
+          <div className="dashboard-content" style={{ textAlign: "center", padding: "var(--space-16)" }}>
+            <div style={{ color: "var(--color-error)", fontWeight: "var(--font-weight-semibold)" }}>{error}</div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -64,9 +62,7 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
     setSelectedJob(job);
   };
 
-  const handleCloseModal = () => {
-    setSelectedJob(null);
-  };
+  const handleCloseModal = () => setSelectedJob(null);
 
   const handleSubmitProposal = async (proposalData) => {
     setSubmitting(true);
@@ -91,6 +87,15 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
       refetch?.();
     } catch (err) {
       console.error("Failed to submit milestone:", err);
+    }
+  };
+
+  const getEmptyState = () => {
+    switch (activeTab) {
+      case "available": return EMPTY_STATES.available;
+      case "proposed": return EMPTY_STATES.proposed;
+      case "ongoing": return EMPTY_STATES.ongoing;
+      default: return {};
     }
   };
 
@@ -122,86 +127,44 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
       <EmptyState {...getEmptyState()} />
     );
 
-  const getEmptyState = () => {
-    switch (activeTab) {
-      case "available":
-        return EMPTY_STATES.available;
-      case "proposed":
-        return EMPTY_STATES.proposed;
-      case "ongoing":
-        return EMPTY_STATES.ongoing;
-      default:
-        return {};
-    }
-  };
+  const tabs = [
+    { key: "available", label: "Find Work" },
+    { key: "proposed", label: "My Proposals" },
+    { key: "ongoing", label: "Active Contracts" },
+  ];
 
   return (
-    <div className="dashboard">
-      <Header user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+    <>
+      <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
 
-      {/* Mobile Menu - Only visible on mobile */}
-      <div className="mobile-menu-container">
-        <MobileMenu activeTab={activeTab} onTabChange={setActiveTab} />
-        <span className="mobile-menu-label">
-          {activeTab === "available" ? (
-            <AvailableIcon />
-          ) : activeTab === "proposed" ? (
-            <ProposedIcon />
-          ) : (
-            <OngoingIcon />
-          )}
-          {activeTab === "available"
-            ? "Available Contracts"
-            : activeTab === "proposed"
-              ? "Proposed"
-              : "Ongoing"}
-        </span>
-      </div>
-
-      <main className="dashboard-split">
-        {/* Left Panel - Available Jobs */}
-        <section className="panel panel-left">
-          <div className="panel-header">
-            <svg
-              className="panel-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-            <h2 className="panel-title">Available Contracts</h2>
+      <div className="dashboard">
+        <div className="dashboard-content">
+          <div className="dashboard-header">
+            <h2 className="dashboard-title">My Jobs</h2>
+            <p className="dashboard-subtitle">Find work and manage your proposals</p>
           </div>
-          <div className="panel-content">
-            {renderJobCards(availableJobs, "find")}
-          </div>
-        </section>
 
-        {/* Right Panel - Proposed & Ongoing (hidden on mobile) */}
-        <section className="panel panel-right">
-          <TabNav
-            activeTab={activeTab === "available" ? "proposed" : activeTab}
-            onTabChange={setActiveTab}
-          />
-          <div className="panel-content">
-            {(activeTab === "proposed" || activeTab === "available") &&
-              renderProposalCards(proposedJobs)}
+          <nav className="tab-nav">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`tab-btn ${activeTab === tab.key ? "active" : ""}`}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="cards-list">
+            {activeTab === "available" && renderJobCards(availableJobs, "find")}
+            {activeTab === "proposed" && renderProposalCards(proposedJobs)}
             {activeTab === "ongoing" && renderJobCards(ongoingJobs, "current")}
           </div>
-        </section>
-      </main>
-
-      {/* Mobile Content - Only visible on mobile */}
-      <div className="mobile-content">
-        {activeTab === "available" && renderJobCards(availableJobs, "find")}
-        {activeTab === "proposed" && renderProposalCards(proposedJobs)}
-        {activeTab === "ongoing" && renderJobCards(ongoingJobs, "current")}
+        </div>
       </div>
 
-      {/* Replaced ProposalModal with JobModal */}
       {selectedJob && (
         <JobModal
           job={selectedJob}
@@ -213,6 +176,8 @@ export const FreelancerDashboard = ({ user, onLogout, onRoleSwitch }) => {
           userRole={user?.role?.[0]}
         />
       )}
-    </div>
+    </>
   );
 };
+
+

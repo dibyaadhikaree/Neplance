@@ -1,71 +1,34 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ClientDashboard } from "@/features/dashboard/screens/ClientDashboard";
 import { FreelancerDashboard } from "@/features/dashboard/screens/FreelancerDashboard";
+import { useAuth } from "@/shared/context/AuthContext";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const { user, activeRole, isHydrated, logout, switchRole } = useAuth();
   const router = useRouter();
 
-  // Load session from server on mount
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { apiCall } = await import("@/services/api");
-        const data = await apiCall("/auth/me");
-        if (data.data?.user) {
-          setUser(data.data.user);
-          setIsHydrated(true);
-        } else {
-          router.push("/");
-        }
-      } catch (_error) {
-        router.push("/");
-      }
-    };
-    fetchUser();
-  }, [router]);
-
-  if (!isHydrated || !user) {
-    return null; // Prevent hydration mismatch and show nothing while redirecting
-  }
-
-  const handleLogout = async () => {
-    try {
-      const { apiCall } = await import("@/services/api");
-      await apiCall("/auth/logout");
-      setUser(null);
-      router.push("/");
-    } catch (error) {
-      console.error("Logout failed", error);
-      // Force redirect anyway
+    if (isHydrated && !user) {
       router.push("/");
     }
-  };
+  }, [isHydrated, user, router]);
 
-  const handleRoleSwitch = (updatedUser) => {
-    // Update the user state with the new role
-    setUser(updatedUser);
-  };
+  if (!isHydrated || !user) return null;
 
-  // Check user role and render appropriate dashboard
-  // Use the first role in the array as the current role
-  const isFreelancer = user.role?.[0] === "freelancer";
+  const isFreelancer = (activeRole || user?.role?.[0] || "freelancer") === "freelancer";
+
+  const sharedProps = {
+    user,
+    onLogout: logout,
+    onRoleSwitch: switchRole,
+  };
 
   return isFreelancer ? (
-    <FreelancerDashboard
-      user={user}
-      onLogout={handleLogout}
-      onRoleSwitch={handleRoleSwitch}
-    />
+    <FreelancerDashboard {...sharedProps} />
   ) : (
-    <ClientDashboard
-      user={user}
-      onLogout={handleLogout}
-      onRoleSwitch={handleRoleSwitch}
-    />
+    <ClientDashboard {...sharedProps} />
   );
 }

@@ -2,7 +2,7 @@
  * Custom hook for freelancer dashboard data fetching
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
 
 const EMPTY_STATES = {
@@ -26,7 +26,6 @@ export function useFreelancerDashboard() {
   const [ongoingJobs, setOngoingJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const fetchFunctionRef = useRef(null);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -70,19 +69,10 @@ export function useFreelancerDashboard() {
     }
   }, []);
 
-  // Store the fetch function in a ref so refetch can call it
-  useEffect(() => {
-    fetchFunctionRef.current = fetchDashboardData;
-  }, [fetchDashboardData]);
-
   // Initial fetch
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
-
-  const refetch = useCallback(() => {
-    fetchFunctionRef.current?.();
-  }, []);
 
   return {
     availableJobs,
@@ -91,6 +81,6 @@ export function useFreelancerDashboard() {
     loading,
     error,
     EMPTY_STATES,
-    refetch,
+    refetch: fetchDashboardData,
   };
 }

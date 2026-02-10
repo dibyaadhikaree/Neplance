@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Header } from "@/features/dashboard/components/Header";
+import { Navbar } from "@/shared/navigation/Navbar";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
 import { apiCall } from "@/services/api";
-import { Button, Input } from "@/shared/ui/UI";
+import { Input } from "@/shared/ui/UI";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const [activeTab, setActiveTab] = useState("create");
   const [contracts, setContracts] = useState([]);
-  const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProposals, setLoadingProposals] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [selectedContractId, setSelectedContractId] = useState(null);
+  const [proposalsByContract, setProposalsByContract] = useState({});
   const [formErrors, setFormErrors] = useState([]);
   const [milestoneErrors, setMilestoneErrors] = useState({});
   const [formState, setFormState] = useState({
@@ -44,15 +44,36 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     }
   };
 
-  const fetchProposals = async (jobId) => {
+  const fetchProposalsForContracts = async (contractList) => {
+    if (!contractList.length) {
+      setProposalsByContract({});
+      return;
+    }
+
+    setLoadingProposals(true);
     try {
-      const proposalsData = await apiCall(`/proposals/job/${jobId}`);
-      if (proposalsData.status === "success") {
-        setProposals(proposalsData.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch proposals:", err);
-      setProposals([]);
+      const results = await Promise.all(
+        contractList.map(async (contract) => {
+          try {
+            const proposalsData = await apiCall(
+              `/proposals/job/${contract._id}`,
+            );
+            if (proposalsData.status === "success") {
+              const pendingOnly = (proposalsData.data || []).filter(
+                (proposal) => proposal.status === "pending",
+              );
+              return [contract._id, pendingOnly];
+            }
+          } catch (err) {
+            console.error("Failed to fetch proposals:", err);
+          }
+          return [contract._id, []];
+        }),
+      );
+
+      setProposalsByContract(Object.fromEntries(results));
+    } finally {
+      setLoadingProposals(false);
     }
   };
 
@@ -60,29 +81,25 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     fetchContracts();
   }, []);
 
-  const handleViewDetails = (job) => {
-    setSelectedJob(job);
-  };
+  useEffect(() => {
+    if (activeTab !== "proposals") return;
+    if (contracts.length === 0) {
+      setProposalsByContract({});
+      return;
+    }
+    fetchProposalsForContracts(contracts);
+  }, [activeTab, contracts]);
 
-  const handleCloseModal = () => {
-    setSelectedJob(null);
-  };
-
-  const handleSelectContract = async (jobId) => {
-    setSelectedContractId(jobId);
-    await fetchProposals(jobId);
-    setActiveTab("proposals");
-  };
+  const handleViewDetails = (job) => setSelectedJob(job);
+  const handleCloseModal = () => setSelectedJob(null);
 
   const handleAcceptProposal = async (proposalId) => {
     try {
-      await apiCall(`/proposals/${proposalId}/accept`, {
-        method: "PATCH",
-      });
-      if (selectedContractId) {
-        await fetchProposals(selectedContractId);
-      }
+      await apiCall(`/proposals/${proposalId}/accept`, { method: "PATCH" });
       await fetchContracts();
+      if (activeTab === "proposals") {
+        await fetchProposalsForContracts(contracts);
+      }
     } catch (err) {
       console.error("Failed to accept proposal:", err);
     }
@@ -138,41 +155,29 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       errors.push("Contract title is required.");
     }
 
-    const validMilestones = formState.milestones
-      .map((milestone, index) => {
-        const entryErrors = [];
-        if (!milestone.title.trim()) {
-          entryErrors.push("Title is required.");
-        }
-        if (!milestone.value || Number(milestone.value) <= 0) {
-          entryErrors.push("Value must be greater than 0.");
-        }
-        if (entryErrors.length > 0) {
-          validationErrors[index] = entryErrors;
-        }
-        return milestone.title.trim();
-      })
-      .filter(Boolean);
+    formState.milestones.forEach((milestone, index) => {
+      const entryErrors = [];
+      if (!milestone.title.trim()) entryErrors.push("Title is required.");
+      if (!milestone.value || Number(milestone.value) <= 0)
+        entryErrors.push("Value must be greater than 0.");
+      if (entryErrors.length > 0) validationErrors[index] = entryErrors;
+    });
 
+    const validMilestones = formState.milestones.filter((m) => m.title.trim());
     if (validMilestones.length === 0) {
       errors.push("Add at least one milestone with a title and value.");
     }
 
     setFormErrors(errors);
     setMilestoneErrors(validationErrors);
+    if (errors.length > 0 || Object.keys(validationErrors).length > 0) return;
 
-    if (errors.length > 0 || Object.keys(validationErrors).length > 0) {
-      return;
-    }
-
-    const milestones = formState.milestones
-      .filter((milestone) => milestone.title.trim())
-      .map((milestone) => ({
-        title: milestone.title.trim(),
-        description: milestone.description.trim(),
-        value: Number(milestone.value) || 0,
-        dueDate: formatDateValue(milestone.dueDate),
-      }));
+    const milestones = validMilestones.map((m) => ({
+      title: m.title.trim(),
+      description: m.description.trim(),
+      value: Number(m.value) || 0,
+      dueDate: formatDateValue(m.dueDate),
+    }));
 
     setSubmitting(true);
     try {
@@ -208,9 +213,10 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       proposal.freelancer?.email ||
       "Unknown Freelancer";
     const freelancerEmail = proposal.freelancer?.email;
-    const freelancerRole = Array.isArray(proposal.freelancer?.role)
-      ? proposal.freelancer.role.join(", ")
-      : proposal.freelancer?.role;
+    const contractTitle =
+      proposal.job?.title || proposal._contract?.title || "Untitled Contract";
+    const contractDescription =
+      proposal.job?.description || proposal._contract?.description || "";
 
     return (
       <article className="job-card">
@@ -221,18 +227,26 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
           <div className="job-card-meta">
             <span className="job-card-client">{freelancerLabel}</span>
           </div>
-          <span className={`status-badge status-${proposal.status?.toLowerCase()}`}>
+          <span
+            className={`status-badge status-${proposal.status?.toLowerCase()}`}
+          >
             {proposal.status || "Unknown"}
           </span>
         </div>
         <div className="job-card-content">
-          <h3 className="job-card-title">Proposal</h3>
-          <p className="job-card-description">
-            {freelancerEmail ? `Email: ${freelancerEmail}` : "Email not shared"}
-          </p>
-          {freelancerRole && (
-            <p className="job-card-description">Role: {freelancerRole}</p>
+          <h3 className="job-card-title">{contractTitle}</h3>
+          {contractDescription && (
+            <p className="job-card-description">
+              {contractDescription.length > 160
+                ? `${contractDescription.slice(0, 160)}...`
+                : contractDescription}
+            </p>
           )}
+          <p className="job-card-description">
+            {freelancerEmail
+              ? `Email: ${freelancerEmail}`
+              : "Email not shared"}
+          </p>
           <p className="job-card-description">
             Amount: NPR {proposal.amount?.toLocaleString() || "N/A"}
           </p>
@@ -247,7 +261,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
           {proposal.status === "pending" && (
             <button
               type="button"
-              className="job-card-btn job-card-btn-primary"
+              className="btn btn-primary btn-sm"
               onClick={() => handleAcceptProposal(proposal._id)}
             >
               Accept Proposal
@@ -258,233 +272,243 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     );
   };
 
+  const contractsWithProposals = contracts.filter(
+    (contract) => (proposalsByContract[contract._id] || []).length > 0,
+  );
+  const pendingProposals = contracts.flatMap((contract) =>
+    (proposalsByContract[contract._id] || []).map((proposal) => ({
+      ...proposal,
+      _contract: contract,
+    })),
+  );
+
   return (
-    <div className="dashboard">
-      <Header user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
-      <main className="dashboard-split">
-        <section className="panel panel-left">
-          <div className="panel-header">
-            <svg
-              className="panel-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-            <h2 className="panel-title">Client Dashboard</h2>
+    <>
+      <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+
+      <div className="dashboard">
+        <div className="dashboard-content">
+          {/* Header row */}
+          <div className="dashboard-header">
+            <div className="dashboard-header-row">
+              <div>
+                <h2 className="dashboard-title">Client Dashboard</h2>
+                <p className="dashboard-subtitle">
+                  Manage your contracts and proposals
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="panel-content">
-            <nav className="tab-nav">
-              <button
-                type="button"
-                className={`tab-btn ${activeTab === "create" ? "active" : ""}`}
-                onClick={() => setActiveTab("create")}
-              >
-                Create Contract
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${activeTab === "contracts" ? "active" : ""}`}
-                onClick={() => setActiveTab("contracts")}
-              >
-                My Contracts
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${activeTab === "proposals" ? "active" : ""}`}
-                onClick={() => setActiveTab("proposals")}
-                disabled={!selectedContractId}
-              >
-                Proposals
-              </button>
-            </nav>
 
-            {activeTab === "create" && (
-              <form className="card" onSubmit={handleCreateContract}>
-                {formErrors.length > 0 && (
-                  <div className="card card-error" style={{ marginBottom: "1rem" }}>
-                    {formErrors.map((error) => (
-                      <p key={error}>{error}</p>
-                    ))}
-                  </div>
-                )}
-                <Input
-                  label="Contract Title"
-                  value={formState.title}
-                  onChange={(e) => handleFormChange("title", e.target.value)}
-                  placeholder="e.g. Landing page redesign"
-                  required
-                  disabled={submitting}
-                />
-                <Input
-                  label="Description"
-                  value={formState.description}
-                  onChange={(e) =>
-                    handleFormChange("description", e.target.value)
-                  }
-                  placeholder="Describe the work scope"
-                  disabled={submitting}
-                />
+          {/* Tabs */}
+          <nav className="tab-nav">
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === "create" ? "active" : ""}`}
+              onClick={() => setActiveTab("create")}
+            >
+              Create Contract
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === "contracts" ? "active" : ""}`}
+              onClick={() => setActiveTab("contracts")}
+            >
+              My Contracts
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === "proposals" ? "active" : ""}`}
+              onClick={() => setActiveTab("proposals")}
+            >
+              Proposals
+            </button>
+          </nav>
 
-                <div style={{ marginTop: "1rem" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "0.5rem",
-                    }}
+          {/* Create Contract tab */}
+          {activeTab === "create" && (
+            <form className="card" onSubmit={handleCreateContract}>
+              {formErrors.length > 0 && (
+                <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>
+                  {formErrors.map((error) => (
+                    <p key={error} style={{ margin: 0 }}>{error}</p>
+                  ))}
+                </div>
+              )}
+              <Input
+                label="Contract Title"
+                value={formState.title}
+                onChange={(e) => handleFormChange("title", e.target.value)}
+                placeholder="e.g. Landing page redesign"
+                required
+                disabled={submitting}
+              />
+              <Input
+                label="Description"
+                value={formState.description}
+                onChange={(e) => handleFormChange("description", e.target.value)}
+                placeholder="Describe the work scope"
+                disabled={submitting}
+              />
+
+              <div style={{ marginTop: "var(--space-4)" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "var(--space-3)",
+                  }}
+                >
+                  <strong>Milestones</strong>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={addMilestone}
                   >
-                    <strong>Milestones</strong>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={addMilestone}
-                    >
-                      + Add milestone
-                    </Button>
-                  </div>
-                  {formState.milestones.map((milestone, index) => (
-                    <div key={`milestone-${index}`} className="card card-sm">
-                      {milestoneErrors[index] && (
-                        <div className="card card-error" style={{ marginBottom: "0.5rem" }}>
-                          {milestoneErrors[index].map((error) => (
-                            <p key={`${index}-${error}`}>{error}</p>
-                          ))}
-                        </div>
-                      )}
+                    + Add milestone
+                  </button>
+                </div>
+
+                {formState.milestones.map((milestone, index) => (
+                  <div key={`milestone-${index}`} className="card-sm">
+                    {milestoneErrors[index] && (
+                      <div className="card-error" style={{ marginBottom: "var(--space-3)" }}>
+                        {milestoneErrors[index].map((error) => (
+                          <p key={`${index}-${error}`} style={{ margin: 0 }}>{error}</p>
+                        ))}
+                      </div>
+                    )}
+                    <Input
+                      label="Title"
+                      value={milestone.title}
+                      onChange={(e) =>
+                        handleMilestoneChange(index, "title", e.target.value)
+                      }
+                      disabled={submitting}
+                    />
+                    <Input
+                      label="Description"
+                      value={milestone.description}
+                      onChange={(e) =>
+                        handleMilestoneChange(
+                          index,
+                          "description",
+                          e.target.value,
+                        )
+                      }
+                      disabled={submitting}
+                    />
+                    <div style={{ display: "flex", gap: "var(--space-4)" }}>
                       <Input
-                        label="Title"
-                        value={milestone.title}
+                        label="Value (NPR)"
+                        type="number"
+                        value={milestone.value}
                         onChange={(e) =>
-                          handleMilestoneChange(index, "title", e.target.value)
+                          handleMilestoneChange(index, "value", e.target.value)
                         }
                         disabled={submitting}
                       />
                       <Input
-                        label="Description"
-                        value={milestone.description}
+                        label="Due Date"
+                        type="date"
+                        value={milestone.dueDate}
                         onChange={(e) =>
                           handleMilestoneChange(
                             index,
-                            "description",
-                            e.target.value
+                            "dueDate",
+                            e.target.value,
                           )
                         }
                         disabled={submitting}
                       />
-                      <div style={{ display: "flex", gap: "1rem" }}>
-                        <Input
-                          label="Value (NPR)"
-                          type="number"
-                          value={milestone.value}
-                          onChange={(e) =>
-                            handleMilestoneChange(
-                              index,
-                              "value",
-                              e.target.value
-                            )
-                          }
-                          disabled={submitting}
-                        />
-                        <Input
-                          label="Due Date"
-                          type="date"
-                          value={milestone.dueDate}
-                          onChange={(e) =>
-                            handleMilestoneChange(
-                              index,
-                              "dueDate",
-                              e.target.value
-                            )
-                          }
-                          disabled={submitting}
-                        />
-                      </div>
-                      {formState.milestones.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => removeMilestone(index)}
-                          style={{ marginTop: "0.5rem" }}
-                        >
-                          Remove milestone
-                        </Button>
-                      )}
                     </div>
-                  ))}
-                </div>
-
-                <div style={{ marginTop: "1rem" }}>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? "Creating..." : "Create Contract"}
-                  </Button>
-                </div>
-              </form>
-            )}
-
-            {activeTab === "contracts" && (
-              <div>
-                {loading ? (
-                  <div className="p-8 text-center text-gray-500">
-                    Loading contracts...
+                    {formState.milestones.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => removeMilestone(index)}
+                        style={{ marginTop: "var(--space-2)" }}
+                      >
+                        Remove milestone
+                      </button>
+                    )}
                   </div>
-                ) : contracts.length > 0 ? (
-                  contracts.map((job) => (
-                    <div key={job._id} style={{ marginBottom: "1rem" }}>
-                      <JobCard
-                        job={job}
-                        variant="default"
-                        onViewDetails={handleViewDetails}
-                      />
-                      <div style={{ marginTop: "0.5rem" }}>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => handleSelectContract(job._id)}
-                        >
-                          View Proposals
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <EmptyState
-                    title="No Contracts Yet"
-                    description="Create a contract to start receiving proposals."
-                  />
-                )}
+                ))}
               </div>
-            )}
 
-            {activeTab === "proposals" && (
-              <div>
-                {selectedContractId ? (
-                  proposals.length > 0 ? (
-                    proposals.map((proposal) => (
-                      <ProposalItem key={proposal._id} proposal={proposal} />
-                    ))
-                  ) : (
-                    <EmptyState
-                      title="No Proposals Yet"
-                      description="Freelancers will appear here once they submit proposals."
-                    />
-                  )
-                ) : (
-                  <EmptyState
-                    title="Select a Contract"
-                    description="Choose a contract to view proposals."
-                  />
-                )}
+              <div style={{ marginTop: "var(--space-4)" }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting}
+                >
+                  {submitting ? "Creating..." : "Create Contract"}
+                </button>
               </div>
-            )}
-          </div>
-        </section>
-      </main>
+            </form>
+          )}
+
+          {/* My Contracts tab */}
+          {activeTab === "contracts" && (
+            <div className="cards-list">
+              {loading ? (
+                <div style={{ textAlign: "center", padding: "var(--space-8)", color: "var(--color-text-light)" }}>
+                  Loading contracts...
+                </div>
+              ) : contracts.length > 0 ? (
+                contracts.map((job) => (
+                  <JobCard
+                    key={job._id}
+                    job={job}
+                    variant="default"
+                    onViewDetails={handleViewDetails}
+                  />
+                ))
+              ) : (
+                <EmptyState
+                  title="No Contracts Yet"
+                  description="Create a contract to start receiving proposals."
+                />
+              )}
+            </div>
+          )}
+
+          {/* Proposals tab */}
+          {activeTab === "proposals" && (
+            <div className="cards-list">
+              {loadingProposals ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "var(--space-8)",
+                    color: "var(--color-text-light)",
+                  }}
+                >
+                  Loading proposals...
+                </div>
+              ) : pendingProposals.length > 0 ? (
+                pendingProposals.map((proposal) => (
+                  <ProposalItem key={proposal._id} proposal={proposal} />
+                ))
+              ) : (
+                <EmptyState
+                  title={
+                    contracts.length === 0
+                      ? "No Contracts Yet"
+                      : "No Proposals Yet"
+                  }
+                  description={
+                    contracts.length === 0
+                      ? "Create a contract to start receiving proposals."
+                      : "Freelancers will appear here once they submit proposals."
+                  }
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {selectedJob && (
         <JobModal
@@ -495,6 +519,6 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
           userRole={user?.role?.[0]}
         />
       )}
-    </div>
+    </>
   );
 };

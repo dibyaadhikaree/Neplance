@@ -13,10 +13,11 @@ export const LoginForm = ({ onSubmit, loading = false }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit}>
       <Input
         type="email"
-        placeholder="Email address"
+        label="Email"
+        placeholder="Enter your email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
@@ -25,7 +26,8 @@ export const LoginForm = ({ onSubmit, loading = false }) => {
       />
       <Input
         type="password"
-        placeholder="Password"
+        label="Password"
+        placeholder="Enter your password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
@@ -33,7 +35,7 @@ export const LoginForm = ({ onSubmit, loading = false }) => {
         disabled={loading}
       />
       <Button type="submit" disabled={loading || !email || !password}>
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? "Logging in..." : "Log In"}
       </Button>
     </form>
   );

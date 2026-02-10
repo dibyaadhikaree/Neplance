@@ -10,9 +10,8 @@ const RoleButton = ({ role, selected, disabled, onClick }) => (
     type="button"
     onClick={() => onClick(role)}
     disabled={disabled}
-    className={`btn border border-solid ${
-      selected ? "btn-primary border-primary" : "btn-secondary border-border"
-    }`}
+    className={selected ? "btn btn-primary" : "btn btn-secondary"}
+    style={{ width: "100%" }}
     aria-pressed={selected}
   >
     {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -52,10 +51,11 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
     selectedRoles.size > 0;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit}>
       <Input
         type="text"
-        placeholder="Full name"
+        label="Full Name"
+        placeholder="Enter your full name"
         value={formData.name}
         onChange={updateField("name")}
         required
@@ -64,7 +64,8 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       />
       <Input
         type="email"
-        placeholder="Email address"
+        label="Email"
+        placeholder="Enter your email"
         value={formData.email}
         onChange={updateField("email")}
         required
@@ -73,7 +74,8 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       />
       <Input
         type="password"
-        placeholder="Password"
+        label="Password"
+        placeholder="Create a password"
         value={formData.password}
         onChange={updateField("password")}
         required
@@ -82,7 +84,8 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       />
       <Input
         type="password"
-        placeholder="Confirm password"
+        label="Confirm Password"
+        placeholder="Re-enter your password"
         value={formData.passwordConfirm}
         onChange={updateField("passwordConfirm")}
         required
@@ -90,9 +93,9 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         disabled={loading}
       />
 
-      <div className="space-y-3">
-        <div className="input-label">Select your role</div>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="form-group">
+        <label className="form-label">I want to:</label>
+        <div className="grid grid-cols-2 gap-4">
           {ROLES.map((role) => (
             <RoleButton
               key={role}
@@ -106,7 +109,7 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       </div>
 
       <Button type="submit" disabled={loading || !isValid}>
-        {loading ? "Creating account..." : "Create account"}
+        {loading ? "Creating account..." : "Sign Up"}
       </Button>
     </form>
   );
