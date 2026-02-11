@@ -1,140 +1,58 @@
 # 🔧 Neplance Server
 
-Backend API for Neplance - built with Express.js and MongoDB.
+The Express + MongoDB backend that powers Neplance's secure authentication, job postings, and proposal workflows. It ships with JWT authentication, scoped role checks, and a minimal error layer so client teams can focus on the UX instead of reinventing login flows.
 
----
+## Why this backend?
+- **Opinionated security**: bcrypt password hashing + JWT tokens with configurable secret/expiration cookies.
+- **Scalable data layer**: MongoDB via Mongoose with a single entrypoint that can point to local instancedb or Atlas clusters.
+- **Clear contracts**: Dedicated routes for auth, proposals, and jobs with strict validation and centralized error handling.
 
-## 🚀 Setup & Run
+## Stack & tooling
+- `Node.js 18+`, Express 4, and MongoDB 8.
+- `bcrypt`/`jsonwebtoken` for auth, `cors` + `cookie-parser` already wired for client integration, and `nodemon` for easy local reloads.
 
-### Prerequisites
-- Node.js v16+
-- MongoDB (local or Atlas)
+## Quick start
+1. `cd server` and install packages with `npm install`.
+2. Copy the template: `cp .env.example .env`.
+3. Edit `.env`:
+   - Point `NEPLANCE_MONGODB_URI` to your MongoDB URI (local or Atlas).
+   - Choose a `SERVER_PORT` (default 3001) and set `FRONTEND_BASE_URL` to whatever host/front-end origin will consume this API.
+   - Generate a long, random value for `AUTH_JWT_SECRET` (e.g., `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`).
+   - Set `AUTH_JWT_EXPIRATION` (e.g., `24h`) and `AUTH_JWT_COOKIE_EXPIRATION_DAYS` (e.g., `1`).
+4. Start the server: `npm start`. You should see `Server listening on 127.0.0.1:<SERVER_PORT>` and `Successfully connected to the Neplance database.` in the logs.
 
-### Installation
-
-```bash
-cd server
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your settings (see below)
-
-# Start server
-npm start
-```
-
-**Access**: http://localhost:3001
-
----
-
-## 🔧 Environment Setup
-
-Create `.env` file:
-
+## Environment
 ```env
-# Database
-DB_URL=mongodb://localhost:27017/neplance
-# OR MongoDB Atlas:
-# DB_URL=mongodb+srv://username:password@cluster.mongodb.net/neplance
-
-# Server
-PORT=3001
-
-# JWT (generate a secure random string)
-JWT_SECRET=your_super_secret_key_minimum_64_characters_long
-JWT_EXPIRES_IN=24h
-JWT_COOKIE_EXPIRES_IN=1
+NEPLANCE_MONGODB_URI=mongodb://root:password123@localhost:27017/neplance
+SERVER_PORT=3001
+FRONTEND_BASE_URL=http://localhost:3000
+AUTH_JWT_SECRET=<secure 64+ char string>
+AUTH_JWT_EXPIRATION=24h
+AUTH_JWT_COOKIE_EXPIRATION_DAYS=1
 ```
+- `FRONTEND_BASE_URL` is used by `cors()` so you can match whatever host the client runs on (Next.js dev server, Vercel preview, etc.).
+- Keep `AUTH_JWT_SECRET` secret; rotate it before hitting production.
 
-**Generate secure JWT secret:**
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
+## Scripts
+| Command | Description |
+|---------|-------------|
+| `npm start` | Starts the server through `nodemon server.js`; hot reloads any backend change. |
 
----
+## API highlights
+- `POST /auth/register`: Create a new user with roles and receive cookies + token.
+- `POST /auth/login`: Sign in and get the session cookie + JWT.
+- `POST /auth/logout`: Invalidate the cookie instantly.
+- `GET /users/:id`, `PUT /users/:id`: User profile access guarded by `protect`/`restrictTo`.
+- `/jobs`, `/proposals` routes: typical CRUD plus auth guards for create/update.
 
-## 📁 Structure
+## Troubleshooting
+- **MongoDB refused connection**: Ensure `NEPLANCE_MONGODB_URI` is reachable and Mongo is running locally. For Atlas, whitelist the current IP.
+- **JWT verification errors**: Regenerate the secret, restart the server, and login again from the client so the cookie uses the new secret.
+- **CORS blocked**: Confirm `FRONTEND_BASE_URL` matches the origin from which the client is served (include the protocol and port).
+- **Port collision**: Run `lsof -ti:<SERVER_PORT> | xargs kill -9` or change `SERVER_PORT`/`NEXT_PUBLIC_API_BASE_URL` accordingly.
 
-```
-server/
-├── controllers/    # Request handlers
-├── models/        # MongoDB schemas
-├── routes/        # API endpoints
-├── utils/         # Helper functions
-├── app.js         # Express config
-└── server.js      # Entry point
-```
+## Production notes
+- Run behind a reverse proxy and enforce HTTPS when `NODE_ENV=production`. The cookie handler already sets `secure` when detecting production.
+- Dockerized deployment only needs to mount `./.env` and ensure the Mongo URI is reachable from the container.
 
----
-
-## 🔐 API Endpoints
-
-### Auth
-- `POST /auth/register` - Register user
-- `POST /auth/login` - Login user
-- `POST /auth/logout` - Logout user
-
-### Users
-- `GET /users/:id` - Get profile
-- `PUT /users/:id` - Update profile
-
-### Jobs
-- `GET /jobs` - List all jobs
-- `POST /jobs` - Create job (auth required)
-- `GET /jobs/:id` - Job details
-
----
-
-## 🛠️ Tech Stack
-
-- Express.js
-- MongoDB + Mongoose
-- JWT Authentication
-- bcrypt (password hashing)
-- CORS, cookie-parser
-
----
-
-## 🐛 Troubleshooting
-
-**MongoDB connection failed?**
-```bash
-# Check if MongoDB is running
-brew services list | grep mongodb  # macOS
-sudo systemctl status mongod       # Ubuntu
-```
-
-**Port already in use?**
-```bash
-lsof -ti:3001 | xargs kill -9
-```
-
-**Module errors?**
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
----
-
-## 📝 Example Request
-
-**Register:**
-```bash
-curl -X POST http://localhost:3001/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "SecurePass123!",
-    "passwordConfirm": "SecurePass123!",
-    "role": ["freelancer"]
-  }'
-```
-
----
-
-Need help? Check the [main README](../README.md)
+Need a client reference? Check `../client/README.md` for the Next.js setup and the public env var naming.

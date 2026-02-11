@@ -3,7 +3,7 @@ const logger = require("../utils/logger");
 
 const connectDB = async () => {
     try {
-        const DbUri = process.env.DB_URL;
+        const DbUri = process.env.NEPLANCE_MONGODB_URI;
         await mongoose.connect(DbUri);
         logger.info("Successfully connected to the Neplance database.");
     } catch (error) {

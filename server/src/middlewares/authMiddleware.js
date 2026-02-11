@@ -25,7 +25,7 @@ const protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET).catch(
+  const decoded = await promisify(jwt.verify)(token, process.env.AUTH_JWT_SECRET).catch(
     (err) => {
       throw new AppError("Invalid token or session expired. Please log in again.", 401);
     }

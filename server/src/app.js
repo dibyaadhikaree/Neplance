@@ -4,11 +4,13 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const cors = require("cors");
 
+const frontendUrl = process.env.FRONTEND_BASE_URL || "http://localhost:3000";
+
 var app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: frontendUrl,
     credentials: true,
   })
 );

@@ -2,7 +2,7 @@
  * API utility for making authenticated requests
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export class APIError extends Error {
   constructor(message, status) {
@@ -21,7 +21,7 @@ export class APIError extends Error {
  */
 export async function apiCall(endpoint, options = {}) {
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       credentials: "include",
       headers: {
@@ -60,7 +60,7 @@ export async function apiCall(endpoint, options = {}) {
  */
 export async function apiAuthCall(endpoint, body) {
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

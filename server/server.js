@@ -1,15 +1,15 @@
-const app = require("./src/app");
-
 const dotenv = require("dotenv");
 const logger = require("./src/utils/logger");
+
 dotenv.config({ path: "./.env" });
+const app = require("./src/app");
 
 process.on("uncaughtException", (err) => {
   logger.error("Uncaught exception detected; terminating process.", err);
   process.exit(1);
 });
 
-const port = process.env.PORT;
+const port = process.env.SERVER_PORT || 3001;
 
 const connectDB = require("./src/config/db");
 

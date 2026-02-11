@@ -5,17 +5,21 @@ const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 
 // Create JWT token for user
-// Create JWT token for user
 const createToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET);
+  const jwtOptions = {
+    expiresIn: process.env.AUTH_JWT_EXPIRATION || "24h",
+  };
+  return jwt.sign({ id: userId }, process.env.AUTH_JWT_SECRET, jwtOptions);
 };
 
 const createSendToken = (user, statusCode, res) => {
   const token = createToken(user._id);
 
+  const cookieExpirationDays =
+    Number(process.env.AUTH_JWT_COOKIE_EXPIRATION_DAYS) || 1;
   const cookieOptions = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+      Date.now() + cookieExpirationDays * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
   };
