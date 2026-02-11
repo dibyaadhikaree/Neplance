@@ -1,6 +1,12 @@
 const Job = require("../models/Job");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
+const {
+  getJobOrThrow,
+  ensureCreator,
+  ensureContractor,
+  ensureStatus,
+} = require("../utils/jobAccess");
 
 const createJob = catchAsync(async (req, res) => {
   const {
@@ -53,7 +59,7 @@ const createJob = catchAsync(async (req, res) => {
 const findJobs = catchAsync(async (req, res) => {
   const data = await Job.find({}).populate("creatorAddress", "name email");
 
-  if (!data) throw new AppError(400, "No Job found ");
+  if (!data) throw new AppError("No Job found", 400);
 
   res.status(200).json({
     status: "success",
@@ -66,7 +72,7 @@ const findMyJobs = catchAsync(async (req, res) => {
     "name email"
   );
 
-  if (!data) throw new AppError(400, "No Job found ");
+  if (!data) throw new AppError("No Job found", 400);
 
   res.status(200).json({
     status: "success",
@@ -78,28 +84,9 @@ const findMyJobs = catchAsync(async (req, res) => {
 const markCompleted = catchAsync(async (req, res, next) => {
   const jobId = req.params.id;
 
-  const job = await Job.findById(jobId);
-  if (!job) {
-    return next(new AppError("Contract not found", 404));
-  }
-
-  const isContractor = (job.parties || []).some(
-    (party) =>
-      party.role === "CONTRACTOR" &&
-      party.address.toString() === req.user.id.toString()
-  );
-
-  if (!isContractor) {
-    return next(
-      new AppError("Only the contractor can mark completion", 403)
-    );
-  }
-
-  if (job.status !== "ACTIVE") {
-    return next(
-      new AppError("Contract is not active, cannot mark as completed", 400)
-    );
-  }
+  const job = await getJobOrThrow(jobId);
+  ensureContractor(job, req.user.id, "Only the contractor can mark completion");
+  ensureStatus(job, "ACTIVE", "Contract is not active, cannot mark as completed");
 
   job.status = "COMPLETED";
   job.updatedAt = Date.now();
@@ -115,27 +102,16 @@ const markCompleted = catchAsync(async (req, res, next) => {
 const approveCompletion = catchAsync(async (req, res, next) => {
   const jobId = req.params.id;
 
-  const job = await Job.findById(jobId);
-  if (!job)
-    throw new AppError(
-      "The contract was not found or you are not authorized",
-      404
-    );
-
-  const creatorId = job.creatorAddress?._id || job.creatorAddress;
-  if (creatorId.toString() !== req.user.id.toString()) {
-    throw new AppError(
-      "You are not authorized to approve completion for this contract",
-      403
-    );
-  }
-
-  if (job.status !== "COMPLETED") {
-    throw new AppError(
-      "The contract is not marked completed yet",
-      400
-    );
-  }
+  const job = await getJobOrThrow(
+    jobId,
+    "The contract was not found or you are not authorized"
+  );
+  ensureCreator(
+    job,
+    req.user.id,
+    "You are not authorized to approve completion for this contract"
+  );
+  ensureStatus(job, "COMPLETED", "The contract is not marked completed yet");
 
   job.updatedAt = Date.now();
   await job.save();
@@ -152,26 +128,9 @@ const submitMilestone = catchAsync(async (req, res, next) => {
   const { id: jobId, index } = req.params;
   const { evidence } = req.body;
 
-  const job = await Job.findById(jobId);
-  if (!job) {
-    return next(new AppError("Contract not found", 404));
-  }
-
-  const isContractor = (job.parties || []).some(
-    (party) =>
-      party.role === "CONTRACTOR" &&
-      party.address.toString() === req.user.id.toString()
-  );
-
-  if (!isContractor) {
-    return next(new AppError("Only the contractor can submit milestones", 403));
-  }
-
-  if (job.status !== "ACTIVE") {
-    return next(
-      new AppError("Contract is not active, cannot submit milestones", 400)
-    );
-  }
+  const job = await getJobOrThrow(jobId);
+  ensureContractor(job, req.user.id, "Only the contractor can submit milestones");
+  ensureStatus(job, "ACTIVE", "Contract is not active, cannot submit milestones");
 
   const milestoneIndex = Number(index);
   if (Number.isNaN(milestoneIndex) || milestoneIndex < 0) {
@@ -208,17 +167,8 @@ const submitMilestone = catchAsync(async (req, res, next) => {
 const approveMilestone = catchAsync(async (req, res, next) => {
   const { id: jobId, index } = req.params;
 
-  const job = await Job.findById(jobId);
-  if (!job) {
-    return next(new AppError("Contract not found", 404));
-  }
-
-  const creatorId = job.creatorAddress?._id || job.creatorAddress;
-  if (creatorId.toString() !== req.user.id.toString()) {
-    return next(
-      new AppError("Only the creator can approve milestones", 403)
-    );
-  }
+  const job = await getJobOrThrow(jobId);
+  ensureCreator(job, req.user.id, "Only the creator can approve milestones");
 
   const milestoneIndex = Number(index);
   if (Number.isNaN(milestoneIndex) || milestoneIndex < 0) {

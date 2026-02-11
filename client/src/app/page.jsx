@@ -1,22 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { AuthPanel } from "@/features/auth/components/AuthPanel";
 import { HeroSection, HowItWorksSection, TestimonialsSection, CategoriesSection } from "@/shared/brand/HeroSection";
 import { Navbar } from "@/shared/navigation/Navbar";
-import { useAuth } from "@/shared/context/AuthContext";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
 
 export default function Home() {
-  const { user, isHydrated, updateUser } = useAuth();
+  const { user, isHydrated, updateUser } = useAuthGate({ mode: "redirect-authed" });
   const router = useRouter();
-
-  // Load session from server on mount
-  useEffect(() => {
-    if (isHydrated && user) {
-      router.push("/dashboard");
-    }
-  }, [isHydrated, user, router]);
 
   if (!isHydrated) {
     return null; // Prevent hydration mismatch

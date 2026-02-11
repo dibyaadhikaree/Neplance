@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { apiCall } from "@/services/api";
-import { useAuth } from "@/shared/context/AuthContext";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
 
 export default function TalentPage() {
-  const { user, isHydrated, logout, switchRole } = useAuth();
+  const { user, isHydrated, logout, switchRole } = useAuthGate({ mode: "none" });
   const [freelancers, setFreelancers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

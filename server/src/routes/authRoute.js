@@ -9,7 +9,6 @@ const {
   getUser,
 } = require("../controllers/authController");
 const { protect, restrictTo } = require("../middlewares/authMiddleware");
-const User = require("../models/User");
 
 router.route("/login").post(login);
 router.route("/logout").get(logout);

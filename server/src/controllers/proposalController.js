@@ -2,6 +2,7 @@ const Job = require("../models/Job");
 const Proposal = require("../models/Proposal");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
+const { getJobOrThrow, ensureCreator, ensureStatus } = require("../utils/jobAccess");
 
 const getMyProposals = catchAsync(async (req, res) => {
   const data = await Proposal.find({ freelancer: req.user.id }).populate({
@@ -9,7 +10,7 @@ const getMyProposals = catchAsync(async (req, res) => {
     populate: { path: "creatorAddress", select: "name email" },
   });
 
-  if (!data) throw new AppError(400, "No Proposals found ");
+  if (!data) throw new AppError("No Proposals found", 400);
 
   res.status(200).json({
     status: "success",
@@ -38,14 +39,12 @@ const getProposalForJob = catchAsync(async (req, res) => {
 
   const jobId = req.params.jobId;
 
-  const job = await Job.findById(jobId);
-  if (!job) throw new AppError("Job not found", 404);
-
-  const creatorId = job.creatorAddress?._id || job.creatorAddress;
-  if (creatorId.toString() !== req.user.id.toString())
-    throw new AppError(
-      "You are not authorized to do this. Only creator of Job can get a proposal "
-    );
+  const job = await getJobOrThrow(jobId, "Job not found");
+  ensureCreator(
+    job,
+    req.user.id,
+    "You are not authorized to do this. Only creator of Job can get a proposal"
+  );
 
   const data = await Proposal.find({ job: jobId }).populate("freelancer");
 
@@ -71,14 +70,8 @@ const acceptProposal = catchAsync(async (req, res, next) => {
   const jobId = job._id;
 
   // Only allow job owner (creator) to accept proposals
-  const creatorId = job.creatorAddress?._id || job.creatorAddress;
-  if (creatorId.toString() !== req.user.id.toString()) {
-    throw new AppError("You can't accept proposals for this job", 403);
-  }
-
-  if (job.status !== "DRAFT") {
-    throw new AppError("Contract is not open for hiring", 400);
-  }
+  ensureCreator(job, req.user.id, "You can't accept proposals for this job");
+  ensureStatus(job, "DRAFT", "Contract is not open for hiring");
 
   // 2) Accept this proposal
   proposal.status = "accepted";

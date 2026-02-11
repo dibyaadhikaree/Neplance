@@ -7,15 +7,12 @@ import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
 import { apiCall } from "@/services/api";
 import { Input } from "@/shared/ui/UI";
+import { useClientDashboard } from "@/features/dashboard/hooks/useClientDashboard";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const [activeTab, setActiveTab] = useState("create");
-  const [contracts, setContracts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingProposals, setLoadingProposals] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [proposalsByContract, setProposalsByContract] = useState({});
   const [formErrors, setFormErrors] = useState([]);
   const [milestoneErrors, setMilestoneErrors] = useState({});
   const [formState, setFormState] = useState({
@@ -24,71 +21,30 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     milestones: [{ title: "", description: "", value: "", dueDate: "" }],
   });
 
+  const {
+    contracts,
+    proposalsByContract,
+    loadingContracts,
+    loadingProposals,
+    fetchContracts,
+    fetchProposalsForContracts,
+    resetProposals,
+  } = useClientDashboard();
+
   const formatDateValue = (value) => {
     if (!value) return null;
     const timestamp = Date.parse(value);
     return Number.isNaN(timestamp) ? null : timestamp;
   };
 
-  const fetchContracts = async () => {
-    try {
-      setLoading(true);
-      const jobsData = await apiCall("/jobs/myJobs");
-      if (jobsData.status === "success") {
-        setContracts(jobsData.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch contracts:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchProposalsForContracts = async (contractList) => {
-    if (!contractList.length) {
-      setProposalsByContract({});
-      return;
-    }
-
-    setLoadingProposals(true);
-    try {
-      const results = await Promise.all(
-        contractList.map(async (contract) => {
-          try {
-            const proposalsData = await apiCall(
-              `/proposals/job/${contract._id}`,
-            );
-            if (proposalsData.status === "success") {
-              const pendingOnly = (proposalsData.data || []).filter(
-                (proposal) => proposal.status === "pending",
-              );
-              return [contract._id, pendingOnly];
-            }
-          } catch (err) {
-            console.error("Failed to fetch proposals:", err);
-          }
-          return [contract._id, []];
-        }),
-      );
-
-      setProposalsByContract(Object.fromEntries(results));
-    } finally {
-      setLoadingProposals(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchContracts();
-  }, []);
-
   useEffect(() => {
     if (activeTab !== "proposals") return;
     if (contracts.length === 0) {
-      setProposalsByContract({});
+      resetProposals();
       return;
     }
     fetchProposalsForContracts(contracts);
-  }, [activeTab, contracts]);
+  }, [activeTab, contracts, fetchProposalsForContracts, resetProposals]);
 
   const handleViewDetails = (job) => setSelectedJob(job);
   const handleCloseModal = () => setSelectedJob(null);
@@ -452,7 +408,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
           {/* My Contracts tab */}
           {activeTab === "contracts" && (
             <div className="cards-list">
-              {loading ? (
+              {loadingContracts ? (
                 <div style={{ textAlign: "center", padding: "var(--space-8)", color: "var(--color-text-light)" }}>
                   Loading contracts...
                 </div>

@@ -1,24 +1,17 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { ClientDashboard } from "@/features/dashboard/screens/ClientDashboard";
 import { FreelancerDashboard } from "@/features/dashboard/screens/FreelancerDashboard";
-import { useAuth } from "@/shared/context/AuthContext";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
 
 export default function DashboardPage() {
-  const { user, activeRole, isHydrated, logout, switchRole } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isHydrated && !user) {
-      router.push("/");
-    }
-  }, [isHydrated, user, router]);
+  const { user, currentRole, isHydrated, logout, switchRole } = useAuthGate({
+    mode: "require-auth",
+  });
 
   if (!isHydrated || !user) return null;
 
-  const isFreelancer = (activeRole || user?.role?.[0] || "freelancer") === "freelancer";
+  const isFreelancer = (currentRole || "freelancer") === "freelancer";
 
   const sharedProps = {
     user,

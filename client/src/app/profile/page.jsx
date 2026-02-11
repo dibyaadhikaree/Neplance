@@ -1,64 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
-import { apiCall } from "@/services/api";
-import { useAuth } from "@/shared/context/AuthContext";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { useProfileData } from "@/features/dashboard/hooks/useProfileData";
 
 export default function ProfilePage() {
-  const { user, activeRole, isHydrated, logout, switchRole } = useAuth();
-  const [completedJobs, setCompletedJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user, currentRole, isHydrated, logout, switchRole } = useAuthGate({
+    mode: "require-auth",
+  });
   const [selectedJob, setSelectedJob] = useState(null);
   const router = useRouter();
 
-  useEffect(() => {
-    if (isHydrated && !user) {
-      router.push("/");
-    }
-  }, [isHydrated, user, router]);
-
-  const fetchProfileData = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoading(true);
-      const isFreelancer = (activeRole || user.role?.[0]) === "freelancer";
-      let completed = [];
-
-      if (isFreelancer) {
-        const proposalsData = await apiCall("/proposals/myProposals");
-        if (proposalsData.status === "success") {
-          completed = proposalsData.data
-            .filter(
-              (p) =>
-                p.status === "accepted" &&
-                p.job &&
-                p.job.status === "COMPLETED",
-            )
-            .map((p) => ({ ...p.job, status: p.job.status, review: null }));
-        }
-      } else {
-        const jobsData = await apiCall("/jobs/myJobs");
-        if (jobsData.status === "success") {
-          completed = jobsData.data
-            .filter((job) => job.status === "COMPLETED")
-            .map((job) => ({ ...job, review: null }));
-        }
-      }
-      setCompletedJobs(completed);
-    } catch (err) {
-      console.error("Error fetching profile data:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, activeRole]);
-
-  useEffect(() => {
-    if (user) fetchProfileData();
-  }, [user, fetchProfileData]);
+  const { completedJobs, loading } = useProfileData({ user, currentRole });
 
   const handleLogout = async () => {
     await logout();
@@ -75,7 +32,7 @@ export default function ProfilePage() {
   if (!isHydrated || !user) return null;
 
   const averageRating = 0.0;
-  const currentRole = activeRole || user.role?.[0] || "freelancer";
+  const roleLabel = currentRole || user.role?.[0] || "freelancer";
 
   return (
     <>
@@ -136,7 +93,7 @@ export default function ProfilePage() {
                     >
                       Role
                     </div>
-                    <span className="badge badge-success">{currentRole}</span>
+                    <span className="badge badge-success">{roleLabel}</span>
                   </div>
                   <div>
                     <div

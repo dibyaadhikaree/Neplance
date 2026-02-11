@@ -1,0 +1,52 @@
+import { useCallback, useEffect, useState } from "react";
+import { apiCall } from "@/services/api";
+
+export const useProfileData = ({ user, currentRole }) => {
+  const [completedJobs, setCompletedJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfileData = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      const isFreelancer = (currentRole || user.role?.[0]) === "freelancer";
+      let completed = [];
+
+      if (isFreelancer) {
+        const proposalsData = await apiCall("/proposals/myProposals");
+        if (proposalsData.status === "success") {
+          completed = proposalsData.data
+            .filter(
+              (p) =>
+                p.status === "accepted" &&
+                p.job &&
+                p.job.status === "COMPLETED"
+            )
+            .map((p) => ({ ...p.job, status: p.job.status, review: null }));
+        }
+      } else {
+        const jobsData = await apiCall("/jobs/myJobs");
+        if (jobsData.status === "success") {
+          completed = jobsData.data
+            .filter((job) => job.status === "COMPLETED")
+            .map((job) => ({ ...job, review: null }));
+        }
+      }
+      setCompletedJobs(completed);
+    } catch (err) {
+      console.error("Error fetching profile data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, currentRole]);
+
+  useEffect(() => {
+    if (user) fetchProfileData();
+  }, [user, fetchProfileData]);
+
+  return {
+    completedJobs,
+    loading,
+    refresh: fetchProfileData,
+  };
+};

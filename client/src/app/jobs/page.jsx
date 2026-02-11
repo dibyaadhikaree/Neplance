@@ -7,10 +7,10 @@ import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancer
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
 import { apiCall } from "@/services/api";
-import { useAuth } from "@/shared/context/AuthContext";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
 
 export default function JobsPage() {
-  const { user, isHydrated, logout, switchRole } = useAuth();
+  const { user, isHydrated, logout, switchRole } = useAuthGate({ mode: "none" });
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalMode, setModalMode] = useState("view");
   const [submitting, setSubmitting] = useState(false);
