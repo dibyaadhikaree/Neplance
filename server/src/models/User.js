@@ -19,6 +19,60 @@ const userSchema = new mongoose.Schema({
     enum: ["admin", "client", "freelancer"],
     required: true,
   },
+  phone: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  avatar: {
+    type: String,
+    default: null,
+  },
+  bio: {
+    type: String,
+    maxlength: 1000,
+  },
+  location: {
+    address: String,
+    city: String,
+    district: String,
+    province: String,
+    coordinates: {
+      lat: Number,
+      lng: Number,
+    },
+  },
+  skills: [{ type: String }],
+  hourlyRate: {
+    type: Number,
+    default: 0,
+  },
+  experienceLevel: {
+    type: String,
+    enum: ["entry", "intermediate", "expert"],
+    default: "entry",
+  },
+  jobTypePreference: {
+    type: String,
+    enum: ["digital", "physical", "both"],
+    default: "digital",
+  },
+  availabilityStatus: {
+    type: String,
+    enum: ["available", "busy", "unavailable"],
+    default: "available",
+  },
+  languages: [{ type: String }],
+  portfolio: [
+    {
+      title: String,
+      description: String,
+      imageUrls: [String],
+      projectUrl: String,
+      skills: [String],
+      completedAt: Date,
+    },
+  ],
   password: {
     type: String,
     required: [true, "Please provide a password"],

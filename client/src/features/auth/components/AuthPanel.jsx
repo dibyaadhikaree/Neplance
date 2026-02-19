@@ -6,7 +6,7 @@ import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 
-export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
+export const AuthPanel = ({ initialTab = "login", onAuthSuccess, allowTabSwitch = true }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,12 +36,9 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
   const handleLogin = (email, password) =>
     handleAuth("login", { email, password });
 
-  const handleSignup = ({ name, email, password, passwordConfirm, roles }) =>
+  const handleSignup = ({ roles, ...rest }) =>
     handleAuth("register", {
-      name,
-      email,
-      password,
-      passwordConfirm,
+      ...rest,
       role: roles,
     });
 
@@ -76,7 +73,9 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
         </div>
       )}
 
-      <AuthTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      {allowTabSwitch && (
+        <AuthTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      )}
 
       <div className="mt-6">
         {isLogin ? (
@@ -86,23 +85,25 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess }) => {
         )}
       </div>
 
-      <div className="text-center text-light" style={{ marginTop: "var(--space-6)", paddingTop: "var(--space-6)", borderTop: "1px solid var(--color-border-light)" }}>
-        {isLogin ? "Don't have an account? " : "Already have an account? "}
-        <button
-          type="button"
-          onClick={() => setActiveTab(isLogin ? "signup" : "login")}
-          className="text-primary font-medium"
-          style={{
-            textDecoration: "underline",
-            backgroundColor: "transparent",
-            border: "none",
-            padding: 0,
-          }}
-          disabled={loading}
-        >
-          {isLogin ? "Sign up" : "Log in"}
-        </button>
-      </div>
+      {allowTabSwitch && (
+        <div className="text-center text-light" style={{ marginTop: "var(--space-6)", paddingTop: "var(--space-6)", borderTop: "1px solid var(--color-border-light)" }}>
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <button
+            type="button"
+            onClick={() => setActiveTab(isLogin ? "signup" : "login")}
+            className="text-primary font-medium"
+            style={{
+              textDecoration: "underline",
+              backgroundColor: "transparent",
+              border: "none",
+              padding: 0,
+            }}
+            disabled={loading}
+          >
+            {isLogin ? "Sign up" : "Log in"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

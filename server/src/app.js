@@ -25,12 +25,14 @@ const indexRouter = require("./routes/indexRoute");
 const jobRouter = require("./routes/jobRoutes");
 const authRouter = require("./routes/authRoute");
 const proposalRouter = require("./routes/proposalRoutes");
+const userRouter = require("./routes/userRoutes");
 const errorController = require("./controllers/errorController");
 
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.use("/jobs", jobRouter);
 app.use("/proposals", proposalRouter);
+app.use("/users", userRouter);
 
 //for catching all the errors
 app.all("*", (req, res, next) => {

@@ -106,14 +106,14 @@ export function Navbar({ user, onLogout, onRoleSwitch }) {
               </a>
             </li>
             <li>
-              <a href="/#signup" className="navbar-link">
-                Why Neplance
-              </a>
+              <Link href="/login" className="navbar-link">
+                Log In
+              </Link>
             </li>
             <li>
-              <a href="/#signup" className="btn btn-primary btn-sm">
+              <Link href="/signup" className="btn btn-primary btn-sm">
                 Sign Up
-              </a>
+              </Link>
             </li>
           </ul>
         </div>

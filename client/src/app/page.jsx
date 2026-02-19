@@ -1,14 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { AuthPanel } from "@/features/auth/components/AuthPanel";
 import { HeroSection, HowItWorksSection, TestimonialsSection, CategoriesSection } from "@/shared/brand/HeroSection";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 
 export default function Home() {
-  const { user, isHydrated, updateUser } = useAuthGate({ mode: "redirect-authed" });
-  const router = useRouter();
+  const { isHydrated } = useAuthGate({ mode: "redirect-authed" });
 
   if (!isHydrated) {
     return null; // Prevent hydration mismatch
@@ -59,7 +56,7 @@ export default function Home() {
                     </div>
                   </li>
                 </ul>
-                <a href="#signup" className="btn btn-primary btn-lg">
+                <a href="/signup" className="btn btn-primary btn-lg">
                   Get Started as a Client
                 </a>
               </div>
@@ -128,7 +125,7 @@ export default function Home() {
                 <p className="text-light" style={{ fontSize: "var(--text-lg)", marginBottom: "var(--space-8)", lineHeight: 1.7 }}>
                   Join thousands of successful freelancers who are earning a living doing what they love. Whether you're looking for a side hustle or building a full-time career, Neplance connects you with clients who value your expertise.
                 </p>
-                <a href="#signup" className="btn btn-primary btn-lg">
+                <a href="/signup" className="btn btn-primary btn-lg">
                   Start Freelancing Today
                 </a>
               </div>
@@ -147,14 +144,13 @@ export default function Home() {
                 Join Neplance today and connect with opportunities or talent worldwide
               </p>
             </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <AuthPanel
-                onAuthSuccess={(nextUser) => {
-                  if (nextUser) updateUser(nextUser);
-                  // Redirect to dashboard after successful auth
-                  router.push("/dashboard");
-                }}
-              />
+            <div style={{ display: "flex", justifyContent: "center", gap: "var(--space-4)" }}>
+              <a href="/login" className="btn btn-secondary btn-lg">
+                Log In
+              </a>
+              <a href="/signup" className="btn btn-primary btn-lg">
+                Sign Up
+              </a>
             </div>
           </div>
         </section>
@@ -203,7 +199,7 @@ export default function Home() {
                   <a href="#hire-talent" style={{ color: "rgba(255, 255, 255, 0.7)", textDecoration: "none", fontSize: "var(--text-sm)" }}>Talent Marketplace</a>
                 </li>
                 <li style={{ marginBottom: "var(--space-2)" }}>
-                  <a href="#signup" style={{ color: "rgba(255, 255, 255, 0.7)", textDecoration: "none", fontSize: "var(--text-sm)" }}>Post a Job</a>
+                  <a href="/signup" style={{ color: "rgba(255, 255, 255, 0.7)", textDecoration: "none", fontSize: "var(--text-sm)" }}>Post a Job</a>
                 </li>
               </ul>
             </div>
@@ -217,7 +213,7 @@ export default function Home() {
                   <a href="/jobs" style={{ color: "rgba(255, 255, 255, 0.7)", textDecoration: "none", fontSize: "var(--text-sm)" }}>Browse Jobs</a>
                 </li>
                 <li style={{ marginBottom: "var(--space-2)" }}>
-                  <a href="#signup" style={{ color: "rgba(255, 255, 255, 0.7)", textDecoration: "none", fontSize: "var(--text-sm)" }}>Create Profile</a>
+                  <a href="/signup" style={{ color: "rgba(255, 255, 255, 0.7)", textDecoration: "none", fontSize: "var(--text-sm)" }}>Create Profile</a>
                 </li>
               </ul>
             </div>

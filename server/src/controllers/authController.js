@@ -3,6 +3,41 @@ const User = require("../models/User");
 const AppError = require("../utils/appError");
 const jwt = require("jsonwebtoken");
 
+const profileFields = [
+  "phone",
+  "avatar",
+  "bio",
+  "location",
+];
+
+const freelancerOnlyFields = [
+  "skills",
+  "hourlyRate",
+  "experienceLevel",
+  "jobTypePreference",
+  "availabilityStatus",
+  "languages",
+  "portfolio",
+];
+
+const hasFreelancerRole = (role = []) => {
+  const roles = Array.isArray(role) ? role : [role];
+  return roles.includes("freelancer");
+};
+
+const pickProfileFields = (payload = {}, role = []) => {
+  const allowedFields = hasFreelancerRole(role)
+    ? [...profileFields, ...freelancerOnlyFields]
+    : profileFields;
+
+  return allowedFields.reduce((acc, field) => {
+    if (payload[field] !== undefined) {
+      acc[field] = payload[field];
+    }
+    return acc;
+  }, {});
+};
+
 // Create JWT token for user
 const createToken = (userId) => {
   const jwtOptions = {
@@ -40,6 +75,7 @@ const createSendToken = (user, statusCode, res) => {
 
 const register = catchAsync(async (req, res, next) => {
   const { name, email, password, passwordConfirm, role } = req.body;
+  const profilePayload = pickProfileFields(req.body, role);
 
   const freshUser = await User.create({
     name,
@@ -47,6 +83,7 @@ const register = catchAsync(async (req, res, next) => {
     password,
     passwordConfirm,
     role,
+    ...profilePayload,
   });
 
   createSendToken(freshUser, 201, res);
