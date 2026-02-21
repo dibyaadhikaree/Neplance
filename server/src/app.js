@@ -4,13 +4,13 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const cors = require("cors");
 
-const frontendUrl = process.env.FRONTEND_BASE_URL || "http://localhost:3000";
+const frontendUrl = process.env.FRONTEND_BASE_URL || process.env.VERCEL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
 
 var app = express();
 
 app.use(
   cors({
-    origin: frontendUrl,
+    origin: ["http://localhost:3000", frontendUrl],
     credentials: true,
   })
 );
@@ -28,11 +28,11 @@ const proposalRouter = require("./routes/proposalRoutes");
 const userRouter = require("./routes/userRoutes");
 const errorController = require("./controllers/errorController");
 
-app.use("/", indexRouter);
-app.use("/auth", authRouter);
-app.use("/jobs", jobRouter);
-app.use("/proposals", proposalRouter);
-app.use("/users", userRouter);
+app.use("/api", indexRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/jobs", jobRouter);
+app.use("/api/proposals", proposalRouter);
+app.use("/api/users", userRouter);
 
 //for catching all the errors
 app.all("*", (req, res, next) => {

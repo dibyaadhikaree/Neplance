@@ -28,7 +28,7 @@ export default function JobsPage() {
   const fetchJobs = useCallback(async (params = "") => {
     setLoading(true);
     try {
-      const response = await apiCall(`/jobs${params ? `?${params}` : ""}`);
+      const response = await apiCall(`/api/jobs${params ? `?${params}` : ""}`);
       if (response.status === "success") {
         setJobs(response.data || []);
       }
@@ -74,7 +74,7 @@ export default function JobsPage() {
   const handleSubmitProposal = async (proposalData) => {
     setSubmitting(true);
     try {
-      await apiCall("/proposals", {
+      await apiCall("/api/proposals", {
         method: "POST",
         body: JSON.stringify(proposalData),
       });

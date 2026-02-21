@@ -66,7 +66,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
   const handleAcceptProposal = async (proposalId) => {
     try {
-      await apiCall(`/proposals/${proposalId}/accept`, { method: "PATCH" });
+      await apiCall(`/api/proposals/${proposalId}/accept`, { method: "PATCH" });
       await fetchContracts();
       if (activeTab === "proposals") {
         await fetchProposalsForContracts(contracts);
@@ -78,7 +78,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
   const handleApproveMilestone = async (jobId, milestoneIndex) => {
     try {
-      await apiCall(`/jobs/${jobId}/milestones/${milestoneIndex}/approve`, {
+      await apiCall(`/api/jobs/${jobId}/milestones/${milestoneIndex}/approve`, {
         method: "PATCH",
       });
       await fetchContracts();
@@ -90,7 +90,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const handlePostDraftJob = async (job) => {
     if (!confirm("Are you sure you want to post this job?")) return;
     try {
-      await apiCall(`/jobs/${job._id}/publish`, { method: "PATCH" });
+      await apiCall(`/api/jobs/${job._id}/publish`, { method: "PATCH" });
       await fetchContracts();
     } catch (err) {
       console.error("Failed to post job:", err);
@@ -101,7 +101,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const handleDeleteJob = async (job) => {
     if (!confirm("Are you sure you want to delete this draft?")) return;
     try {
-      await apiCall(`/jobs/${job._id}`, { method: "DELETE" });
+      await apiCall(`/api/jobs/${job._id}`, { method: "DELETE" });
       await fetchContracts();
     } catch (err) {
       console.error("Failed to delete job:", err);
@@ -259,7 +259,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     setSubmitting(true);
     try {
       setFormErrors([]);
-      await apiCall("/jobs", {
+      await apiCall("/api/jobs", {
         method: "POST",
         body: JSON.stringify(buildJobPayload("DRAFT")),
       });
@@ -281,7 +281,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     setSubmitting(true);
     try {
       setFormErrors([]);
-      await apiCall("/jobs", {
+      await apiCall("/api/jobs", {
         method: "POST",
         body: JSON.stringify(buildJobPayload("OPEN")),
       });

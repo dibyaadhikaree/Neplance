@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = useCallback(async () => {
     setLoadingUser(true);
     try {
-      const data = await apiCall("/auth/me");
+      const data = await apiCall("/api/auth/me");
       if (data?.data?.user) {
         applyUser(data.data.user);
       } else {

@@ -27,7 +27,7 @@ export function useFreelancerDashboard() {
       setLoading(true);
       setError(null);
 
-      const proposalsData = await apiCall("/proposals/myProposals");
+      const proposalsData = await apiCall("/api/proposals/myProposals");
       if (proposalsData.status === "success") {
         const proposals = proposalsData.data;
 

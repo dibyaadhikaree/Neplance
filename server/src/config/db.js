@@ -1,15 +1,29 @@
 const mongoose = require("mongoose");
-const logger = require("../utils/logger");
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
 const connectDB = async () => {
-    try {
-        const DbUri = process.env.NEPLANCE_MONGODB_URI;
-        await mongoose.connect(DbUri);
-        logger.info("Successfully connected to the Neplance database.");
-    } catch (error) {
-        logger.error("Failed to connect to the Neplance database.", error);
-        process.exit(1);
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const DbUri = process.env.NEPLANCE_MONGODB_URI;
+    if (!DbUri) {
+      throw new Error("NEPLANCE_MONGODB_URI is not defined");
     }
+    cached.promise = mongoose.connect(DbUri).then((mongoose) => {
+      console.log("DB connected");
+      return mongoose;
+    });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
 };
 
 module.exports = connectDB;

@@ -19,7 +19,7 @@ export const persistActiveRole = (role) => {
 
 export const logoutRequest = async () => {
   try {
-    await apiCall("/auth/logout");
+    await apiCall("/api/auth/logout");
   } catch (_) {
     // Ignore logout errors and let callers handle navigation.
   }

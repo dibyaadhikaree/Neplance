@@ -1,36 +1,78 @@
 const dotenv = require("dotenv");
-const logger = require("./src/utils/logger");
-
 dotenv.config({ path: "./.env" });
-const app = require("./src/app");
 
-process.on("uncaughtException", (err) => {
-  logger.error("Uncaught exception detected; terminating process.", err);
-  process.exit(1);
+const mongoose = require("mongoose");
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
+const AppError = require("./src/utils/appError");
+
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+const connectDB = async () => {
+  if (cached.conn) return cached.conn;
+  if (!cached.promise) {
+    const DbUri = process.env.NEPLANCE_MONGODB_URI;
+    cached.promise = mongoose.connect(DbUri).then((m) => {
+      console.log("DB connected");
+      return m;
+    });
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
+};
+
+const frontendUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+
+const app = express();
+
+app.use(
+  cors({
+    origin: ["http://localhost:3000", frontendUrl],
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
-const port = process.env.SERVER_PORT || 3001;
+const indexRouter = require("./src/routes/indexRoute");
+const jobRouter = require("./src/routes/jobRoutes");
+const authRouter = require("./src/routes/authRoute");
+const proposalRouter = require("./src/routes/proposalRoutes");
+const userRouter = require("./src/routes/userRoutes");
+const errorController = require("./src/controllers/errorController");
 
-const connectDB = require("./src/config/db");
+app.use("/api", indexRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/jobs", jobRouter);
+app.use("/api/proposals", proposalRouter);
+app.use("/api/users", userRouter);
 
-// Connect to Database
-connectDB();
-
-const server = app.listen(port, "127.0.0.1", () => {
-  logger.info(`Server listening on 127.0.0.1:${port}`);
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", db: mongoose.connection.readyState });
 });
 
-process.on("unhandledRejection", (err) => {
-  logger.error("Unhandled rejection detected; shutting down the server.", err);
-  server.close(() => {
-    logger.info("Server closed after unhandled rejection.");
-    process.exit(1);
-  });
+app.all("*", (req, res, next) => {
+  next(new AppError(`No route found for ${req.url}`, 404));
 });
 
-process.on("SIGTERM", () => {
-  logger.warn("SIGTERM received. Initiating graceful shutdown.");
-  server.close(() => {
-    logger.info("Process terminated gracefully.");
-  });
-});
+app.use(errorController);
+
+const PORT = process.env.SERVER_PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

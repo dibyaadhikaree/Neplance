@@ -183,7 +183,7 @@ export default function ProfilePage() {
         }));
       }
 
-      const response = await apiCall("/users/me", {
+      const response = await apiCall("/api/users/me", {
         method: "PATCH",
         body: JSON.stringify(payload),
       });

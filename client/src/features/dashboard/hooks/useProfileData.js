@@ -13,7 +13,7 @@ export const useProfileData = ({ user, currentRole }) => {
       let completed = [];
 
       if (isFreelancer) {
-        const proposalsData = await apiCall("/proposals/myProposals");
+        const proposalsData = await apiCall("/api/proposals/myProposals");
         if (proposalsData.status === "success") {
           completed = proposalsData.data
             .filter(
@@ -25,7 +25,7 @@ export const useProfileData = ({ user, currentRole }) => {
             .map((p) => ({ ...p.job, status: p.job.status, review: null }));
         }
       } else {
-        const jobsData = await apiCall("/jobs/myJobs");
+        const jobsData = await apiCall("/api/jobs/myJobs");
         if (jobsData.status === "success") {
           completed = jobsData.data
             .filter((job) => job.status === "COMPLETED")

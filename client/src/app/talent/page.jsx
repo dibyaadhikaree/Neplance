@@ -17,7 +17,7 @@ export default function TalentPage() {
     const fetchFreelancers = async () => {
       try {
         setLoading(true);
-        const data = await apiCall("/users/freelancers");
+        const data = await apiCall("/api/users/freelancers");
         if (data.status === "success") {
           setFreelancers(data.data || []);
         }

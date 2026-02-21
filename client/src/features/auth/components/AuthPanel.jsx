@@ -16,7 +16,7 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess, allowTabSwitch 
     setLoading(true);
 
     try {
-      const data = await apiAuthCall(`/auth/${endpoint}`, body);
+      const data = await apiAuthCall(`/api/auth/${endpoint}`, body);
       const user = data.data?.user || data.user;
 
       if (user && onAuthSuccess) {

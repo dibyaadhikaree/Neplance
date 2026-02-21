@@ -66,7 +66,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
   const handleSubmitProposal = async (proposalData) => {
     setSubmitting(true);
     try {
-      await apiCall("/proposals", {
+      await apiCall("/api/proposals", {
         method: "POST",
         body: JSON.stringify(proposalData),
       });
@@ -79,7 +79,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
 
   const handleSubmitMilestone = async (jobId, milestoneIndex, evidence) => {
     try {
-      await apiCall(`/jobs/${jobId}/milestones/${milestoneIndex}/submit`, {
+      await apiCall(`/api/jobs/${jobId}/milestones/${milestoneIndex}/submit`, {
         method: "PATCH",
         body: JSON.stringify({ evidence }),
       });

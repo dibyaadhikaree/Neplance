@@ -10,7 +10,7 @@ export const useClientDashboard = () => {
   const fetchContracts = useCallback(async () => {
     try {
       setLoadingContracts(true);
-      const jobsData = await apiCall("/jobs/myJobs");
+      const jobsData = await apiCall("/api/jobs/myJobs");
       if (jobsData.status === "success") {
         setContracts(jobsData.data);
       }
@@ -33,7 +33,7 @@ export const useClientDashboard = () => {
         contractList.map(async (contract) => {
           try {
             const proposalsData = await apiCall(
-              `/proposals/job/${contract._id}`
+              `/api/proposals/job/${contract._id}`
             );
             if (proposalsData.status === "success") {
               const pendingOnly = (proposalsData.data || []).filter(
