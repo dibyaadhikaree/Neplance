@@ -9,6 +9,34 @@ import {
   hasMilestones,
 } from "@/shared/utils/job";
 
+const formatBudget = (budget, budgetType) => {
+  if (!budget?.min) return "Negotiable";
+  const currency = budget.currency || "NPR";
+  if (budgetType === "hourly") {
+    return `${currency} ${budget.min.toLocaleString()}-${budget.max?.toLocaleString() || "N/A"}/hr`;
+  }
+  if (budget.max) {
+    return `${currency} ${budget.min.toLocaleString()}-${budget.max.toLocaleString()}`;
+  }
+  return `${currency} ${budget.min.toLocaleString()}`;
+};
+
+const formatLocation = (location) => {
+  if (!location) return null;
+  if (location.isRemote) return "Remote";
+  const parts = [location.address, location.city, location.district, location.province].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
+};
+
+const formatDate = (date) => {
+  if (!date) return null;
+  return new Date(date).toLocaleDateString("en-NP", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
 export const JobModal = ({
   job,
   mode = "view",
@@ -52,6 +80,11 @@ export const JobModal = ({
     userRole === "freelancer" && job.status === "ACTIVE";
   const canApproveMilestone = userRole === "client";
   const creatorLabel = getCreatorLabel(job.creatorAddress);
+  const budgetDisplay = job.budget
+    ? formatBudget(job.budget, job.budgetType)
+    : (hasMilestones(milestones) ? `NPR ${totalValue.toLocaleString()}` : "Negotiable");
+  const locationText = formatLocation(job.location);
+  const deadlineText = formatDate(job.deadline);
 
   const handleEvidenceChange = (index, value) => {
     setEvidenceInputs((prev) => ({
@@ -79,7 +112,7 @@ export const JobModal = ({
       >
         <div className="proposal-modal-header">
           <h2 id="modal-title" className="proposal-modal-title">
-            {isProposalMode ? "Submit Proposal" : "Contract Details"}
+            {isProposalMode ? "Submit Proposal" : "Job Details"}
           </h2>
         </div>
 
@@ -103,27 +136,55 @@ export const JobModal = ({
               className="job-card-budget"
               style={{ fontSize: "1.1rem", whiteSpace: "nowrap" }}
             >
-              {hasMilestones(milestones)
-                ? `NPR ${totalValue.toLocaleString()}`
-                : "N/A"}
+              {budgetDisplay}
             </span>
           </div>
 
           <div
             style={{
               display: "flex",
-              gap: "1rem",
-              margin: "1rem 0",
-              padding: "0.75rem",
-              background: "rgba(0,0,0,0.03)",
-              borderRadius: "4px",
-              border: "1px solid var(--color-border)",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+              margin: "0.75rem 0",
               alignItems: "center",
             }}
           >
             <span className={`status-badge status-${job.status?.toLowerCase()}`}>
               {formatStatus(job.status)}
             </span>
+            {job.jobType && (
+              <span className="badge" style={{ background: "var(--color-secondary-lightest)", color: "var(--color-secondary)" }}>
+                {job.jobType}
+              </span>
+            )}
+            {job.category && (
+              <span className="badge" style={{ background: "var(--color-primary-lightest)", color: "var(--color-primary)" }}>
+                {job.category}
+              </span>
+            )}
+            {job.experienceLevel && (
+              <span className="badge" style={{ background: "var(--color-warning-lightest)", color: "var(--color-warning-dark)" }}>
+                {job.experienceLevel}
+              </span>
+            )}
+            {job.isUrgent && (
+              <span className="badge badge-error">Urgent</span>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              margin: "0.75rem 0",
+              padding: "0.75rem",
+              background: "rgba(0,0,0,0.03)",
+              borderRadius: "4px",
+              border: "1px solid var(--color-border)",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
             {creatorLabel && (
               <span
                 className="profile-role-badge"
@@ -133,6 +194,16 @@ export const JobModal = ({
                 <span style={{ color: "var(--color-primary)" }}>
                   {creatorLabel}
                 </span>
+              </span>
+            )}
+            {locationText && (
+              <span style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
+                📍 {locationText}
+              </span>
+            )}
+            {deadlineText && (
+              <span style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
+                📅 Due: {deadlineText}
               </span>
             )}
             {hasMilestones(milestones) && (
@@ -157,8 +228,34 @@ export const JobModal = ({
             </p>
           )}
 
+          {job.requiredSkills?.length > 0 && (
+            <div style={{ marginTop: "0.75rem" }}>
+              <strong style={{ fontSize: "0.875rem" }}>Required Skills:</strong>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
+                {job.requiredSkills.map((skill) => (
+                  <span key={skill} className="badge" style={{ background: "var(--color-border-light)" }}>
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {job.tags?.length > 0 && (
+            <div style={{ marginTop: "0.75rem" }}>
+              <strong style={{ fontSize: "0.875rem" }}>Tags:</strong>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
+                {job.tags.map((tag) => (
+                  <span key={tag} className="badge" style={{ background: "var(--color-border-light)" }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {milestones.length > 0 ? (
-            <div className="proposal-modal-job-description">
+            <div className="proposal-modal-job-description" style={{ marginTop: "1rem" }}>
               <strong>Milestones</strong>
               <ul style={{ marginTop: "0.5rem", paddingLeft: "1.25rem" }}>
                 {milestones.map((milestone, index) => (

@@ -9,13 +9,12 @@ import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancer
 import { apiCall } from "@/services/api";
 
 export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
-  const [activeTab, setActiveTab] = useState("available");
+  const [activeTab, setActiveTab] = useState("proposals");
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalMode, setModalMode] = useState("view");
   const [submitting, setSubmitting] = useState(false);
 
   const {
-    availableJobs,
     proposedJobs,
     ongoingJobs,
     loading,
@@ -92,21 +91,19 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
 
   const getEmptyState = () => {
     switch (activeTab) {
-      case "available": return EMPTY_STATES.available;
-      case "proposed": return EMPTY_STATES.proposed;
+      case "proposals": return EMPTY_STATES.proposed;
       case "ongoing": return EMPTY_STATES.ongoing;
       default: return {};
     }
   };
 
-  const renderJobCards = (jobs, variant = "find") =>
+  const renderJobCards = (jobs, variant = "current") =>
     jobs.length > 0 ? (
       jobs.map((job) => (
         <JobCard
           key={job._id}
           job={job}
           variant={variant}
-          onSubmitProposal={handleOpenProposalModal}
           onViewDetails={handleViewJobDetails}
         />
       ))
@@ -128,8 +125,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
     );
 
   const tabs = [
-    { key: "available", label: "Find Work" },
-    { key: "proposed", label: "My Proposals" },
+    { key: "proposals", label: "My Proposals" },
     { key: "ongoing", label: "Active Contracts" },
   ];
 
@@ -140,8 +136,8 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
       <div className="dashboard">
         <div className="dashboard-content">
           <div className="dashboard-header">
-            <h2 className="dashboard-title">My Jobs</h2>
-            <p className="dashboard-subtitle">Find work and manage your proposals</p>
+            <h2 className="dashboard-title">Freelancer Dashboard</h2>
+            <p className="dashboard-subtitle">Manage your proposals and active contracts</p>
           </div>
 
           <nav className="tab-nav">
@@ -158,8 +154,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
           </nav>
 
           <div className="cards-list">
-            {activeTab === "available" && renderJobCards(availableJobs, "find")}
-            {activeTab === "proposed" && renderProposalCards(proposedJobs)}
+            {activeTab === "proposals" && renderProposalCards(proposedJobs)}
             {activeTab === "ongoing" && renderJobCards(ongoingJobs, "current")}
           </div>
         </div>
@@ -179,5 +174,3 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
     </>
   );
 };
-
-

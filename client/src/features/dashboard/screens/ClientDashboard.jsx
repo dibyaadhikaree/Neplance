@@ -8,6 +8,7 @@ import { JobModal } from "@/features/dashboard/components/JobModal";
 import { apiCall } from "@/services/api";
 import { Input } from "@/shared/ui/UI";
 import { useClientDashboard } from "@/features/dashboard/hooks/useClientDashboard";
+import { JOB_CATEGORIES, EXPERIENCE_LEVELS, NEPAL_PROVINCES } from "@/shared/constants/jobCategories";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const [activeTab, setActiveTab] = useState("create");
@@ -18,7 +19,21 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const [formState, setFormState] = useState({
     title: "",
     description: "",
-    milestones: [{ title: "", description: "", value: "", dueDate: "" }],
+    jobType: "digital",
+    category: "",
+    subcategory: "",
+    tags: "",
+    requiredSkills: "",
+    experienceLevel: "",
+    budgetType: "fixed",
+    budgetMin: "",
+    budgetMax: "",
+    deadline: "",
+    isUrgent: false,
+    locationCity: "",
+    locationDistrict: "",
+    locationProvince: "",
+    milestones: [{ id: Date.now(), title: "", description: "", value: "", dueDate: "" }],
   });
 
   const {
@@ -72,6 +87,28 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     }
   };
 
+  const handlePostDraftJob = async (job) => {
+    if (!confirm("Are you sure you want to post this job?")) return;
+    try {
+      await apiCall(`/jobs/${job._id}/publish`, { method: "PATCH" });
+      await fetchContracts();
+    } catch (err) {
+      console.error("Failed to post job:", err);
+      alert(err?.message || "Failed to post job");
+    }
+  };
+
+  const handleDeleteJob = async (job) => {
+    if (!confirm("Are you sure you want to delete this draft?")) return;
+    try {
+      await apiCall(`/jobs/${job._id}`, { method: "DELETE" });
+      await fetchContracts();
+    } catch (err) {
+      console.error("Failed to delete job:", err);
+      alert(err?.message || "Failed to delete job");
+    }
+  };
+
   const handleFormChange = (field, value) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
@@ -89,7 +126,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       ...prev,
       milestones: [
         ...prev.milestones,
-        { title: "", description: "", value: "", dueDate: "" },
+        { id: Date.now(), title: "", description: "", value: "", dueDate: "" },
       ],
     }));
   };
@@ -101,63 +138,159 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     }));
   };
 
-  const handleCreateContract = async (e) => {
-    e.preventDefault();
+  const buildJobPayload = (status) => {
+    const tags = formState.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
 
+    const requiredSkills = formState.requiredSkills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const location =
+      formState.jobType === "physical"
+        ? {
+            city: formState.locationCity.trim() || undefined,
+            district: formState.locationDistrict.trim() || undefined,
+            province: formState.locationProvince.trim() || undefined,
+          }
+        : undefined;
+
+    const milestones = formState.milestones
+      .filter((m) => m.title.trim())
+      .map((m) => ({
+        title: m.title.trim(),
+        description: m.description.trim(),
+        value: Number(m.value) || 0,
+        dueDate: formatDateValue(m.dueDate),
+      }));
+
+    return {
+      title: formState.title.trim(),
+      description: formState.description.trim(),
+      jobType: formState.jobType,
+      category: formState.category.trim(),
+      subcategory: formState.subcategory.trim() || undefined,
+      tags,
+      requiredSkills,
+      experienceLevel: formState.experienceLevel || undefined,
+      budgetType: formState.budgetType,
+      budget: {
+        min: Number(formState.budgetMin),
+        max: formState.budgetMax ? Number(formState.budgetMax) : undefined,
+        currency: "NPR",
+      },
+      deadline: formState.deadline || undefined,
+      isUrgent: formState.isUrgent,
+      location,
+      milestones,
+      status,
+    };
+  };
+
+  const resetForm = () => {
+    setFormState({
+      title: "",
+      description: "",
+      jobType: "digital",
+      category: "",
+      subcategory: "",
+      tags: "",
+      requiredSkills: "",
+      experienceLevel: "",
+      budgetType: "fixed",
+      budgetMin: "",
+      budgetMax: "",
+      deadline: "",
+      isUrgent: false,
+      locationCity: "",
+      locationDistrict: "",
+      locationProvince: "",
+      milestones: [{ id: Date.now(), title: "", description: "", value: "", dueDate: "" }],
+    });
+    setFormErrors([]);
+    setMilestoneErrors({});
+  };
+
+  const validateForm = (requireMilestones = true) => {
     const errors = [];
     const validationErrors = {};
 
     if (!formState.title.trim()) {
-      errors.push("Contract title is required.");
+      errors.push("Job title is required.");
     }
 
-    formState.milestones.forEach((milestone, index) => {
-      const entryErrors = [];
-      if (!milestone.title.trim()) entryErrors.push("Title is required.");
-      if (!milestone.value || Number(milestone.value) <= 0)
-        entryErrors.push("Value must be greater than 0.");
-      if (entryErrors.length > 0) validationErrors[index] = entryErrors;
-    });
+    if (!formState.category) {
+      errors.push("Category is required.");
+    }
 
-    const validMilestones = formState.milestones.filter((m) => m.title.trim());
-    if (validMilestones.length === 0) {
-      errors.push("Add at least one milestone with a title and value.");
+    if (!formState.budgetMin || Number(formState.budgetMin) <= 0) {
+      errors.push("Minimum budget is required.");
+    }
+
+    if (requireMilestones) {
+      formState.milestones.forEach((milestone, index) => {
+        const entryErrors = [];
+        if (!milestone.title.trim()) entryErrors.push("Title is required.");
+        if (!milestone.value || Number(milestone.value) <= 0)
+          entryErrors.push("Value must be greater than 0.");
+        if (entryErrors.length > 0) validationErrors[index] = entryErrors;
+      });
+
+      const validMilestones = formState.milestones.filter((m) => m.title.trim());
+      if (validMilestones.length === 0) {
+        errors.push("Add at least one milestone with a title and value.");
+      }
     }
 
     setFormErrors(errors);
     setMilestoneErrors(validationErrors);
-    if (errors.length > 0 || Object.keys(validationErrors).length > 0) return;
+    return errors.length === 0 && Object.keys(validationErrors).length === 0;
+  };
 
-    const milestones = validMilestones.map((m) => ({
-      title: m.title.trim(),
-      description: m.description.trim(),
-      value: Number(m.value) || 0,
-      dueDate: formatDateValue(m.dueDate),
-    }));
+  const handleSaveDraft = async () => {
+    if (!formState.title.trim()) {
+      setFormErrors(["Job title is required to save as draft."]);
+      return;
+    }
 
     setSubmitting(true);
     try {
       setFormErrors([]);
       await apiCall("/jobs", {
         method: "POST",
-        body: JSON.stringify({
-          title: formState.title.trim(),
-          description: formState.description.trim(),
-          milestones,
-        }),
+        body: JSON.stringify(buildJobPayload("DRAFT")),
       });
-      setFormState({
-        title: "",
-        description: "",
-        milestones: [{ title: "", description: "", value: "", dueDate: "" }],
-      });
+      resetForm();
       await fetchContracts();
       setActiveTab("contracts");
     } catch (err) {
-      console.error("Failed to create contract:", err);
-      setFormErrors([
-        err?.message || "Failed to create contract. Please try again.",
-      ]);
+      console.error("Failed to save draft:", err);
+      setFormErrors([err?.message || "Failed to save draft. Please try again."]);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePostJob = async (e) => {
+    e.preventDefault();
+    if (!validateForm(true)) return;
+
+    setSubmitting(true);
+    try {
+      setFormErrors([]);
+      await apiCall("/jobs", {
+        method: "POST",
+        body: JSON.stringify(buildJobPayload("OPEN")),
+      });
+      resetForm();
+      await fetchContracts();
+      setActiveTab("contracts");
+    } catch (err) {
+      console.error("Failed to post job:", err);
+      setFormErrors([err?.message || "Failed to post job. Please try again."]);
     } finally {
       setSubmitting(false);
     }
@@ -258,13 +391,13 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
           {/* Tabs */}
           <nav className="tab-nav">
-            <button
-              type="button"
-              className={`tab-btn ${activeTab === "create" ? "active" : ""}`}
-              onClick={() => setActiveTab("create")}
-            >
-              Create Contract
-            </button>
+              <button
+                type="button"
+                className={`tab-btn ${activeTab === "create" ? "active" : ""}`}
+                onClick={() => setActiveTab("create")}
+              >
+                Post Job
+              </button>
             <button
               type="button"
               className={`tab-btn ${activeTab === "contracts" ? "active" : ""}`}
@@ -283,7 +416,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
           {/* Create Contract tab */}
           {activeTab === "create" && (
-            <form className="card" onSubmit={handleCreateContract}>
+            <form className="card" onSubmit={handlePostJob}>
               {formErrors.length > 0 && (
                 <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>
                   {formErrors.map((error) => (
@@ -291,14 +424,20 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                   ))}
                 </div>
               )}
-              <Input
-                label="Contract Title"
-                value={formState.title}
-                onChange={(e) => handleFormChange("title", e.target.value)}
-                placeholder="e.g. Landing page redesign"
-                required
-                disabled={submitting}
-              />
+              
+              <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+                <div style={{ flex: "1", minWidth: "200px" }}>
+                  <Input
+                    label="Contract Title"
+                    value={formState.title}
+                    onChange={(e) => handleFormChange("title", e.target.value)}
+                    placeholder="e.g. Landing page redesign"
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+
               <Input
                 label="Description"
                 value={formState.description}
@@ -306,6 +445,187 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                 placeholder="Describe the work scope"
                 disabled={submitting}
               />
+
+              <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+                <div style={{ flex: "1", minWidth: "150px" }}>
+                  <label htmlFor="jobType" style={{ display: "block", marginBottom: "var(--space-1)", fontWeight: "var(--font-weight-medium)" }}>
+                    Job Type
+                  </label>
+                  <select
+                    id="jobType"
+                    value={formState.jobType}
+                    onChange={(e) => handleFormChange("jobType", e.target.value)}
+                    disabled={submitting}
+                    style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)" }}
+                  >
+                    <option value="digital">Digital</option>
+                    <option value="physical">Physical</option>
+                  </select>
+                </div>
+                <div style={{ flex: "2", minWidth: "200px" }}>
+                  <label htmlFor="category" style={{ display: "block", marginBottom: "var(--space-1)", fontWeight: "var(--font-weight-medium)" }}>
+                    Category <span style={{ color: "var(--color-error)" }}>*</span>
+                  </label>
+                  <select
+                    id="category"
+                    value={formState.category}
+                    onChange={(e) => handleFormChange("category", e.target.value)}
+                    disabled={submitting}
+                    required
+                    style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)" }}
+                  >
+                    <option value="">Select Category</option>
+                    {JOB_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ flex: "1", minWidth: "150px" }}>
+                  <Input
+                    label="Subcategory"
+                    value={formState.subcategory}
+                    onChange={(e) => handleFormChange("subcategory", e.target.value)}
+                    placeholder="e.g. Frontend"
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+                <div style={{ flex: "1", minWidth: "200px" }}>
+                  <Input
+                    label="Tags (comma separated)"
+                    value={formState.tags}
+                    onChange={(e) => handleFormChange("tags", e.target.value)}
+                    placeholder="e.g. React, Node.js, MongoDB"
+                    disabled={submitting}
+                  />
+                </div>
+                <div style={{ flex: "1", minWidth: "200px" }}>
+                  <Input
+                    label="Required Skills (comma separated)"
+                    value={formState.requiredSkills}
+                    onChange={(e) => handleFormChange("requiredSkills", e.target.value)}
+                    placeholder="e.g. JavaScript, CSS"
+                    disabled={submitting}
+                  />
+                </div>
+                <div style={{ flex: "1", minWidth: "150px" }}>
+                  <label htmlFor="experienceLevel" style={{ display: "block", marginBottom: "var(--space-1)", fontWeight: "var(--font-weight-medium)" }}>
+                    Experience Level
+                  </label>
+                  <select
+                    id="experienceLevel"
+                    value={formState.experienceLevel}
+                    onChange={(e) => handleFormChange("experienceLevel", e.target.value)}
+                    disabled={submitting}
+                    style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)" }}
+                  >
+                    <option value="">Any</option>
+                    <option value="entry">Entry Level</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="expert">Expert</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", alignItems: "flex-end" }}>
+                <div style={{ flex: "1", minWidth: "120px" }}>
+                  <label htmlFor="budgetType" style={{ display: "block", marginBottom: "var(--space-1)", fontWeight: "var(--font-weight-medium)" }}>
+                    Budget Type
+                  </label>
+                  <select
+                    id="budgetType"
+                    value={formState.budgetType}
+                    onChange={(e) => handleFormChange("budgetType", e.target.value)}
+                    disabled={submitting}
+                    style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)" }}
+                  >
+                    <option value="fixed">Fixed</option>
+                    <option value="hourly">Hourly</option>
+                  </select>
+                </div>
+                <div style={{ flex: "1", minWidth: "150px" }}>
+                  <Input
+                    label="Budget Min (NPR)"
+                    type="number"
+                    value={formState.budgetMin}
+                    onChange={(e) => handleFormChange("budgetMin", e.target.value)}
+                    placeholder="5000"
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+                <div style={{ flex: "1", minWidth: "150px" }}>
+                  <Input
+                    label="Budget Max (NPR)"
+                    type="number"
+                    value={formState.budgetMax}
+                    onChange={(e) => handleFormChange("budgetMax", e.target.value)}
+                    placeholder="10000"
+                    disabled={submitting}
+                  />
+                </div>
+                <div style={{ flex: "1", minWidth: "150px" }}>
+                  <Input
+                    label="Deadline"
+                    type="date"
+                    value={formState.deadline}
+                    onChange={(e) => handleFormChange("deadline", e.target.value)}
+                    disabled={submitting}
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-1)" }}>
+                  <input
+                    type="checkbox"
+                    id="isUrgent"
+                    checked={formState.isUrgent}
+                    onChange={(e) => handleFormChange("isUrgent", e.target.checked)}
+                    disabled={submitting}
+                  />
+                  <label htmlFor="isUrgent" style={{ cursor: "pointer" }}>Urgent</label>
+                </div>
+              </div>
+
+              {formState.jobType === "physical" && (
+                <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", padding: "var(--space-3)", background: "var(--color-bg-secondary)", borderRadius: "var(--radius)" }}>
+                  <div style={{ flex: "1", minWidth: "150px" }}>
+                    <Input
+                      label="City"
+                      value={formState.locationCity}
+                      onChange={(e) => handleFormChange("locationCity", e.target.value)}
+                      placeholder="Kathmandu"
+                      disabled={submitting}
+                    />
+                  </div>
+                  <div style={{ flex: "1", minWidth: "150px" }}>
+                    <Input
+                      label="District"
+                      value={formState.locationDistrict}
+                      onChange={(e) => handleFormChange("locationDistrict", e.target.value)}
+                      placeholder="Kathmandu"
+                      disabled={submitting}
+                    />
+                  </div>
+                  <div style={{ flex: "1", minWidth: "150px" }}>
+                    <label htmlFor="locationProvince" style={{ display: "block", marginBottom: "var(--space-1)", fontWeight: "var(--font-weight-medium)" }}>
+                      Province
+                    </label>
+                    <select
+                      id="locationProvince"
+                      value={formState.locationProvince}
+                      onChange={(e) => handleFormChange("locationProvince", e.target.value)}
+                      disabled={submitting}
+                      style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)" }}
+                    >
+                      <option value="">Select Province</option>
+                      {NEPAL_PROVINCES.map((province) => (
+                        <option key={province} value={province}>{province}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
 
               <div style={{ marginTop: "var(--space-4)" }}>
                 <div
@@ -327,11 +647,11 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                 </div>
 
                 {formState.milestones.map((milestone, index) => (
-                  <div key={`milestone-${index}`} className="card-sm">
+                  <div key={milestone.id} className="card-sm">
                     {milestoneErrors[index] && (
                       <div className="card-error" style={{ marginBottom: "var(--space-3)" }}>
                         {milestoneErrors[index].map((error) => (
-                          <p key={`${index}-${error}`} style={{ margin: 0 }}>{error}</p>
+                          <p key={error} style={{ margin: 0 }}>{error}</p>
                         ))}
                       </div>
                     )}
@@ -393,13 +713,21 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                 ))}
               </div>
 
-              <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{ marginTop: "var(--space-4)", display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={handleSaveDraft}
+                  disabled={submitting}
+                >
+                  {submitting ? "Saving..." : "Save as Draft"}
+                </button>
                 <button
                   type="submit"
                   className="btn btn-primary"
                   disabled={submitting}
                 >
-                  {submitting ? "Creating..." : "Create Contract"}
+                  {submitting ? "Posting..." : "Post Job"}
                 </button>
               </div>
             </form>
@@ -419,12 +747,14 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     job={job}
                     variant="default"
                     onViewDetails={handleViewDetails}
+                    onPostJob={handlePostDraftJob}
+                    onDeleteJob={handleDeleteJob}
                   />
                 ))
               ) : (
                 <EmptyState
-                  title="No Contracts Yet"
-                  description="Create a contract to start receiving proposals."
+                  title="No Jobs Yet"
+                  description="Post a job to start receiving proposals."
                 />
               )}
             </div>

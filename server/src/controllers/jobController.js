@@ -12,10 +12,23 @@ const createJob = catchAsync(async (req, res) => {
   const {
     title,
     description,
+    jobType = "digital",
+    category,
+    subcategory,
+    tags = [],
+    requiredSkills = [],
+    experienceLevel,
+    budgetType = "fixed",
+    budget,
+    deadline,
+    isUrgent = false,
+    location,
+    isPublic = true,
     milestones = [],
     terms,
     attachments = [],
     parties = [],
+    status = "DRAFT",
   } = req.body;
 
   const creatorAddress = req.user.id.toString();
@@ -37,11 +50,25 @@ const createJob = catchAsync(async (req, res) => {
       })),
   ];
 
+  const jobStatus = ["DRAFT", "OPEN"].includes(status) ? status : "DRAFT";
+
   const data = await Job.create({
     title,
     description,
     creatorAddress,
-    status: "DRAFT",
+    status: jobStatus,
+    jobType,
+    category,
+    subcategory,
+    tags,
+    requiredSkills,
+    experienceLevel,
+    budgetType,
+    budget,
+    deadline,
+    isUrgent,
+    location,
+    isPublic,
     milestones,
     parties: normalizedParties,
     terms,
@@ -50,37 +77,203 @@ const createJob = catchAsync(async (req, res) => {
     updatedAt: Date.now(),
   });
 
-  res.status(200).json({
+  res.status(201).json({
     status: "success",
     data,
   });
 });
 
 const findJobs = catchAsync(async (req, res) => {
-  const data = await Job.find({}).populate("creatorAddress", "name email");
+  const {
+    category,
+    jobType,
+    experienceLevel,
+    budgetType,
+    minBudget,
+    maxBudget,
+    city,
+    district,
+    province,
+    isRemote,
+    tags,
+    skills,
+    search,
+    isUrgent,
+    isFeatured,
+    sort = "-createdAt",
+    page = 1,
+    limit = 20,
+  } = req.query;
 
-  if (!data) throw new AppError("No Job found", 400);
+  const query = { isPublic: true, status: { $in: ["OPEN", "ACTIVE"] } };
+
+  if (category) query.category = category;
+  if (jobType) query.jobType = jobType;
+  if (experienceLevel) query.experienceLevel = experienceLevel;
+  if (budgetType) query.budgetType = budgetType;
+  if (isUrgent === "true") query.isUrgent = true;
+  if (isFeatured === "true") query.isFeatured = true;
+
+  if (minBudget || maxBudget) {
+    query["budget.min"] = {};
+    if (minBudget) query["budget.min"].$gte = Number(minBudget);
+    if (maxBudget) query["budget.max"] = { $lte: Number(maxBudget) };
+  }
+
+  if (city) query["location.city"] = new RegExp(city, "i");
+  if (district) query["location.district"] = new RegExp(district, "i");
+  if (province) query["location.province"] = province;
+  if (isRemote === "true") query["location.isRemote"] = true;
+
+  if (tags) {
+    const tagArray = tags.split(",").map((t) => t.trim());
+    query.tags = { $in: tagArray };
+  }
+
+  if (skills) {
+    const skillArray = skills.split(",").map((s) => s.trim());
+    query.requiredSkills = { $in: skillArray };
+  }
+
+  if (search) {
+    query.$or = [
+      { title: new RegExp(search, "i") },
+      { description: new RegExp(search, "i") },
+      { tags: new RegExp(search, "i") },
+    ];
+  }
+
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [data, total] = await Promise.all([
+    Job.find(query)
+      .populate("creatorAddress", "name email")
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit)),
+    Job.countDocuments(query),
+  ]);
 
   res.status(200).json({
     status: "success",
+    results: data.length,
+    total,
+    page: Number(page),
+    pages: Math.ceil(total / Number(limit)),
     data,
   });
 });
+
 const findMyJobs = catchAsync(async (req, res) => {
-  const data = await Job.find({ creatorAddress: req.user.id.toString() }).populate(
-    "creatorAddress",
-    "name email"
-  );
+  const { status, sort = "-createdAt" } = req.query;
 
-  if (!data) throw new AppError("No Job found", 400);
+  const query = { creatorAddress: req.user.id.toString() };
+  if (status) query.status = status;
+
+  const data = await Job.find(query)
+    .populate("creatorAddress", "name email")
+    .populate("hiredFreelancer", "name email")
+    .sort(sort);
 
   res.status(200).json({
     status: "success",
+    results: data.length,
     data,
   });
 });
 
-// PATCH /api/jobs/:id/mark-completed
+const getJob = catchAsync(async (req, res) => {
+  const job = await Job.findById(req.params.id)
+    .populate("creatorAddress", "name email")
+    .populate("hiredFreelancer", "name email");
+
+  if (!job) throw new AppError("Job not found", 404);
+
+  if (job.isPublic) {
+    job.viewCount += 1;
+    await job.save();
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: job,
+  });
+});
+
+const updateJob = catchAsync(async (req, res) => {
+  const jobId = req.params.id;
+  const job = await getJobOrThrow(jobId);
+  ensureCreator(job, req.user.id, "You can only update your own jobs");
+  ensureStatus(job, "DRAFT", "Can only update draft jobs");
+
+  const allowedUpdates = [
+    "title", "description", "jobType", "category", "subcategory",
+    "tags", "requiredSkills", "experienceLevel", "budgetType", "budget",
+    "deadline", "isUrgent", "location", "isPublic", "milestones",
+    "terms", "attachments",
+  ];
+
+  const updates = {};
+  allowedUpdates.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field];
+    }
+  });
+
+  updates.updatedAt = Date.now();
+
+  const updatedJob = await Job.findByIdAndUpdate(jobId, updates, {
+    new: true,
+    runValidators: true,
+  }).populate("creatorAddress", "name email");
+
+  res.status(200).json({
+    status: "success",
+    data: updatedJob,
+  });
+});
+
+const publishJob = catchAsync(async (req, res) => {
+  const jobId = req.params.id;
+  const job = await getJobOrThrow(jobId);
+  ensureCreator(job, req.user.id, "You can only publish your own jobs");
+
+  if (job.status !== "DRAFT") {
+    throw new AppError("Only draft jobs can be published", 400);
+  }
+
+  if (!job.category || !job.budget?.min) {
+    throw new AppError("Job must have category and budget to be published", 400);
+  }
+
+  job.status = "OPEN";
+  job.updatedAt = Date.now();
+  await job.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Job published successfully",
+    data: job,
+  });
+});
+
+const deleteJob = catchAsync(async (req, res) => {
+  const jobId = req.params.id;
+  const job = await getJobOrThrow(jobId);
+  ensureCreator(job, req.user.id, "You can only delete your own jobs");
+
+  if (job.status === "ACTIVE") {
+    throw new AppError("Cannot delete active jobs", 400);
+  }
+
+  await Job.findByIdAndDelete(jobId);
+
+  res.status(204).json({
+    status: "success",
+    data: null,
+  });
+});
+
 const markCompleted = catchAsync(async (req, res, next) => {
   const jobId = req.params.id;
 
@@ -123,7 +316,6 @@ const approveCompletion = catchAsync(async (req, res, next) => {
   });
 });
 
-// PATCH /api/jobs/:id/milestones/:index/submit
 const submitMilestone = catchAsync(async (req, res, next) => {
   const { id: jobId, index } = req.params;
   const { evidence } = req.body;
@@ -163,7 +355,6 @@ const submitMilestone = catchAsync(async (req, res, next) => {
   });
 });
 
-// PATCH /api/jobs/:id/milestones/:index/approve
 const approveMilestone = catchAsync(async (req, res, next) => {
   const { id: jobId, index } = req.params;
 
@@ -211,12 +402,41 @@ const approveMilestone = catchAsync(async (req, res, next) => {
   });
 });
 
+const getJobCategories = catchAsync(async (req, res) => {
+  const categories = await Job.distinct("category");
+  res.status(200).json({
+    status: "success",
+    data: categories,
+  });
+});
+
+const incrementProposalCount = catchAsync(async (req, res) => {
+  const job = await Job.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { proposalCount: 1 } },
+    { new: true }
+  );
+
+  if (!job) throw new AppError("Job not found", 404);
+
+  res.status(200).json({
+    status: "success",
+    proposalCount: job.proposalCount,
+  });
+});
+
 module.exports = {
   createJob,
   findJobs,
+  findMyJobs,
+  getJob,
+  updateJob,
+  publishJob,
+  deleteJob,
   markCompleted,
   approveCompletion,
   submitMilestone,
   approveMilestone,
-  findMyJobs,
+  getJobCategories,
+  incrementProposalCount,
 };

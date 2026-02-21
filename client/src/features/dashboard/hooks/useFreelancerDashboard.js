@@ -6,10 +6,6 @@ import { useCallback, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
 
 const EMPTY_STATES = {
-  available: {
-    title: "No Contracts Available",
-    description: "Check back later for new opportunities.",
-  },
   proposed: {
     title: "No Proposals",
     description: "Submit proposals on available contracts to see them here.",
@@ -21,7 +17,6 @@ const EMPTY_STATES = {
 };
 
 export function useFreelancerDashboard() {
-  const [availableJobs, setAvailableJobs] = useState([]);
   const [proposedJobs, setProposedJobs] = useState([]);
   const [ongoingJobs, setOngoingJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,21 +27,12 @@ export function useFreelancerDashboard() {
       setLoading(true);
       setError(null);
 
-      // Fetch available contracts
-      const jobsData = await apiCall("/jobs");
-      if (jobsData.status === "success") {
-        setAvailableJobs(jobsData.data.filter((job) => job.status === "DRAFT"));
-      }
-
-      // Fetch my proposals
       const proposalsData = await apiCall("/proposals/myProposals");
       if (proposalsData.status === "success") {
         const proposals = proposalsData.data;
 
-        // Filter pending proposals
         setProposedJobs(proposals.filter((p) => p.status === "pending"));
 
-        // Filter and map accepted proposals (ongoing contracts)
         const ongoing = proposals
           .filter(
             (p) =>
@@ -69,13 +55,11 @@ export function useFreelancerDashboard() {
     }
   }, []);
 
-  // Initial fetch
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
   return {
-    availableJobs,
     proposedJobs,
     ongoingJobs,
     loading,
