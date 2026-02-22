@@ -48,6 +48,10 @@ export const JobModal = ({
   userRole,
 }) => {
   const [amount, setAmount] = useState("");
+  const [coverLetter, setCoverLetter] = useState("");
+  const [deliveryDays, setDeliveryDays] = useState("");
+  const [revisionsIncluded, setRevisionsIncluded] = useState("0");
+  const [attachments, setAttachments] = useState("");
   const [error, setError] = useState("");
   const [evidenceInputs, setEvidenceInputs] = useState({});
 
@@ -59,11 +63,23 @@ export const JobModal = ({
       setError("Please enter a valid amount");
       return;
     }
+    if (!coverLetter || coverLetter.trim().length === 0) {
+      setError("Please enter a cover letter");
+      return;
+    }
+    if (!deliveryDays || Number(deliveryDays) <= 0) {
+      setError("Please enter valid delivery days");
+      return;
+    }
 
     try {
       await onSubmit({
         job: job._id,
         amount: Number(amount),
+        coverLetter: coverLetter.trim(),
+        deliveryDays: Number(deliveryDays),
+        revisionsIncluded: Number(revisionsIncluded) || 0,
+        attachments: attachments ? attachments.split(",").map((a) => a.trim()).filter(Boolean) : [],
       });
     } catch (err) {
       setError(err.message || "Failed to submit proposal");
@@ -347,10 +363,71 @@ export const JobModal = ({
               disabled={loading}
             />
 
+            <div style={{ marginTop: "1rem" }}>
+              <label htmlFor="coverLetter" style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+                Cover Letter *
+              </label>
+              <textarea
+                id="coverLetter"
+                value={coverLetter}
+                onChange={(e) => setCoverLetter(e.target.value)}
+                placeholder="Describe why you're the best fit for this job..."
+                rows={5}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem",
+                  borderRadius: "4px",
+                  border: "1px solid var(--color-border)",
+                  fontFamily: "inherit",
+                  fontSize: "0.875rem",
+                  resize: "vertical",
+                }}
+                maxLength={5000}
+                required
+                disabled={loading}
+              />
+              <p style={{ fontSize: "0.75rem", color: "var(--color-text-light)", marginTop: "0.25rem" }}>
+                {coverLetter.length}/5000 characters
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+              <Input
+                type="number"
+                label="Delivery Days *"
+                placeholder="e.g., 7"
+                value={deliveryDays}
+                onChange={(e) => setDeliveryDays(e.target.value)}
+                min="1"
+                required
+                disabled={loading}
+              />
+              <Input
+                type="number"
+                label="Revisions Included"
+                placeholder="e.g., 2"
+                value={revisionsIncluded}
+                onChange={(e) => setRevisionsIncluded(e.target.value)}
+                min="0"
+                disabled={loading}
+              />
+            </div>
+
+            <div style={{ marginTop: "1rem" }}>
+              <Input
+                type="text"
+                label="Attachments (comma-separated URLs)"
+                placeholder="https://example.com/file1.pdf, https://example.com/file2.pdf"
+                value={attachments}
+                onChange={(e) => setAttachments(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
             {error && <p className="proposal-modal-error">{error}</p>}
 
             <div className="proposal-modal-actions">
-              <Button type="submit" disabled={loading || !amount}>
+              <Button type="submit" disabled={loading || !amount || !coverLetter || !deliveryDays}>
                 {loading ? "Submitting..." : "Submit"}
               </Button>
               <Button

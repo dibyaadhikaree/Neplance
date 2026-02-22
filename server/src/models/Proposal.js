@@ -15,7 +15,34 @@ const proposalSchema = new mongoose.Schema({
     enum: ["pending", "accepted", "rejected"],
     default: "pending",
   },
-  amount: Number, //npr
+  amount: Number,
+  coverLetter: {
+    type: String,
+    required: true,
+    maxlength: 5000,
+  },
+  deliveryDays: {
+    type: Number,
+    required: true,
+  },
+  revisionsIncluded: {
+    type: Number,
+    default: 0,
+  },
+  attachments: [String],
+  isRead: {
+    type: Boolean,
+    default: false,
+  },
+  withdrawnAt: Date,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Proposal = mongoose.model("Proposal", proposalSchema);

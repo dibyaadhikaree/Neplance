@@ -17,16 +17,20 @@ const getMyProposals = catchAsync(async (req, res) => {
 });
 
 const createProposal = catchAsync(async (req, res) => {
-  const { job, status, amount } = req.body;
+  const { job, status, amount, coverLetter, deliveryDays, revisionsIncluded, attachments } = req.body;
 
   const data = await Proposal.create({
     freelancer: req.user.id,
     job,
     status,
     amount,
+    coverLetter,
+    deliveryDays,
+    revisionsIncluded,
+    attachments,
   });
 
-  res.status(200).json({
+  res.status(201).json({
     status: "success",
     data,
   });

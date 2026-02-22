@@ -217,7 +217,7 @@ export const JobCard = ({
 };
 
 export const ProposalCard = ({ proposal, onViewDetails }) => {
-  const { job, amount, status } = proposal;
+  const { job, amount, status, coverLetter, deliveryDays, revisionsIncluded, attachments } = proposal;
   const jobTitle = job?.title || "Unknown Contract";
   const creatorLabel = getCreatorLabel(job?.creatorAddress);
   const totalValue = hasMilestones(job?.milestones)
@@ -270,20 +270,44 @@ export const ProposalCard = ({ proposal, onViewDetails }) => {
         <h3 style={{ fontSize: "var(--text-xl)", fontWeight: "var(--font-weight-semibold)", marginBottom: "var(--space-2)" }}>
           {jobTitle}
         </h3>
-        <div style={{ display: "flex", gap: "var(--space-4)", marginBottom: "var(--space-3)" }}>
+        <div style={{ display: "flex", gap: "var(--space-4)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
           <div>
             <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-light)" }}>Your Proposal: </span>
             <span style={{ fontSize: "var(--text-base)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-primary)" }}>
               NPR {amount?.toLocaleString() || "N/A"}
             </span>
           </div>
+          {deliveryDays && (
+            <div>
+              <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-light)" }}>Delivery: </span>
+              <span style={{ fontSize: "var(--text-base)", fontWeight: "var(--font-weight-medium)" }}>
+                {deliveryDays} days
+              </span>
+            </div>
+          )}
+          {revisionsIncluded !== undefined && (
+            <div>
+              <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-light)" }}>Revisions: </span>
+              <span style={{ fontSize: "var(--text-base)", fontWeight: "var(--font-weight-medium)" }}>
+                {revisionsIncluded}
+              </span>
+            </div>
+          )}
         </div>
-        {job?.description && (
-          <p className="text-light">
-            {job.description.length > 120
-              ? `${job.description.slice(0, 120)}...`
-              : job.description}
-          </p>
+        {coverLetter && (
+          <div style={{ marginBottom: "var(--space-3)" }}>
+            <p className="text-light">
+              {coverLetter.length > 150
+                ? `${coverLetter.slice(0, 150)}...`
+                : coverLetter}
+            </p>
+          </div>
+        )}
+        {attachments?.length > 0 && (
+          <div style={{ marginBottom: "var(--space-3)" }}>
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--color-text-light)" }}>Attachments: </span>
+            <span style={{ fontSize: "var(--text-sm)" }}>{attachments.length} file(s)</span>
+          </div>
         )}
       </div>
 
