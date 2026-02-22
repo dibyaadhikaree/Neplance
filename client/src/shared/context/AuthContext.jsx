@@ -41,7 +41,10 @@ export const AuthProvider = ({ children }) => {
     }
 
     const roleList = normalizeRoleList(nextUser.role);
-    const initialRole = getStoredActiveRole(roleList, roleList[0] || "freelancer");
+    const initialRole = getStoredActiveRole(
+      roleList,
+      roleList[0] || "freelancer",
+    );
     const orderedRoles = roleList.length
       ? [initialRole, ...roleList.filter((role) => role !== initialRole)]
       : [initialRole];
@@ -71,41 +74,47 @@ export const AuthProvider = ({ children }) => {
     refreshUser();
   }, [refreshUser]);
 
-  const updateUser = useCallback((nextUser) => {
-    if (!nextUser) {
-      setUser(null);
-      setActiveRole(null);
-      return;
-    }
+  const updateUser = useCallback(
+    (nextUser) => {
+      if (!nextUser) {
+        setUser(null);
+        setActiveRole(null);
+        return;
+      }
 
-    const roleList = normalizeRoleList(nextUser.role);
-    const nextRole = getStoredActiveRole(
-      roleList,
-      activeRole || roleList[0] || "freelancer",
-    );
-    persistActiveRole(nextRole);
-    setActiveRole(nextRole);
-    setUser({
-      ...nextUser,
-      role: [nextRole, ...roleList.filter((role) => role !== nextRole)],
-    });
-  }, [activeRole]);
+      const roleList = normalizeRoleList(nextUser.role);
+      const nextRole = getStoredActiveRole(
+        roleList,
+        activeRole || roleList[0] || "freelancer",
+      );
+      persistActiveRole(nextRole);
+      setActiveRole(nextRole);
+      setUser({
+        ...nextUser,
+        role: [nextRole, ...roleList.filter((role) => role !== nextRole)],
+      });
+    },
+    [activeRole],
+  );
 
-  const switchRole = useCallback((updatedUser) => {
-    const sourceUser = updatedUser || user;
-    if (!sourceUser) return;
+  const switchRole = useCallback(
+    (updatedUser) => {
+      const sourceUser = updatedUser || user;
+      if (!sourceUser) return;
 
-    const roleList = normalizeRoleList(sourceUser.role);
-    const current = activeRole || roleList[0] || "freelancer";
-    const nextRole = getNextRole(current, roleList);
+      const roleList = normalizeRoleList(sourceUser.role);
+      const current = activeRole || roleList[0] || "freelancer";
+      const nextRole = getNextRole(current, roleList);
 
-    persistActiveRole(nextRole);
-    setActiveRole(nextRole);
-    setUser({
-      ...sourceUser,
-      role: [nextRole, ...roleList.filter((role) => role !== nextRole)],
-    });
-  }, [activeRole, user]);
+      persistActiveRole(nextRole);
+      setActiveRole(nextRole);
+      setUser({
+        ...sourceUser,
+        role: [nextRole, ...roleList.filter((role) => role !== nextRole)],
+      });
+    },
+    [activeRole, user],
+  );
 
   const logout = useCallback(async () => {
     await logoutRequest();

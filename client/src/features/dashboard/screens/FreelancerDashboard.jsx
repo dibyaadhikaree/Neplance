@@ -4,32 +4,31 @@ import { useState } from "react";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard, ProposalCard } from "@/features/dashboard/components/JobCard";
-import { JobModal } from "@/features/dashboard/components/JobModal";
+
 import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancerDashboard";
-import { apiCall } from "@/services/api";
 
 export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
   const [activeTab, setActiveTab] = useState("proposals");
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [modalMode, setModalMode] = useState("view");
-  const [submitting, setSubmitting] = useState(false);
 
-  const {
-    proposedJobs,
-    ongoingJobs,
-    loading,
-    error,
-    EMPTY_STATES,
-    refetch,
-  } = useFreelancerDashboard();
+  const { proposedJobs, ongoingJobs, loading, error, EMPTY_STATES } =
+    useFreelancerDashboard();
 
   if (loading) {
     return (
       <>
         <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
         <div className="dashboard">
-          <div className="dashboard-content" style={{ textAlign: "center", padding: "var(--space-16)" }}>
-            <div style={{ fontSize: "var(--text-xl)", fontWeight: "var(--font-weight-semibold)", color: "var(--color-primary)" }}>
+          <div
+            className="dashboard-content"
+            style={{ textAlign: "center", padding: "var(--space-16)" }}
+          >
+            <div
+              style={{
+                fontSize: "var(--text-xl)",
+                fontWeight: "var(--font-weight-semibold)",
+                color: "var(--color-primary)",
+              }}
+            >
               Loading...
             </div>
           </div>
@@ -43,57 +42,32 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
       <>
         <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
         <div className="dashboard">
-          <div className="dashboard-content" style={{ textAlign: "center", padding: "var(--space-16)" }}>
-            <div style={{ color: "var(--color-error)", fontWeight: "var(--font-weight-semibold)" }}>{error}</div>
+          <div
+            className="dashboard-content"
+            style={{ textAlign: "center", padding: "var(--space-16)" }}
+          >
+            <div
+              style={{
+                color: "var(--color-error)",
+                fontWeight: "var(--font-weight-semibold)",
+              }}
+            >
+              {error}
+            </div>
           </div>
         </div>
       </>
     );
   }
 
-  const handleOpenProposalModal = (job) => {
-    setModalMode("proposal");
-    setSelectedJob(job);
-  };
-
-  const handleViewJobDetails = (job) => {
-    setModalMode("view");
-    setSelectedJob(job);
-  };
-
-  const handleCloseModal = () => setSelectedJob(null);
-
-  const handleSubmitProposal = async (proposalData) => {
-    setSubmitting(true);
-    try {
-      await apiCall("/api/proposals", {
-        method: "POST",
-        body: JSON.stringify(proposalData),
-      });
-      setSelectedJob(null);
-      refetch?.();
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSubmitMilestone = async (jobId, milestoneIndex, evidence) => {
-    try {
-      await apiCall(`/api/jobs/${jobId}/milestones/${milestoneIndex}/submit`, {
-        method: "PATCH",
-        body: JSON.stringify({ evidence }),
-      });
-      refetch?.();
-    } catch (err) {
-      console.error("Failed to submit milestone:", err);
-    }
-  };
-
   const getEmptyState = () => {
     switch (activeTab) {
-      case "proposals": return EMPTY_STATES.proposed;
-      case "ongoing": return EMPTY_STATES.ongoing;
-      default: return {};
+      case "proposals":
+        return EMPTY_STATES.proposed;
+      case "ongoing":
+        return EMPTY_STATES.ongoing;
+      default:
+        return {};
     }
   };
 
@@ -104,7 +78,6 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
           key={job._id}
           job={job}
           variant={variant}
-          onViewDetails={handleViewJobDetails}
         />
       ))
     ) : (
@@ -117,7 +90,6 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
         <ProposalCard
           key={proposal._id}
           proposal={proposal}
-          onViewDetails={handleViewJobDetails}
         />
       ))
     ) : (
@@ -137,7 +109,9 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
         <div className="dashboard-content">
           <div className="dashboard-header">
             <h2 className="dashboard-title">Freelancer Dashboard</h2>
-            <p className="dashboard-subtitle">Manage your proposals and active contracts</p>
+            <p className="dashboard-subtitle">
+              Manage your proposals and active contracts
+            </p>
           </div>
 
           <nav className="tab-nav">
@@ -159,18 +133,6 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
           </div>
         </div>
       </div>
-
-      {selectedJob && (
-        <JobModal
-          job={selectedJob}
-          mode={modalMode}
-          onSubmit={handleSubmitProposal}
-          onSubmitMilestone={handleSubmitMilestone}
-          onClose={handleCloseModal}
-          loading={submitting}
-          userRole={user?.role?.[0]}
-        />
-      )}
     </>
   );
 };

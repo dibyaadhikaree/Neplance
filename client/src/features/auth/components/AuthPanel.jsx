@@ -6,7 +6,11 @@ import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 
-export const AuthPanel = ({ initialTab = "login", onAuthSuccess, allowTabSwitch = true }) => {
+export const AuthPanel = ({
+  initialTab = "login",
+  onAuthSuccess,
+  allowTabSwitch = true,
+}) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,7 +52,13 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess, allowTabSwitch 
     <div className="card" style={{ maxWidth: "480px", width: "100%" }}>
       {/* Header */}
       <div className="mb-6">
-        <h2 style={{ fontSize: "var(--text-3xl)", fontWeight: "var(--font-weight-semibold)", marginBottom: "var(--space-2)" }}>
+        <h2
+          style={{
+            fontSize: "var(--text-3xl)",
+            fontWeight: "var(--font-weight-semibold)",
+            marginBottom: "var(--space-2)",
+          }}
+        >
           {isLogin ? "Log in to Neplance" : "Sign up for Neplance"}
         </h2>
         <p className="text-light">
@@ -59,14 +69,14 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess, allowTabSwitch 
       </div>
 
       {error && (
-        <div 
-          className="mb-6" 
-          style={{ 
-            padding: "var(--space-3) var(--space-4)", 
-            backgroundColor: "#ffebee", 
-            color: "var(--color-error)", 
+        <div
+          className="mb-6"
+          style={{
+            padding: "var(--space-3) var(--space-4)",
+            backgroundColor: "#ffebee",
+            color: "var(--color-error)",
             borderRadius: "var(--radius-md)",
-            fontSize: "var(--text-sm)"
+            fontSize: "var(--text-sm)",
           }}
         >
           {error}
@@ -86,7 +96,14 @@ export const AuthPanel = ({ initialTab = "login", onAuthSuccess, allowTabSwitch 
       </div>
 
       {allowTabSwitch && (
-        <div className="text-center text-light" style={{ marginTop: "var(--space-6)", paddingTop: "var(--space-6)", borderTop: "1px solid var(--color-border-light)" }}>
+        <div
+          className="text-center text-light"
+          style={{
+            marginTop: "var(--space-6)",
+            paddingTop: "var(--space-6)",
+            borderTop: "1px solid var(--color-border-light)",
+          }}
+        >
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
             type="button"

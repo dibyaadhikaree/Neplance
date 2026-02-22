@@ -36,9 +36,7 @@ export function useFreelancerDashboard() {
         const ongoing = proposals
           .filter(
             (p) =>
-              p.status === "accepted" &&
-              p.job &&
-              p.job.status === "ACTIVE",
+              p.status === "accepted" && p.job && p.job.status === "ACTIVE",
           )
           .map((p) => ({
             ...p.job,

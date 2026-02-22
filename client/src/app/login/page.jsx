@@ -14,8 +14,22 @@ export default function LoginPage() {
   return (
     <>
       <Navbar />
-      <main className="section" style={{ backgroundColor: "var(--color-primary-lightest)", minHeight: "calc(100vh - 72px)" }}>
-        <div className="container" style={{ display: "flex", justifyContent: "center", paddingTop: "var(--space-12)", paddingBottom: "var(--space-12)" }}>
+      <main
+        className="section"
+        style={{
+          backgroundColor: "var(--color-primary-lightest)",
+          minHeight: "calc(100vh - 72px)",
+        }}
+      >
+        <div
+          className="container"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: "var(--space-12)",
+            paddingBottom: "var(--space-12)",
+          }}
+        >
           <AuthPanel
             initialTab="login"
             allowTabSwitch={false}

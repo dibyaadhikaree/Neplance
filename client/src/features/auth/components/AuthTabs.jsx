@@ -5,17 +5,27 @@ export const AuthTabs = ({ activeTab, onTabChange }) => {
     flex: 1,
     padding: "var(--space-3) var(--space-4)",
     fontSize: "var(--text-base)",
-    fontWeight: isActive ? "var(--font-weight-semibold)" : "var(--font-weight-medium)",
+    fontWeight: isActive
+      ? "var(--font-weight-semibold)"
+      : "var(--font-weight-medium)",
     color: isActive ? "var(--color-primary)" : "var(--color-text-light)",
     backgroundColor: "transparent",
     border: "none",
-    borderBottom: isActive ? "2px solid var(--color-primary)" : "2px solid var(--color-border-light)",
+    borderBottom: isActive
+      ? "2px solid var(--color-primary)"
+      : "2px solid var(--color-border-light)",
     cursor: "pointer",
-    transition: "all var(--transition-fast)"
+    transition: "all var(--transition-fast)",
   });
 
   return (
-    <div style={{ display: "flex", marginBottom: "var(--space-6)", borderBottom: "1px solid var(--color-border-light)" }}>
+    <div
+      style={{
+        display: "flex",
+        marginBottom: "var(--space-6)",
+        borderBottom: "1px solid var(--color-border-light)",
+      }}
+    >
       <button
         type="button"
         onClick={() => onTabChange("login")}

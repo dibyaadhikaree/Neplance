@@ -23,12 +23,7 @@ const Logo = () => (
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <path
-      d="M10 15H22"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
+    <path d="M10 15H22" stroke="white" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 

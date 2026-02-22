@@ -16,13 +16,16 @@
   padding: var(--space-8) 0;
 }
 
-
 /* ===================================
    HERO SECTION
    =================================== */
 
 .hero {
-  background: linear-gradient(135deg, var(--color-primary-lightest) 0%, var(--color-bg-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-lightest) 0%,
+    var(--color-bg-light) 100%
+  );
   padding: var(--space-20) 0;
   text-align: center;
 }
@@ -62,14 +65,26 @@
   gap: var(--space-6);
 }
 
-.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 @media (max-width: 1024px) {
-  .grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
-  .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
-  .grid-cols-2 { grid-template-columns: repeat(1, 1fr); }
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-cols-2 {
+    grid-template-columns: repeat(1, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
@@ -109,13 +124,27 @@
    UTILITY CLASSES
    =================================== */
 
-.gap-4 { gap: var(--space-4); }
+.gap-4 {
+  gap: var(--space-4);
+}
 
-.text-center { text-align: center; }
+.text-center {
+  text-align: center;
+}
 
-.font-medium { font-weight: var(--font-weight-medium); }
+.font-medium {
+  font-weight: var(--font-weight-medium);
+}
 
-.text-primary { color: var(--color-primary); }
-.text-light { color: var(--color-text-light); }
-.mb-6 { margin-bottom: var(--space-6); }
-.mt-6 { margin-top: var(--space-6); }
+.text-primary {
+  color: var(--color-primary);
+}
+.text-light {
+  color: var(--color-text-light);
+}
+.mb-6 {
+  margin-bottom: var(--space-6);
+}
+.mt-6 {
+  margin-top: var(--space-6);
+}

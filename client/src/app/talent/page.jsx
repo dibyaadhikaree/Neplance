@@ -7,7 +7,9 @@ import { apiCall } from "@/services/api";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 
 export default function TalentPage() {
-  const { user, isHydrated, logout, switchRole } = useAuthGate({ mode: "none" });
+  const { user, isHydrated, logout, switchRole } = useAuthGate({
+    mode: "none",
+  });
   const [freelancers, setFreelancers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,7 +56,11 @@ export default function TalentPage() {
 
   return (
     <>
-      <Navbar user={user} onLogout={handleLogout} onRoleSwitch={handleRoleSwitch} />
+      <Navbar
+        user={user}
+        onLogout={handleLogout}
+        onRoleSwitch={handleRoleSwitch}
+      />
 
       <div className="dashboard">
         {/* Hero */}
@@ -155,7 +161,13 @@ export default function TalentPage() {
                       >
                         {freelancer.name || "Unnamed"}
                       </h3>
-                      <p style={{ margin: 0, color: "var(--color-text-light)", fontSize: "var(--text-sm)" }}>
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "var(--color-text-light)",
+                          fontSize: "var(--text-sm)",
+                        }}
+                      >
                         {freelancer.email}
                       </p>
                     </div>
@@ -193,8 +205,13 @@ export default function TalentPage() {
               ))}
             </div>
           ) : (
-            <div className="card" style={{ textAlign: "center", padding: "var(--space-8)" }}>
-              <h3 style={{ marginBottom: "var(--space-3)" }}>No freelancers found</h3>
+            <div
+              className="card"
+              style={{ textAlign: "center", padding: "var(--space-8)" }}
+            >
+              <h3 style={{ marginBottom: "var(--space-3)" }}>
+                No freelancers found
+              </h3>
               <p className="text-light">
                 {searchQuery
                   ? "Try adjusting your search"

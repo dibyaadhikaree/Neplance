@@ -7,10 +7,15 @@ import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
 import { apiCall } from "@/services/api";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
-import { JOB_CATEGORIES, EXPERIENCE_LEVELS } from "@/shared/constants/jobCategories";
+import {
+  JOB_CATEGORIES,
+  EXPERIENCE_LEVELS,
+} from "@/shared/constants/jobCategories";
 
 export default function JobsPage() {
-  const { user, isHydrated, logout, switchRole } = useAuthGate({ mode: "none" });
+  const { user, isHydrated, logout, switchRole } = useAuthGate({
+    mode: "none",
+  });
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalMode, setModalMode] = useState("view");
   const [submitting, setSubmitting] = useState(false);
@@ -90,9 +95,11 @@ export default function JobsPage() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (searchFilters.category) params.append("category", searchFilters.category);
+    if (searchFilters.category)
+      params.append("category", searchFilters.category);
     if (searchFilters.jobType) params.append("jobType", searchFilters.jobType);
-    if (searchFilters.experienceLevel) params.append("experienceLevel", searchFilters.experienceLevel);
+    if (searchFilters.experienceLevel)
+      params.append("experienceLevel", searchFilters.experienceLevel);
     if (searchFilters.search) params.append("search", searchFilters.search);
 
     setIsSearching(true);
@@ -113,7 +120,11 @@ export default function JobsPage() {
 
   return (
     <>
-      <Navbar user={user} onLogout={handleLogout} onRoleSwitch={handleRoleSwitch} />
+      <Navbar
+        user={user}
+        onLogout={handleLogout}
+        onRoleSwitch={handleRoleSwitch}
+      />
 
       <div className="dashboard">
         {/* Hero */}
@@ -149,34 +160,67 @@ export default function JobsPage() {
 
             {/* Search Bar */}
             <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-              <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap", justifyContent: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "var(--space-3)",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                }}
+              >
                 <div style={{ flex: "1 1 200px", minWidth: "200px" }}>
                   <input
                     type="text"
                     placeholder="Search jobs..."
                     value={searchFilters.search}
-                    onChange={(e) => handleFilterChange("search", e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("search", e.target.value)
+                    }
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    style={{ width: "100%", padding: "var(--space-3)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)", fontSize: "var(--text-base)" }}
+                    style={{
+                      width: "100%",
+                      padding: "var(--space-3)",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--color-border)",
+                      fontSize: "var(--text-base)",
+                    }}
                   />
                 </div>
                 <div style={{ flex: "1 1 180px", minWidth: "180px" }}>
                   <select
                     value={searchFilters.category}
-                    onChange={(e) => handleFilterChange("category", e.target.value)}
-                    style={{ width: "100%", padding: "var(--space-3)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)", fontSize: "var(--text-base)" }}
+                    onChange={(e) =>
+                      handleFilterChange("category", e.target.value)
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "var(--space-3)",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--color-border)",
+                      fontSize: "var(--text-base)",
+                    }}
                   >
                     <option value="">All Categories</option>
                     {JOB_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div style={{ flex: "1 1 140px", minWidth: "140px" }}>
                   <select
                     value={searchFilters.jobType}
-                    onChange={(e) => handleFilterChange("jobType", e.target.value)}
-                    style={{ width: "100%", padding: "var(--space-3)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)", fontSize: "var(--text-base)" }}
+                    onChange={(e) =>
+                      handleFilterChange("jobType", e.target.value)
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "var(--space-3)",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--color-border)",
+                      fontSize: "var(--text-base)",
+                    }}
                   >
                     <option value="">All Types</option>
                     <option value="digital">Digital</option>
@@ -186,12 +230,22 @@ export default function JobsPage() {
                 <div style={{ flex: "1 1 160px", minWidth: "160px" }}>
                   <select
                     value={searchFilters.experienceLevel}
-                    onChange={(e) => handleFilterChange("experienceLevel", e.target.value)}
-                    style={{ width: "100%", padding: "var(--space-3)", borderRadius: "var(--radius)", border: "1px solid var(--color-border)", fontSize: "var(--text-base)" }}
+                    onChange={(e) =>
+                      handleFilterChange("experienceLevel", e.target.value)
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "var(--space-3)",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--color-border)",
+                      fontSize: "var(--text-base)",
+                    }}
                   >
                     <option value="">All Levels</option>
                     {EXPERIENCE_LEVELS.map((level) => (
-                      <option key={level.value} value={level.value}>{level.label}</option>
+                      <option key={level.value} value={level.value}>
+                        {level.label}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -255,12 +309,8 @@ export default function JobsPage() {
                 padding: "var(--space-8)",
               }}
             >
-              <h3 style={{ marginBottom: "var(--space-3)" }}>
-                No jobs found
-              </h3>
-              <p className="text-light">
-                Try adjusting your search or filters
-              </p>
+              <h3 style={{ marginBottom: "var(--space-3)" }}>No jobs found</h3>
+              <p className="text-light">Try adjusting your search or filters</p>
             </div>
           )}
         </div>

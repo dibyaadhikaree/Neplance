@@ -37,22 +37,23 @@ const makeInitialForm = (user) => ({
   languages: toCsv(user?.languages),
   portfolio: Array.isArray(user?.portfolio)
     ? user.portfolio.map((item) => ({
-      title: item?.title || "",
-      description: item?.description || "",
-      imageUrls: toCsv(item?.imageUrls),
-      projectUrl: item?.projectUrl || "",
-      skills: toCsv(item?.skills),
-      completedAt: item?.completedAt
-        ? new Date(item.completedAt).toISOString().slice(0, 10)
-        : "",
-    }))
+        title: item?.title || "",
+        description: item?.description || "",
+        imageUrls: toCsv(item?.imageUrls),
+        projectUrl: item?.projectUrl || "",
+        skills: toCsv(item?.skills),
+        completedAt: item?.completedAt
+          ? new Date(item.completedAt).toISOString().slice(0, 10)
+          : "",
+      }))
     : [],
 });
 
 export default function ProfilePage() {
-  const { user, currentRole, isHydrated, logout, switchRole, updateUser } = useAuthGate({
-    mode: "require-auth",
-  });
+  const { user, currentRole, isHydrated, logout, switchRole, updateUser } =
+    useAuthGate({
+      mode: "require-auth",
+    });
   const [selectedJob, setSelectedJob] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -210,7 +211,11 @@ export default function ProfilePage() {
 
   return (
     <>
-      <Navbar user={user} onLogout={handleLogout} onRoleSwitch={handleRoleSwitch} />
+      <Navbar
+        user={user}
+        onLogout={handleLogout}
+        onRoleSwitch={handleRoleSwitch}
+      />
 
       <div className="dashboard">
         <div className="container section-sm">
@@ -240,7 +245,11 @@ export default function ProfilePage() {
                   <img
                     src={user.avatar}
                     alt={user.name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
                   />
                 ) : (
                   <div
@@ -268,7 +277,10 @@ export default function ProfilePage() {
                   {user.email}
                 </p>
 
-                <p className="text-light" style={{ marginBottom: "var(--space-6)" }}>
+                <p
+                  className="text-light"
+                  style={{ marginBottom: "var(--space-6)" }}
+                >
                   {user.bio || "No bio added yet."}
                 </p>
 
@@ -409,7 +421,13 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <div style={{ marginTop: "var(--space-6)", display: "flex", gap: "var(--space-3)" }}>
+                <div
+                  style={{
+                    marginTop: "var(--space-6)",
+                    display: "flex",
+                    gap: "var(--space-3)",
+                  }}
+                >
                   {isEditing ? (
                     <>
                       <button
@@ -450,13 +468,30 @@ export default function ProfilePage() {
           {isFreelancerProfile && (
             <>
               <div className="card" style={{ marginBottom: "var(--space-8)" }}>
-                <h2 style={{ marginBottom: "var(--space-4)" }}>Skills & Languages</h2>
+                <h2 style={{ marginBottom: "var(--space-4)" }}>
+                  Skills & Languages
+                </h2>
                 <div style={{ marginBottom: "var(--space-4)" }}>
-                  <div style={{ marginBottom: "var(--space-2)", fontWeight: "var(--font-weight-medium)" }}>Skills</div>
+                  <div
+                    style={{
+                      marginBottom: "var(--space-2)",
+                      fontWeight: "var(--font-weight-medium)",
+                    }}
+                  >
+                    Skills
+                  </div>
                   {Array.isArray(user.skills) && user.skills.length > 0 ? (
-                    <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "var(--space-2)",
+                        flexWrap: "wrap",
+                      }}
+                    >
                       {user.skills.map((skill) => (
-                        <span key={skill} className="badge badge-success">{skill}</span>
+                        <span key={skill} className="badge badge-success">
+                          {skill}
+                        </span>
                       ))}
                     </div>
                   ) : (
@@ -464,11 +499,27 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div>
-                  <div style={{ marginBottom: "var(--space-2)", fontWeight: "var(--font-weight-medium)" }}>Languages</div>
-                  {Array.isArray(user.languages) && user.languages.length > 0 ? (
-                    <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      marginBottom: "var(--space-2)",
+                      fontWeight: "var(--font-weight-medium)",
+                    }}
+                  >
+                    Languages
+                  </div>
+                  {Array.isArray(user.languages) &&
+                  user.languages.length > 0 ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "var(--space-2)",
+                        flexWrap: "wrap",
+                      }}
+                    >
                       {user.languages.map((language) => (
-                        <span key={language} className="badge badge-info">{language}</span>
+                        <span key={language} className="badge badge-info">
+                          {language}
+                        </span>
                       ))}
                     </div>
                   ) : (
@@ -482,20 +533,46 @@ export default function ProfilePage() {
                 {Array.isArray(user.portfolio) && user.portfolio.length > 0 ? (
                   <div style={{ display: "grid", gap: "var(--space-4)" }}>
                     {user.portfolio.map((item, index) => (
-                      <article key={`${item.title || "portfolio"}-${index}`} className="card-sm">
-                        <h3 style={{ marginBottom: "var(--space-2)" }}>{item.title || "Untitled Project"}</h3>
-                        <p className="text-light" style={{ marginBottom: "var(--space-3)" }}>
+                      <article
+                        key={`${item.title || "portfolio"}-${index}`}
+                        className="card-sm"
+                      >
+                        <h3 style={{ marginBottom: "var(--space-2)" }}>
+                          {item.title || "Untitled Project"}
+                        </h3>
+                        <p
+                          className="text-light"
+                          style={{ marginBottom: "var(--space-3)" }}
+                        >
                           {item.description || "No description."}
                         </p>
-                        {Array.isArray(item.skills) && item.skills.length > 0 && (
-                          <div style={{ marginBottom: "var(--space-3)", display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-                            {item.skills.map((skill) => (
-                              <span className="badge badge-success" key={`${item.title}-${skill}`}>{skill}</span>
-                            ))}
-                          </div>
-                        )}
+                        {Array.isArray(item.skills) &&
+                          item.skills.length > 0 && (
+                            <div
+                              style={{
+                                marginBottom: "var(--space-3)",
+                                display: "flex",
+                                gap: "var(--space-2)",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              {item.skills.map((skill) => (
+                                <span
+                                  className="badge badge-success"
+                                  key={`${item.title}-${skill}`}
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         {item.projectUrl && (
-                          <a href={item.projectUrl} target="_blank" rel="noreferrer" className="text-primary">
+                          <a
+                            href={item.projectUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary"
+                          >
                             Visit Project
                           </a>
                         )}
@@ -513,7 +590,14 @@ export default function ProfilePage() {
             <div className="card" style={{ marginBottom: "var(--space-8)" }}>
               <h2 style={{ marginBottom: "var(--space-6)" }}>Edit Profile</h2>
 
-              {formError && <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>{formError}</div>}
+              {formError && (
+                <div
+                  className="card-error"
+                  style={{ marginBottom: "var(--space-4)" }}
+                >
+                  {formError}
+                </div>
+              )}
               {formSuccess && (
                 <div
                   style={{
@@ -529,24 +613,51 @@ export default function ProfilePage() {
               )}
 
               <form id="profile-edit-form" onSubmit={handleSaveProfile}>
-                <div className="grid grid-cols-2" style={{ gap: "var(--space-4)" }}>
+                <div
+                  className="grid grid-cols-2"
+                  style={{ gap: "var(--space-4)" }}
+                >
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-name">Name</label>
-                    <input id="profile-name" className="form-input" value={formData.name} onChange={handleChange("name")} required />
+                    <label className="form-label" htmlFor="profile-name">
+                      Name
+                    </label>
+                    <input
+                      id="profile-name"
+                      className="form-input"
+                      value={formData.name}
+                      onChange={handleChange("name")}
+                      required
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-phone">Phone</label>
-                    <input id="profile-phone" className="form-input" value={formData.phone} onChange={handleChange("phone")} />
+                    <label className="form-label" htmlFor="profile-phone">
+                      Phone
+                    </label>
+                    <input
+                      id="profile-phone"
+                      className="form-input"
+                      value={formData.phone}
+                      onChange={handleChange("phone")}
+                    />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="profile-avatar">Avatar URL</label>
-                  <input id="profile-avatar" className="form-input" value={formData.avatar} onChange={handleChange("avatar")} />
+                  <label className="form-label" htmlFor="profile-avatar">
+                    Avatar URL
+                  </label>
+                  <input
+                    id="profile-avatar"
+                    className="form-input"
+                    value={formData.avatar}
+                    onChange={handleChange("avatar")}
+                  />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="profile-bio">Bio</label>
+                  <label className="form-label" htmlFor="profile-bio">
+                    Bio
+                  </label>
                   <textarea
                     id="profile-bio"
                     className="form-input"
@@ -558,68 +669,181 @@ export default function ProfilePage() {
                 </div>
 
                 <h3 style={{ marginBottom: "var(--space-4)" }}>Location</h3>
-                <div className="grid grid-cols-2" style={{ gap: "var(--space-4)" }}>
+                <div
+                  className="grid grid-cols-2"
+                  style={{ gap: "var(--space-4)" }}
+                >
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-address">Address</label>
-                    <input id="profile-address" className="form-input" value={formData.address} onChange={handleChange("address")} />
+                    <label className="form-label" htmlFor="profile-address">
+                      Address
+                    </label>
+                    <input
+                      id="profile-address"
+                      className="form-input"
+                      value={formData.address}
+                      onChange={handleChange("address")}
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-city">City</label>
-                    <input id="profile-city" className="form-input" value={formData.city} onChange={handleChange("city")} />
+                    <label className="form-label" htmlFor="profile-city">
+                      City
+                    </label>
+                    <input
+                      id="profile-city"
+                      className="form-input"
+                      value={formData.city}
+                      onChange={handleChange("city")}
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-district">District</label>
-                    <input id="profile-district" className="form-input" value={formData.district} onChange={handleChange("district")} />
+                    <label className="form-label" htmlFor="profile-district">
+                      District
+                    </label>
+                    <input
+                      id="profile-district"
+                      className="form-input"
+                      value={formData.district}
+                      onChange={handleChange("district")}
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-province">Province</label>
-                    <input id="profile-province" className="form-input" value={formData.province} onChange={handleChange("province")} />
+                    <label className="form-label" htmlFor="profile-province">
+                      Province
+                    </label>
+                    <input
+                      id="profile-province"
+                      className="form-input"
+                      value={formData.province}
+                      onChange={handleChange("province")}
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-lat">Latitude</label>
-                    <input id="profile-lat" type="number" step="any" className="form-input" value={formData.lat} onChange={handleChange("lat")} />
+                    <label className="form-label" htmlFor="profile-lat">
+                      Latitude
+                    </label>
+                    <input
+                      id="profile-lat"
+                      type="number"
+                      step="any"
+                      className="form-input"
+                      value={formData.lat}
+                      onChange={handleChange("lat")}
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="profile-lng">Longitude</label>
-                    <input id="profile-lng" type="number" step="any" className="form-input" value={formData.lng} onChange={handleChange("lng")} />
+                    <label className="form-label" htmlFor="profile-lng">
+                      Longitude
+                    </label>
+                    <input
+                      id="profile-lng"
+                      type="number"
+                      step="any"
+                      className="form-input"
+                      value={formData.lng}
+                      onChange={handleChange("lng")}
+                    />
                   </div>
                 </div>
 
                 {isFreelancerProfile && (
                   <>
-                    <h3 style={{ marginBottom: "var(--space-4)" }}>Professional Details</h3>
-                    <div className="grid grid-cols-2" style={{ gap: "var(--space-4)" }}>
+                    <h3 style={{ marginBottom: "var(--space-4)" }}>
+                      Professional Details
+                    </h3>
+                    <div
+                      className="grid grid-cols-2"
+                      style={{ gap: "var(--space-4)" }}
+                    >
                       <div className="form-group">
-                        <label className="form-label" htmlFor="profile-skills">Skills (comma separated)</label>
-                        <input id="profile-skills" className="form-input" value={formData.skills} onChange={handleChange("skills")} />
+                        <label className="form-label" htmlFor="profile-skills">
+                          Skills (comma separated)
+                        </label>
+                        <input
+                          id="profile-skills"
+                          className="form-input"
+                          value={formData.skills}
+                          onChange={handleChange("skills")}
+                        />
                       </div>
                       <div className="form-group">
-                        <label className="form-label" htmlFor="profile-languages">Languages (comma separated)</label>
-                        <input id="profile-languages" className="form-input" value={formData.languages} onChange={handleChange("languages")} />
+                        <label
+                          className="form-label"
+                          htmlFor="profile-languages"
+                        >
+                          Languages (comma separated)
+                        </label>
+                        <input
+                          id="profile-languages"
+                          className="form-input"
+                          value={formData.languages}
+                          onChange={handleChange("languages")}
+                        />
                       </div>
                       <div className="form-group">
-                        <label className="form-label" htmlFor="profile-hourly-rate">Hourly Rate (NPR)</label>
-                        <input id="profile-hourly-rate" type="number" min="0" className="form-input" value={formData.hourlyRate} onChange={handleChange("hourlyRate")} />
+                        <label
+                          className="form-label"
+                          htmlFor="profile-hourly-rate"
+                        >
+                          Hourly Rate (NPR)
+                        </label>
+                        <input
+                          id="profile-hourly-rate"
+                          type="number"
+                          min="0"
+                          className="form-input"
+                          value={formData.hourlyRate}
+                          onChange={handleChange("hourlyRate")}
+                        />
                       </div>
                       <div className="form-group">
-                        <label className="form-label" htmlFor="profile-experience">Experience Level</label>
-                        <select id="profile-experience" className="form-select" value={formData.experienceLevel} onChange={handleChange("experienceLevel")}>
+                        <label
+                          className="form-label"
+                          htmlFor="profile-experience"
+                        >
+                          Experience Level
+                        </label>
+                        <select
+                          id="profile-experience"
+                          className="form-select"
+                          value={formData.experienceLevel}
+                          onChange={handleChange("experienceLevel")}
+                        >
                           <option value="entry">Entry</option>
                           <option value="intermediate">Intermediate</option>
                           <option value="expert">Expert</option>
                         </select>
                       </div>
                       <div className="form-group">
-                        <label className="form-label" htmlFor="profile-job-type">Job Type Preference</label>
-                        <select id="profile-job-type" className="form-select" value={formData.jobTypePreference} onChange={handleChange("jobTypePreference")}>
+                        <label
+                          className="form-label"
+                          htmlFor="profile-job-type"
+                        >
+                          Job Type Preference
+                        </label>
+                        <select
+                          id="profile-job-type"
+                          className="form-select"
+                          value={formData.jobTypePreference}
+                          onChange={handleChange("jobTypePreference")}
+                        >
                           <option value="digital">Digital</option>
                           <option value="physical">Physical</option>
                           <option value="both">Both</option>
                         </select>
                       </div>
                       <div className="form-group">
-                        <label className="form-label" htmlFor="profile-availability">Availability Status</label>
-                        <select id="profile-availability" className="form-select" value={formData.availabilityStatus} onChange={handleChange("availabilityStatus")}>
+                        <label
+                          className="form-label"
+                          htmlFor="profile-availability"
+                        >
+                          Availability Status
+                        </label>
+                        <select
+                          id="profile-availability"
+                          className="form-select"
+                          value={formData.availabilityStatus}
+                          onChange={handleChange("availabilityStatus")}
+                        >
                           <option value="available">Available</option>
                           <option value="busy">Busy</option>
                           <option value="unavailable">Unavailable</option>
@@ -627,22 +851,47 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "var(--space-4)",
+                      }}
+                    >
                       <h3 style={{ marginBottom: 0 }}>Portfolio</h3>
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={addPortfolioItem}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={addPortfolioItem}
+                      >
                         Add Project
                       </button>
                     </div>
 
                     {formData.portfolio.length === 0 && (
-                      <p className="text-light" style={{ marginBottom: "var(--space-6)" }}>
+                      <p
+                        className="text-light"
+                        style={{ marginBottom: "var(--space-6)" }}
+                      >
                         No portfolio projects yet.
                       </p>
                     )}
 
                     {formData.portfolio.map((item, index) => (
-                      <div key={`edit-portfolio-${index}`} className="card-sm" style={{ marginBottom: "var(--space-4)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-3)" }}>
+                      <div
+                        key={`edit-portfolio-${index}`}
+                        className="card-sm"
+                        style={{ marginBottom: "var(--space-4)" }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: "var(--space-3)",
+                          }}
+                        >
                           <strong>Project {index + 1}</strong>
                           <button
                             type="button"
@@ -652,13 +901,22 @@ export default function ProfilePage() {
                             Remove
                           </button>
                         </div>
-                        <div className="grid grid-cols-2" style={{ gap: "var(--space-4)" }}>
+                        <div
+                          className="grid grid-cols-2"
+                          style={{ gap: "var(--space-4)" }}
+                        >
                           <div className="form-group">
                             <label className="form-label">Title</label>
                             <input
                               className="form-input"
                               value={item.title}
-                              onChange={(event) => handlePortfolioChange(index, "title", event.target.value)}
+                              onChange={(event) =>
+                                handlePortfolioChange(
+                                  index,
+                                  "title",
+                                  event.target.value,
+                                )
+                              }
                             />
                           </div>
                           <div className="form-group">
@@ -666,7 +924,13 @@ export default function ProfilePage() {
                             <input
                               className="form-input"
                               value={item.projectUrl}
-                              onChange={(event) => handlePortfolioChange(index, "projectUrl", event.target.value)}
+                              onChange={(event) =>
+                                handlePortfolioChange(
+                                  index,
+                                  "projectUrl",
+                                  event.target.value,
+                                )
+                              }
                             />
                           </div>
                         </div>
@@ -676,24 +940,49 @@ export default function ProfilePage() {
                             className="form-input"
                             rows={3}
                             value={item.description}
-                            onChange={(event) => handlePortfolioChange(index, "description", event.target.value)}
+                            onChange={(event) =>
+                              handlePortfolioChange(
+                                index,
+                                "description",
+                                event.target.value,
+                              )
+                            }
                           />
                         </div>
-                        <div className="grid grid-cols-2" style={{ gap: "var(--space-4)" }}>
+                        <div
+                          className="grid grid-cols-2"
+                          style={{ gap: "var(--space-4)" }}
+                        >
                           <div className="form-group">
-                            <label className="form-label">Image URLs (comma separated)</label>
+                            <label className="form-label">
+                              Image URLs (comma separated)
+                            </label>
                             <input
                               className="form-input"
                               value={item.imageUrls}
-                              onChange={(event) => handlePortfolioChange(index, "imageUrls", event.target.value)}
+                              onChange={(event) =>
+                                handlePortfolioChange(
+                                  index,
+                                  "imageUrls",
+                                  event.target.value,
+                                )
+                              }
                             />
                           </div>
                           <div className="form-group">
-                            <label className="form-label">Skills (comma separated)</label>
+                            <label className="form-label">
+                              Skills (comma separated)
+                            </label>
                             <input
                               className="form-input"
                               value={item.skills}
-                              onChange={(event) => handlePortfolioChange(index, "skills", event.target.value)}
+                              onChange={(event) =>
+                                handlePortfolioChange(
+                                  index,
+                                  "skills",
+                                  event.target.value,
+                                )
+                              }
                             />
                           </div>
                         </div>
@@ -703,7 +992,13 @@ export default function ProfilePage() {
                             type="date"
                             className="form-input"
                             value={item.completedAt}
-                            onChange={(event) => handlePortfolioChange(index, "completedAt", event.target.value)}
+                            onChange={(event) =>
+                              handlePortfolioChange(
+                                index,
+                                "completedAt",
+                                event.target.value,
+                              )
+                            }
                           />
                         </div>
                       </div>

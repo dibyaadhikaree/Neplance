@@ -27,7 +27,10 @@ export const Button = ({
   };
 
   return (
-    <button className={`${variantClass[variant] || "btn btn-primary"} ${className}`} {...props}>
+    <button
+      className={`${variantClass[variant] || "btn btn-primary"} ${className}`}
+      {...props}
+    >
       {children}
     </button>
   );

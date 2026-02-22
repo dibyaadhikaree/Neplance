@@ -76,11 +76,21 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       bio: formData.bio.trim() || undefined,
       location: hasLocation ? location : undefined,
       skills: isFreelancerSelected ? parseCsv(formData.skills) : undefined,
-      languages: isFreelancerSelected ? parseCsv(formData.languages) : undefined,
-      hourlyRate: isFreelancerSelected ? Number(formData.hourlyRate) || 0 : undefined,
-      experienceLevel: isFreelancerSelected ? formData.experienceLevel : undefined,
-      jobTypePreference: isFreelancerSelected ? formData.jobTypePreference : undefined,
-      availabilityStatus: isFreelancerSelected ? formData.availabilityStatus : undefined,
+      languages: isFreelancerSelected
+        ? parseCsv(formData.languages)
+        : undefined,
+      hourlyRate: isFreelancerSelected
+        ? Number(formData.hourlyRate) || 0
+        : undefined,
+      experienceLevel: isFreelancerSelected
+        ? formData.experienceLevel
+        : undefined,
+      jobTypePreference: isFreelancerSelected
+        ? formData.jobTypePreference
+        : undefined,
+      availabilityStatus: isFreelancerSelected
+        ? formData.availabilityStatus
+        : undefined,
       roles: Array.from(selectedRoles),
     });
   };
@@ -146,7 +156,9 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
       />
 
       <div className="form-group">
-        <label className="form-label" htmlFor="signup-bio">Bio (optional)</label>
+        <label className="form-label" htmlFor="signup-bio">
+          Bio (optional)
+        </label>
         <textarea
           id="signup-bio"
           className="form-input"
@@ -217,7 +229,9 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
           />
 
           <div className="form-group">
-            <label className="form-label" htmlFor="experience-level">Experience Level</label>
+            <label className="form-label" htmlFor="experience-level">
+              Experience Level
+            </label>
             <select
               id="experience-level"
               className="form-select"
@@ -232,7 +246,9 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="job-type-preference">Job Type Preference</label>
+            <label className="form-label" htmlFor="job-type-preference">
+              Job Type Preference
+            </label>
             <select
               id="job-type-preference"
               className="form-select"
@@ -247,7 +263,9 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="availability-status">Availability</label>
+            <label className="form-label" htmlFor="availability-status">
+              Availability
+            </label>
             <select
               id="availability-status"
               className="form-select"

@@ -111,9 +111,43 @@ const acceptProposal = catchAsync(async (req, res, next) => {
   });
 });
 
+const getProposalById = catchAsync(async (req, res, next) => {
+  const proposalId = req.params.id;
+  const userId = String(req.user.id);
+
+  const proposal = await Proposal.findById(proposalId);
+
+  if (!proposal) {
+    return next(new AppError("Proposal not found", 404));
+  }
+
+  const isFreelancer = String(proposal.freelancer) === userId;
+
+  if (isFreelancer) {
+    const populatedProposal = await Proposal.findById(proposalId).populate("freelancer", "name email");
+    return res.status(200).json({ status: "success", data: populatedProposal });
+  }
+
+  const job = await Job.findById(proposal.job);
+  if (!job) {
+    return next(new AppError("Job not found", 404));
+  }
+
+  const isJobOwner = String(job.creatorAddress) === userId ||
+    job.parties?.some(p => p.role === "CREATOR" && p.address === userId);
+
+  if (!isJobOwner) {
+    return next(new AppError("You are not authorized to view this proposal", 403));
+  }
+
+  const populatedProposal = await Proposal.findById(proposalId).populate("freelancer", "name email");
+  res.status(200).json({ status: "success", data: populatedProposal });
+});
+
 module.exports = {
   createProposal,
   getProposalForJob,
   acceptProposal,
   getMyProposals,
+  getProposalById,
 };

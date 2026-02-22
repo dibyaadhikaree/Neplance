@@ -20,7 +20,7 @@ export const useProfileData = ({ user, currentRole }) => {
               (p) =>
                 p.status === "accepted" &&
                 p.job &&
-                p.job.status === "COMPLETED"
+                p.job.status === "COMPLETED",
             )
             .map((p) => ({ ...p.job, status: p.job.status, review: null }));
         }

@@ -24,7 +24,12 @@ const formatBudget = (budget, budgetType) => {
 const formatLocation = (location) => {
   if (!location) return null;
   if (location.isRemote) return "Remote";
-  const parts = [location.address, location.city, location.district, location.province].filter(Boolean);
+  const parts = [
+    location.address,
+    location.city,
+    location.district,
+    location.province,
+  ].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : null;
 };
 
@@ -79,7 +84,12 @@ export const JobModal = ({
         coverLetter: coverLetter.trim(),
         deliveryDays: Number(deliveryDays),
         revisionsIncluded: Number(revisionsIncluded) || 0,
-        attachments: attachments ? attachments.split(",").map((a) => a.trim()).filter(Boolean) : [],
+        attachments: attachments
+          ? attachments
+              .split(",")
+              .map((a) => a.trim())
+              .filter(Boolean)
+          : [],
       });
     } catch (err) {
       setError(err.message || "Failed to submit proposal");
@@ -90,7 +100,7 @@ export const JobModal = ({
   const milestones = Array.isArray(job.milestones) ? job.milestones : [];
   const totalValue = getMilestoneTotal(milestones);
   const completedCount = milestones.filter(
-    (milestone) => milestone?.status === "COMPLETED"
+    (milestone) => milestone?.status === "COMPLETED",
   ).length;
   const canSubmitMilestone =
     userRole === "freelancer" && job.status === "ACTIVE";
@@ -98,7 +108,9 @@ export const JobModal = ({
   const creatorLabel = getCreatorLabel(job.creatorAddress);
   const budgetDisplay = job.budget
     ? formatBudget(job.budget, job.budgetType)
-    : (hasMilestones(milestones) ? `NPR ${totalValue.toLocaleString()}` : "Negotiable");
+    : hasMilestones(milestones)
+      ? `NPR ${totalValue.toLocaleString()}`
+      : "Negotiable";
   const locationText = formatLocation(job.location);
   const deadlineText = formatDate(job.deadline);
 
@@ -165,27 +177,45 @@ export const JobModal = ({
               alignItems: "center",
             }}
           >
-            <span className={`status-badge status-${job.status?.toLowerCase()}`}>
+            <span
+              className={`status-badge status-${job.status?.toLowerCase()}`}
+            >
               {formatStatus(job.status)}
             </span>
             {job.jobType && (
-              <span className="badge" style={{ background: "var(--color-secondary-lightest)", color: "var(--color-secondary)" }}>
+              <span
+                className="badge"
+                style={{
+                  background: "var(--color-secondary-lightest)",
+                  color: "var(--color-secondary)",
+                }}
+              >
                 {job.jobType}
               </span>
             )}
             {job.category && (
-              <span className="badge" style={{ background: "var(--color-primary-lightest)", color: "var(--color-primary)" }}>
+              <span
+                className="badge"
+                style={{
+                  background: "var(--color-primary-lightest)",
+                  color: "var(--color-primary)",
+                }}
+              >
                 {job.category}
               </span>
             )}
             {job.experienceLevel && (
-              <span className="badge" style={{ background: "var(--color-warning-lightest)", color: "var(--color-warning-dark)" }}>
+              <span
+                className="badge"
+                style={{
+                  background: "var(--color-warning-lightest)",
+                  color: "var(--color-warning-dark)",
+                }}
+              >
                 {job.experienceLevel}
               </span>
             )}
-            {job.isUrgent && (
-              <span className="badge badge-error">Urgent</span>
-            )}
+            {job.isUrgent && <span className="badge badge-error">Urgent</span>}
           </div>
 
           <div
@@ -213,12 +243,22 @@ export const JobModal = ({
               </span>
             )}
             {locationText && (
-              <span style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
+              <span
+                style={{
+                  fontSize: "0.875rem",
+                  color: "var(--color-text-light)",
+                }}
+              >
                 📍 {locationText}
               </span>
             )}
             {deadlineText && (
-              <span style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
+              <span
+                style={{
+                  fontSize: "0.875rem",
+                  color: "var(--color-text-light)",
+                }}
+              >
                 📅 Due: {deadlineText}
               </span>
             )}
@@ -247,9 +287,20 @@ export const JobModal = ({
           {job.requiredSkills?.length > 0 && (
             <div style={{ marginTop: "0.75rem" }}>
               <strong style={{ fontSize: "0.875rem" }}>Required Skills:</strong>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                  marginTop: "0.5rem",
+                }}
+              >
                 {job.requiredSkills.map((skill) => (
-                  <span key={skill} className="badge" style={{ background: "var(--color-border-light)" }}>
+                  <span
+                    key={skill}
+                    className="badge"
+                    style={{ background: "var(--color-border-light)" }}
+                  >
                     {skill}
                   </span>
                 ))}
@@ -260,9 +311,20 @@ export const JobModal = ({
           {job.tags?.length > 0 && (
             <div style={{ marginTop: "0.75rem" }}>
               <strong style={{ fontSize: "0.875rem" }}>Tags:</strong>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                  marginTop: "0.5rem",
+                }}
+              >
                 {job.tags.map((tag) => (
-                  <span key={tag} className="badge" style={{ background: "var(--color-border-light)" }}>
+                  <span
+                    key={tag}
+                    className="badge"
+                    style={{ background: "var(--color-border-light)" }}
+                  >
                     {tag}
                   </span>
                 ))}
@@ -271,7 +333,10 @@ export const JobModal = ({
           )}
 
           {milestones.length > 0 ? (
-            <div className="proposal-modal-job-description" style={{ marginTop: "1rem" }}>
+            <div
+              className="proposal-modal-job-description"
+              style={{ marginTop: "1rem" }}
+            >
               <strong>Milestones</strong>
               <ul style={{ marginTop: "0.5rem", paddingLeft: "1.25rem" }}>
                 {milestones.map((milestone, index) => (
@@ -279,8 +344,8 @@ export const JobModal = ({
                     {milestone?.title || "Untitled"} -{" "}
                     {milestone?.value
                       ? `NPR ${Number(milestone.value).toLocaleString()}`
-                      : "N/A"}
-                    {" "}({formatStatus(milestone?.status)})
+                      : "N/A"}{" "}
+                    ({formatStatus(milestone?.status)})
                     {milestone?.evidence && (
                       <span style={{ marginLeft: "0.5rem" }}>
                         Evidence: {milestone.evidence}
@@ -296,7 +361,10 @@ export const JobModal = ({
                         onSubmitMilestone &&
                         previousCompleted;
 
-                      if (!canSubmitMilestone || milestone?.status !== "ACTIVE") {
+                      if (
+                        !canSubmitMilestone ||
+                        milestone?.status !== "ACTIVE"
+                      ) {
                         return null;
                       }
 
@@ -364,7 +432,14 @@ export const JobModal = ({
             />
 
             <div style={{ marginTop: "1rem" }}>
-              <label htmlFor="coverLetter" style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+              <label
+                htmlFor="coverLetter"
+                style={{
+                  display: "block",
+                  marginBottom: "0.5rem",
+                  fontWeight: 500,
+                }}
+              >
                 Cover Letter *
               </label>
               <textarea
@@ -386,12 +461,25 @@ export const JobModal = ({
                 required
                 disabled={loading}
               />
-              <p style={{ fontSize: "0.75rem", color: "var(--color-text-light)", marginTop: "0.25rem" }}>
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--color-text-light)",
+                  marginTop: "0.25rem",
+                }}
+              >
                 {coverLetter.length}/5000 characters
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1rem",
+                marginTop: "1rem",
+              }}
+            >
               <Input
                 type="number"
                 label="Delivery Days *"
@@ -427,7 +515,10 @@ export const JobModal = ({
             {error && <p className="proposal-modal-error">{error}</p>}
 
             <div className="proposal-modal-actions">
-              <Button type="submit" disabled={loading || !amount || !coverLetter || !deliveryDays}>
+              <Button
+                type="submit"
+                disabled={loading || !amount || !coverLetter || !deliveryDays}
+              >
                 {loading ? "Submitting..." : "Submit"}
               </Button>
               <Button

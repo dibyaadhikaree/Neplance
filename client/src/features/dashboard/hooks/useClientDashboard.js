@@ -33,11 +33,11 @@ export const useClientDashboard = () => {
         contractList.map(async (contract) => {
           try {
             const proposalsData = await apiCall(
-              `/api/proposals/job/${contract._id}`
+              `/api/proposals/job/${contract._id}`,
             );
             if (proposalsData.status === "success") {
               const pendingOnly = (proposalsData.data || []).filter(
-                (proposal) => proposal.status === "pending"
+                (proposal) => proposal.status === "pending",
               );
               return [contract._id, pendingOnly];
             }
@@ -45,7 +45,7 @@ export const useClientDashboard = () => {
             console.error("Failed to fetch proposals:", err);
           }
           return [contract._id, []];
-        })
+        }),
       );
 
       setProposalsByContract(Object.fromEntries(results));
