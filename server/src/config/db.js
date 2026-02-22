@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 
 let cached = global.mongoose;
 
@@ -16,8 +17,9 @@ const connectDB = async () => {
     if (!DbUri) {
       throw new Error("NEPLANCE_MONGODB_URI is not defined");
     }
+    logger.info("Connecting to database...");
     cached.promise = mongoose.connect(DbUri).then((mongoose) => {
-      console.log("DB connected");
+      logger.info("Database connected successfully");
       return mongoose;
     });
   }

@@ -10,8 +10,6 @@ const getMyProposals = catchAsync(async (req, res) => {
     populate: { path: "creatorAddress", select: "name email" },
   });
 
-  if (!data) throw new AppError("No Proposals found", 400);
-
   res.status(200).json({
     status: "success",
     data,

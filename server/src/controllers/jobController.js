@@ -165,19 +165,29 @@ const findJobs = catchAsync(async (req, res) => {
 });
 
 const findMyJobs = catchAsync(async (req, res) => {
-  const { status, sort = "-createdAt" } = req.query;
+  const { status, sort = "-createdAt", page = 1, limit = 20 } = req.query;
 
   const query = { creatorAddress: req.user.id.toString() };
   if (status) query.status = status;
 
-  const data = await Job.find(query)
-    .populate("creatorAddress", "name email")
-    .populate("hiredFreelancer", "name email")
-    .sort(sort);
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [data, total] = await Promise.all([
+    Job.find(query)
+      .populate("creatorAddress", "name email")
+      .populate("hiredFreelancer", "name email")
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit)),
+    Job.countDocuments(query),
+  ]);
 
   res.status(200).json({
     status: "success",
     results: data.length,
+    total,
+    page: Number(page),
+    pages: Math.ceil(total / Number(limit)),
     data,
   });
 });

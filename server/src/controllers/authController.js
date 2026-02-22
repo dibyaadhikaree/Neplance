@@ -2,6 +2,7 @@ const catchAsync = require("../utils/catchAsync");
 const User = require("../models/User");
 const AppError = require("../utils/appError");
 const jwt = require("jsonwebtoken");
+const { pickUserFields, freelancerOnlyFields } = require("../utils/userFields");
 
 const profileFields = [
   "phone",
@@ -10,26 +11,8 @@ const profileFields = [
   "location",
 ];
 
-const freelancerOnlyFields = [
-  "skills",
-  "hourlyRate",
-  "experienceLevel",
-  "jobTypePreference",
-  "availabilityStatus",
-  "languages",
-  "portfolio",
-];
-
-const hasFreelancerRole = (role = []) => {
-  const roles = Array.isArray(role) ? role : [role];
-  return roles.includes("freelancer");
-};
-
 const pickProfileFields = (payload = {}, role = []) => {
-  const allowedFields = hasFreelancerRole(role)
-    ? [...profileFields, ...freelancerOnlyFields]
-    : profileFields;
-
+  const allowedFields = [...profileFields, ...freelancerOnlyFields];
   return allowedFields.reduce((acc, field) => {
     if (payload[field] !== undefined) {
       acc[field] = payload[field];

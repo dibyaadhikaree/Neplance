@@ -1,41 +1,6 @@
 const catchAsync = require("../utils/catchAsync");
 const User = require("../models/User");
-
-const commonEditableFields = [
-  "name",
-  "phone",
-  "avatar",
-  "bio",
-  "location",
-];
-
-const freelancerOnlyFields = [
-  "skills",
-  "hourlyRate",
-  "experienceLevel",
-  "jobTypePreference",
-  "availabilityStatus",
-  "languages",
-  "portfolio",
-];
-
-const hasFreelancerRole = (role = []) => {
-  const roles = Array.isArray(role) ? role : [role];
-  return roles.includes("freelancer");
-};
-
-const pickEditableFields = (payload = {}, role = []) => {
-  const allowedFields = hasFreelancerRole(role)
-    ? [...commonEditableFields, ...freelancerOnlyFields]
-    : commonEditableFields;
-
-  return allowedFields.reduce((acc, field) => {
-    if (payload[field] !== undefined) {
-      acc[field] = payload[field];
-    }
-    return acc;
-  }, {});
-};
+const { pickUserFields } = require("../utils/userFields");
 
 const getMyProfile = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
@@ -49,7 +14,7 @@ const getMyProfile = catchAsync(async (req, res, next) => {
 });
 
 const updateMyProfile = catchAsync(async (req, res, next) => {
-  const updates = pickEditableFields(req.body, req.user.role);
+  const updates = pickUserFields(req.body, req.user.role);
 
   const updatedUser = await User.findByIdAndUpdate(req.user.id, updates, {
     new: true,
@@ -65,12 +30,30 @@ const updateMyProfile = catchAsync(async (req, res, next) => {
 });
 
 const getFreelancers = catchAsync(async (req, res, next) => {
-  const freelancers = await User.find({ role: "freelancer" }).select(
-    "name email avatar bio location skills hourlyRate experienceLevel jobTypePreference availabilityStatus languages portfolio"
-  );
+  const { page = 1, limit = 20, skills, search, availabilityStatus } = req.query;
+
+  const query = { role: "freelancer" };
+  if (skills) query.skills = { $in: skills.split(",").map(s => s.trim()) };
+  if (search) query.$or = [
+    { name: new RegExp(search, "i") },
+    { bio: new RegExp(search, "i") }
+  ];
+  if (availabilityStatus) query.availabilityStatus = availabilityStatus;
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const selectFields = "name email avatar bio location skills hourlyRate experienceLevel jobTypePreference availabilityStatus languages portfolio";
+
+  const [freelancers, total] = await Promise.all([
+    User.find(query).select(selectFields).skip(skip).limit(Number(limit)),
+    User.countDocuments(query),
+  ]);
 
   res.status(200).json({
     status: "success",
+    results: freelancers.length,
+    total,
+    page: Number(page),
+    pages: Math.ceil(total / Number(limit)),
     data: freelancers,
   });
 });

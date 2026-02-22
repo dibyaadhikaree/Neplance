@@ -7,24 +7,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const AppError = require("./src/utils/appError");
-
-let cached = global.mongoose;
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-const connectDB = async () => {
-  if (cached.conn) return cached.conn;
-  if (!cached.promise) {
-    const DbUri = process.env.NEPLANCE_MONGODB_URI;
-    cached.promise = mongoose.connect(DbUri).then((m) => {
-      console.log("DB connected");
-      return m;
-    });
-  }
-  cached.conn = await cached.promise;
-  return cached.conn;
-};
+const connectDB = require("./src/config/db");
 
 const frontendUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
 
@@ -39,15 +22,6 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
 
 const indexRouter = require("./src/routes/indexRoute");
 const jobRouter = require("./src/routes/jobRoutes");
@@ -73,6 +47,12 @@ app.all("*", (req, res, next) => {
 app.use(errorController);
 
 const PORT = process.env.SERVER_PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+};
+
+startServer();
 
 module.exports = app;
