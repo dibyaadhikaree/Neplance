@@ -10,11 +10,12 @@ const {
   refreshAccessToken,
 } = require("../controllers/authController");
 const { protect, restrictTo } = require("../middlewares/authMiddleware");
+const { loginLimiter, refreshLimiter, authLimiter } = require("../middlewares/rateLimiter");
 
-router.route("/login").post(login);
-router.route("/logout").get(logout);
-router.route("/register").post(register);
-router.route("/refresh").get(refreshAccessToken);
+router.route("/login").post(loginLimiter, login);
+router.route("/logout").get(authLimiter, logout);
+router.route("/register").post(authLimiter, register);
+router.route("/refresh").get(refreshLimiter, refreshAccessToken);
 router.route("/me").get(protect, getMe, getUser);
 
 module.exports = router;

@@ -34,11 +34,20 @@ const generateRefreshToken = (userId) => {
   });
 };
 
-const getCookieOptions = (expires) => ({
-  expires,
-  httpOnly: true,
-  sameSite: "lax",
-});
+const getCookieOptions = (expires) => {
+  const options = {
+    expires,
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  };
+
+  if (process.env.NODE_ENV === "production") {
+    options.secure = true;
+  }
+
+  return options;
+};
 
 const createSendTokens = (user, statusCode, res) => {
   const accessToken = generateAccessToken(user._id);
@@ -46,10 +55,6 @@ const createSendTokens = (user, statusCode, res) => {
 
   const refreshCookieExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const refreshCookieOptions = getCookieOptions(refreshCookieExpiry);
-
-  if (process.env.NODE_ENV === "production") {
-    refreshCookieOptions.secure = true;
-  }
 
   res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
@@ -125,8 +130,18 @@ const refreshAccessToken = catchAsync(async (req, res, next) => {
 });
 
 const logout = (req, res) => {
-  res.clearCookie("accessToken", { httpOnly: true, sameSite: "lax" });
-  res.clearCookie("refreshToken", { httpOnly: true, sameSite: "lax" });
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  };
+
+  if (process.env.NODE_ENV === "production") {
+    cookieOptions.secure = true;
+  }
+
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
 
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
