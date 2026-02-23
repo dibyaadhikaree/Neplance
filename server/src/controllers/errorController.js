@@ -28,8 +28,14 @@ module.exports = (err, req, res, next) => {
       .join(", ");
   }
 
-  res.status(resolvedStatusCode).send({
+  const response = {
     status,
     message: message,
-  });
+  };
+
+  if (err.errorCode) {
+    response.errorCode = err.errorCode;
+  }
+
+  res.status(resolvedStatusCode).send(response);
 };

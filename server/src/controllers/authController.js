@@ -2,6 +2,7 @@ const catchAsync = require("../utils/catchAsync");
 const User = require("../models/User");
 const AppError = require("../utils/appError");
 const jwt = require("jsonwebtoken");
+const { promisify } = require("util");
 const { pickUserFields, freelancerOnlyFields } = require("../utils/userFields");
 
 const profileFields = [
@@ -21,35 +22,42 @@ const pickProfileFields = (payload = {}, role = []) => {
   }, {});
 };
 
-// Create JWT token for user
-const createToken = (userId) => {
-  const jwtOptions = {
-    expiresIn: process.env.AUTH_JWT_EXPIRATION || "24h",
-  };
-  return jwt.sign({ id: userId }, process.env.AUTH_JWT_SECRET, jwtOptions);
+const generateAccessToken = (userId) => {
+  return jwt.sign({ id: userId, type: "access" }, process.env.AUTH_JWT_SECRET, {
+    expiresIn: process.env.AUTH_ACCESS_TOKEN_EXPIRY || "15m",
+  });
 };
 
-const createSendToken = (user, statusCode, res) => {
-  const token = createToken(user._id);
+const generateRefreshToken = (userId) => {
+  return jwt.sign({ id: userId, type: "refresh" }, process.env.AUTH_JWT_SECRET, {
+    expiresIn: process.env.AUTH_REFRESH_TOKEN_EXPIRY || "7d",
+  });
+};
 
-  const cookieExpirationDays =
-    Number(process.env.AUTH_JWT_COOKIE_EXPIRATION_DAYS) || 1;
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() + cookieExpirationDays * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-  };
+const getCookieOptions = (expires) => ({
+  expires,
+  httpOnly: true,
+  sameSite: "lax",
+});
 
-  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
+const createSendTokens = (user, statusCode, res) => {
+  const accessToken = generateAccessToken(user._id);
+  const refreshToken = generateRefreshToken(user._id);
 
-  res.cookie("jwt", token, cookieOptions);
+  const refreshCookieExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const refreshCookieOptions = getCookieOptions(refreshCookieExpiry);
+
+  if (process.env.NODE_ENV === "production") {
+    refreshCookieOptions.secure = true;
+  }
+
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
   user.password = undefined;
 
   res.status(statusCode).json({
     status: "success",
-    token,
+    accessToken,
     data: {
       user,
     },
@@ -69,7 +77,7 @@ const register = catchAsync(async (req, res, next) => {
     ...profilePayload,
   });
 
-  createSendToken(freshUser, 201, res);
+  createSendTokens(freshUser, 201, res);
 });
 
 const login = catchAsync(async (req, res, next) => {
@@ -83,14 +91,47 @@ const login = catchAsync(async (req, res, next) => {
   if (!user || !(await user.correctPassword(password, user.password)))
     throw new AppError("Invalid email or password", 401);
 
-  createSendToken(user, 200, res);
+  createSendTokens(user, 200, res);
+});
+
+const refreshAccessToken = catchAsync(async (req, res, next) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    throw new AppError("No refresh token provided. Please log in again.", 401);
+  }
+
+  const decoded = await promisify(jwt.verify)(refreshToken, process.env.AUTH_JWT_SECRET).catch(
+    () => {
+      throw new AppError("Invalid or expired refresh token. Please log in again.", 401);
+    }
+  );
+
+  if (decoded.type !== "refresh") {
+    throw new AppError("Invalid token type. Please log in again.", 401);
+  }
+
+  const user = await User.findById(decoded.id);
+  if (!user) {
+    throw new AppError("User no longer exists. Please log in again.", 401);
+  }
+
+  const accessToken = generateAccessToken(user._id);
+
+  res.status(200).json({
+    status: "success",
+    accessToken,
+  });
 });
 
 const logout = (req, res) => {
-  res.cookie("jwt", "loggedout", {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
-  });
+  res.clearCookie("accessToken", { httpOnly: true, sameSite: "lax" });
+  res.clearCookie("refreshToken", { httpOnly: true, sameSite: "lax" });
+
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+
   res.status(200).json({ status: "success" });
 };
 
@@ -116,4 +157,5 @@ module.exports = {
   logout,
   getMe,
   getUser,
+  refreshAccessToken,
 };

@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Navbar } from "@/shared/navigation/Navbar";
 import { apiCall } from "@/services/api";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { Navbar } from "@/shared/navigation/Navbar";
 
 export default function TalentPage() {
   const { user, isHydrated, logout, switchRole } = useAuthGate({
@@ -24,7 +24,6 @@ export default function TalentPage() {
           setFreelancers(data.data || []);
         }
       } catch (_) {
-        // Endpoint might not exist yet -- show empty state
         setFreelancers([]);
       } finally {
         setLoading(false);

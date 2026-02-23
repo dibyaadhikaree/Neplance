@@ -1,16 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
-import { Navbar } from "@/shared/navigation/Navbar";
+import { useCallback, useEffect, useState } from "react";
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
 import { apiCall } from "@/services/api";
-import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import {
-  JOB_CATEGORIES,
   EXPERIENCE_LEVELS,
+  JOB_CATEGORIES,
 } from "@/shared/constants/jobCategories";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { Navbar } from "@/shared/navigation/Navbar";
 
 export default function JobsPage() {
   const { user, isHydrated, logout, switchRole } = useAuthGate({

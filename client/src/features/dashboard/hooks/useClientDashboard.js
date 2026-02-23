@@ -28,27 +28,18 @@ export const useClientDashboard = () => {
     }
 
     setLoadingProposals(true);
+
     try {
       const results = await Promise.all(
         contractList.map(async (contract) => {
-          try {
-            const proposalsData = await apiCall(
-              `/api/proposals/job/${contract._id}`,
-            );
-            if (proposalsData.status === "success") {
-              const pendingOnly = (proposalsData.data || []).filter(
-                (proposal) => proposal.status === "pending",
-              );
-              return [contract._id, pendingOnly];
-            }
-          } catch (err) {
-            console.error("Failed to fetch proposals:", err);
-          }
-          return [contract._id, []];
-        }),
+          const proposalsData = await apiCall(`/api/proposals/job/${contract._id}`);
+          return [contract._id, proposalsData.data || []];
+        })
       );
 
       setProposalsByContract(Object.fromEntries(results));
+    } catch (err) {
+      console.error("Failed to fetch proposals:", err);
     } finally {
       setLoadingProposals(false);
     }

@@ -1,11 +1,11 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Navbar } from "@/shared/navigation/Navbar";
-import { Button, Input } from "@/shared/ui/UI";
+import { use, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { Navbar } from "@/shared/navigation/Navbar";
+import { Button, Input } from "@/shared/ui/UI";
 import {
   formatStatus,
   getCreatorLabel,
@@ -52,6 +52,7 @@ export default function JobDetailPage({ params }) {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -122,6 +123,21 @@ export default function JobDetailPage({ params }) {
       setSubmitting(false);
     }
   };
+
+  if (!isHydrated || !user) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -5,8 +5,6 @@ const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 
 const protect = catchAsync(async (req, res, next) => {
-  //verify jwt token
-
   let token;
 
   if (
@@ -14,8 +12,6 @@ const protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies.jwt) {
-    token = req.cookies.jwt;
   }
 
   if (!token) {
@@ -24,19 +20,24 @@ const protect = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 2) Verification token
   const decoded = await promisify(jwt.verify)(token, process.env.AUTH_JWT_SECRET).catch(
     (err) => {
+      if (err.name === "TokenExpiredError") {
+        throw new AppError("Access token expired. Please refresh your session.", 401, "TOKEN_EXPIRED");
+      }
       throw new AppError("Invalid token or session expired. Please log in again.", 401);
     }
   );
 
-  // 3) Check if user still exists
+  if (decoded.type !== "access") {
+    throw new AppError("Invalid token type. Please log in again.", 401);
+  }
+
   const currentUser = await User.findById(decoded.id);
 
   if (!currentUser) throw new AppError("The user doesnt exist any more ", 404);
 
-  req.user = currentUser.toObject(); //doing this because currentUser is  a mongoose _doc , it includes its methods and validators and setter , getter
+  req.user = currentUser.toObject();
   req.user.id = currentUser._id;
 
   next();

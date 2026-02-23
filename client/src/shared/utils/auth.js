@@ -17,7 +17,27 @@ export const persistActiveRole = (role) => {
   }
 };
 
+export const getAccessToken = () => {
+  if (typeof window !== "undefined") {
+    return window.localStorage.getItem("neplance.accessToken");
+  }
+  return null;
+};
+
+export const setAccessToken = (token) => {
+  if (typeof window !== "undefined" && token) {
+    window.localStorage.setItem("neplance.accessToken", token);
+  }
+};
+
+export const clearAccessToken = () => {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem("neplance.accessToken");
+  }
+};
+
 export const logoutRequest = async () => {
+  clearAccessToken();
   try {
     await apiCall("/api/auth/logout");
   } catch (_) {

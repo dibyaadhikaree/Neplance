@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { APIError, apiAuthCall } from "@/services/api";
+import { setAccessToken } from "@/shared/utils/auth";
 import { AuthTabs } from "./AuthTabs";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
@@ -22,6 +23,10 @@ export const AuthPanel = ({
     try {
       const data = await apiAuthCall(`/api/auth/${endpoint}`, body);
       const user = data.data?.user || data.user;
+
+      if (data.accessToken) {
+        setAccessToken(data.accessToken);
+      }
 
       if (user && onAuthSuccess) {
         onAuthSuccess(user);
