@@ -29,6 +29,15 @@ const updateMyProfile = catchAsync(async (req, res, next) => {
   });
 });
 
+const deactivateMyAccount = catchAsync(async (req, res, next) => {
+  await User.findByIdAndUpdate(req.user.id, { active: false });
+
+  res.status(200).json({
+    status: "success",
+    message: "Account deactivated successfully",
+  });
+});
+
 const getFreelancers = catchAsync(async (req, res, next) => {
   const { page = 1, limit = 20, skills, search, availabilityStatus } = req.query;
 
@@ -61,5 +70,6 @@ const getFreelancers = catchAsync(async (req, res, next) => {
 module.exports = {
   getMyProfile,
   updateMyProfile,
+  deactivateMyAccount,
   getFreelancers,
 };

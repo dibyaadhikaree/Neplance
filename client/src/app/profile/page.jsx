@@ -57,6 +57,8 @@ export default function ProfilePage() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [formData, setFormData] = useState(makeInitialForm(null));
@@ -135,6 +137,19 @@ export default function ProfilePage() {
     setFormError("");
     setFormSuccess("");
     setIsEditing(false);
+  };
+
+  const handleDeactivateAccount = async () => {
+    setIsDeactivating(true);
+    try {
+      await apiCall("/api/users/me", { method: "DELETE" });
+      await logout();
+      router.push("/");
+    } catch (error) {
+      setFormError(error.message || "Failed to deactivate account.");
+      setIsDeactivating(false);
+      setShowDeactivateModal(false);
+    }
   };
 
   const handleSaveProfile = async (event) => {
@@ -1101,11 +1116,102 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
+
+          {/* Account Danger Zone */}
+          <div style={{ marginTop: "var(--space-12)" }}>
+            <div
+              className="card"
+              style={{
+                border: "1px solid var(--color-error)",
+              }}
+            >
+              <h3
+                style={{
+                  marginBottom: "var(--space-2)",
+                  color: "var(--color-error)",
+                }}
+              >
+                Danger Zone
+              </h3>
+              <p className="text-light" style={{ marginBottom: "var(--space-4)" }}>
+                Once you deactivate your account, you will not be able to log in
+                or access your profile. Your data will be soft-deleted and hidden
+                from other users.
+              </p>
+              <button
+                type="button"
+                className="btn"
+                style={{
+                  backgroundColor: "var(--color-error)",
+                  color: "white",
+                }}
+                onClick={() => setShowDeactivateModal(true)}
+              >
+                Deactivate Account
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {selectedJob && (
         <JobModal job={selectedJob} mode="view" onClose={handleCloseModal} />
+      )}
+
+      {showDeactivateModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => !isDeactivating && setShowDeactivateModal(false)}
+        >
+          <div
+            className="card"
+            style={{ maxWidth: "400px", width: "90%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginBottom: "var(--space-4)" }}>
+              Deactivate Account?
+            </h3>
+            <p className="text-light" style={{ marginBottom: "var(--space-6)" }}>
+              Are you sure you want to deactivate your account? This action cannot
+              be undone. You will be logged out immediately.
+            </p>
+            {formError && (
+              <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>
+                {formError}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "var(--space-3)", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowDeactivateModal(false)}
+                disabled={isDeactivating}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn"
+                style={{
+                  backgroundColor: "var(--color-error)",
+                  color: "white",
+                }}
+                onClick={handleDeactivateAccount}
+                disabled={isDeactivating}
+              >
+                {isDeactivating ? "Deactivating..." : "Deactivate"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
