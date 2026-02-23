@@ -193,10 +193,7 @@ export default function TalentPage() {
                     type="button"
                     className="btn btn-secondary btn-sm"
                     style={{ width: "100%" }}
-                    onClick={() => {
-                      // Navigate to their profile or open invite modal
-                      // For now, placeholder
-                    }}
+                    onClick={() => router.push(`/freelancers/${freelancer._id}`)}
                   >
                     View Profile
                   </button>

@@ -67,9 +67,26 @@ const getFreelancers = catchAsync(async (req, res, next) => {
   });
 });
 
+const getFreelancerById = catchAsync(async (req, res, next) => {
+  const freelancer = await User.findOne({ _id: req.params.id, role: "freelancer" });
+
+  if (!freelancer) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Freelancer not found",
+    });
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: freelancer,
+  });
+});
+
 module.exports = {
   getMyProfile,
   updateMyProfile,
   deactivateMyAccount,
   getFreelancers,
+  getFreelancerById,
 };
