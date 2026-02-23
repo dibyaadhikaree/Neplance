@@ -62,7 +62,7 @@ export default function JobDetailPage({ params }) {
   const [revisionsIncluded, setRevisionsIncluded] = useState("0");
   const [attachments, setAttachments] = useState("");
 
-  const { user, logout, switchRole } = useAuthGate({ mode: "none" });
+  const { user, isHydrated, logout, switchRole } = useAuthGate({ mode: "none" });
 
   useEffect(() => {
     const fetchJob = async () => {

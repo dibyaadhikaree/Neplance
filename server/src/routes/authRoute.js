@@ -9,7 +9,7 @@ const {
   getUser,
   refreshAccessToken,
 } = require("../controllers/authController");
-const { protect, restrictTo } = require("../middlewares/authMiddleware");
+const { protect } = require("../middlewares/authMiddleware");
 const { loginLimiter, refreshLimiter, authLimiter } = require("../middlewares/rateLimiter");
 
 router.route("/login").post(loginLimiter, login);
