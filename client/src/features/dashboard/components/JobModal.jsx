@@ -8,6 +8,11 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
+import {
+  proposalSchema,
+  validateForm,
+  getFieldError,
+} from "@/shared/lib/validation";
 
 const formatBudget = (budget, budgetType) => {
   if (!budget?.min) return "Negotiable";
@@ -58,39 +63,42 @@ export const JobModal = ({
   const [revisionsIncluded, setRevisionsIncluded] = useState("0");
   const [attachments, setAttachments] = useState("");
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
   const [evidenceInputs, setEvidenceInputs] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setErrors({});
 
-    if (!amount || Number(amount) <= 0) {
-      setError("Please enter a valid amount");
-      return;
-    }
-    if (!coverLetter || coverLetter.trim().length === 0) {
-      setError("Please enter a cover letter");
-      return;
-    }
-    if (!deliveryDays || Number(deliveryDays) <= 0) {
-      setError("Please enter valid delivery days");
+    const attachmentsArray = attachments
+      ? attachments
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean)
+      : [];
+
+    const submitData = {
+      job: job._id,
+      amount: Number(amount),
+      coverLetter: coverLetter.trim(),
+      deliveryDays: Number(deliveryDays),
+      revisionsIncluded: Number(revisionsIncluded) || 0,
+      attachments: attachmentsArray,
+    };
+
+    const { errors: validationErrors, data } = validateForm(
+      proposalSchema,
+      submitData,
+    );
+
+    if (validationErrors) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
-      await onSubmit({
-        job: job._id,
-        amount: Number(amount),
-        coverLetter: coverLetter.trim(),
-        deliveryDays: Number(deliveryDays),
-        revisionsIncluded: Number(revisionsIncluded) || 0,
-        attachments: attachments
-          ? attachments
-              .split(",")
-              .map((a) => a.trim())
-              .filter(Boolean)
-          : [],
-      });
+      await onSubmit(data);
     } catch (err) {
       setError(err.message || "Failed to submit proposal");
     }
@@ -426,6 +434,7 @@ export const JobModal = ({
               placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              error={getFieldError(errors, "amount")}
               min="1"
               required
               disabled={loading}
@@ -452,7 +461,7 @@ export const JobModal = ({
                   width: "100%",
                   padding: "0.75rem",
                   borderRadius: "4px",
-                  border: "1px solid var(--color-border)",
+                  border: `1px solid ${getFieldError(errors, "coverLetter") ? "var(--color-error)" : "var(--color-border)"}`,
                   fontFamily: "inherit",
                   fontSize: "0.875rem",
                   resize: "vertical",
@@ -461,6 +470,17 @@ export const JobModal = ({
                 required
                 disabled={loading}
               />
+              {getFieldError(errors, "coverLetter") && (
+                <p
+                  style={{
+                    color: "var(--color-error)",
+                    fontSize: "0.75rem",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  {getFieldError(errors, "coverLetter")}
+                </p>
+              )}
               <p
                 style={{
                   fontSize: "0.75rem",
@@ -486,6 +506,7 @@ export const JobModal = ({
                 placeholder="e.g., 7"
                 value={deliveryDays}
                 onChange={(e) => setDeliveryDays(e.target.value)}
+                error={getFieldError(errors, "deliveryDays")}
                 min="1"
                 required
                 disabled={loading}
@@ -496,6 +517,7 @@ export const JobModal = ({
                 placeholder="e.g., 2"
                 value={revisionsIncluded}
                 onChange={(e) => setRevisionsIncluded(e.target.value)}
+                error={getFieldError(errors, "revisionsIncluded")}
                 min="0"
                 disabled={loading}
               />
@@ -508,6 +530,7 @@ export const JobModal = ({
                 placeholder="https://example.com/file1.pdf, https://example.com/file2.pdf"
                 value={attachments}
                 onChange={(e) => setAttachments(e.target.value)}
+                error={getFieldError(errors, "attachments")}
                 disabled={loading}
               />
             </div>

@@ -1,6 +1,6 @@
 import { useId } from "react";
 
-export const Input = ({ label, className = "", ...props }) => {
+export const Input = ({ label, className = "", error, ...props }) => {
   const id = useId();
   return (
     <div className="form-group">
@@ -9,7 +9,16 @@ export const Input = ({ label, className = "", ...props }) => {
           {label}
         </label>
       )}
-      <input id={id} className={`form-input ${className}`} {...props} />
+      <input
+        id={id}
+        className={`form-input ${error ? "form-input-error" : ""} ${className}`}
+        {...props}
+      />
+      {error && (
+        <p className="form-error" style={{ color: "var(--color-error)", fontSize: "0.75rem", marginTop: "0.25rem" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 };

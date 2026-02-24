@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { Button, Input } from "@/shared/ui/UI";
+import {
+  signupSchema,
+  validateForm,
+  getFieldError,
+} from "@/shared/lib/validation";
 
 const ROLES = ["freelancer", "client"];
 
@@ -37,6 +42,7 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
     availabilityStatus: "available",
   });
   const [selectedRoles, setSelectedRoles] = useState(new Set());
+  const [errors, setErrors] = useState({});
   const isFreelancerSelected = selectedRoles.has("freelancer");
 
   const updateField = (field) => (e) =>
@@ -67,21 +73,21 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
 
     const hasLocation = Object.values(location).some(Boolean);
 
-    onSubmit({
+    const submitData = {
       name: formData.name,
       email: formData.email,
       password: formData.password,
       passwordConfirm: formData.passwordConfirm,
       phone: formData.phone.trim() || undefined,
       bio: formData.bio.trim() || undefined,
-      location: hasLocation ? location : undefined,
+      city: location.city || undefined,
+      district: location.district || undefined,
+      province: location.province || undefined,
       skills: isFreelancerSelected ? parseCsv(formData.skills) : undefined,
       languages: isFreelancerSelected
         ? parseCsv(formData.languages)
         : undefined,
-      hourlyRate: isFreelancerSelected
-        ? Number(formData.hourlyRate) || 0
-        : undefined,
+      hourlyRate: isFreelancerSelected ? formData.hourlyRate : undefined,
       experienceLevel: isFreelancerSelected
         ? formData.experienceLevel
         : undefined,
@@ -92,7 +98,45 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         ? formData.availabilityStatus
         : undefined,
       roles: Array.from(selectedRoles),
-    });
+    };
+
+    const { errors: validationErrors, data } = validateForm(
+      signupSchema,
+      submitData,
+    );
+
+    if (validationErrors) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    const finalPayload = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      passwordConfirm: data.passwordConfirm,
+      phone: data.phone,
+      bio: data.bio,
+      location: hasLocation ? location : undefined,
+      skills: isFreelancerSelected ? parseCsv(formData.skills) : undefined,
+      languages: isFreelancerSelected
+        ? parseCsv(formData.languages)
+        : undefined,
+      hourlyRate: isFreelancerSelected
+        ? Number(formData.hourlyRate) || 0
+        : undefined,
+      experienceLevel: isFreelancerSelected ? data.experienceLevel : undefined,
+      jobTypePreference: isFreelancerSelected
+        ? data.jobTypePreference
+        : undefined,
+      availabilityStatus: isFreelancerSelected
+        ? data.availabilityStatus
+        : undefined,
+      roles: data.roles,
+    };
+
+    setErrors({});
+    onSubmit(finalPayload);
   };
 
   const isValid =
@@ -110,6 +154,7 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         placeholder="Enter your full name"
         value={formData.name}
         onChange={updateField("name")}
+        error={getFieldError(errors, "name")}
         required
         autoComplete="name"
         disabled={loading}
@@ -120,6 +165,7 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         placeholder="Enter your email"
         value={formData.email}
         onChange={updateField("email")}
+        error={getFieldError(errors, "email")}
         required
         autoComplete="email"
         disabled={loading}
@@ -130,6 +176,7 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         placeholder="Create a password"
         value={formData.password}
         onChange={updateField("password")}
+        error={getFieldError(errors, "password")}
         required
         autoComplete="new-password"
         disabled={loading}
@@ -140,6 +187,7 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         placeholder="Re-enter your password"
         value={formData.passwordConfirm}
         onChange={updateField("passwordConfirm")}
+        error={getFieldError(errors, "passwordConfirm")}
         required
         autoComplete="new-password"
         disabled={loading}
@@ -151,6 +199,7 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         placeholder="Enter your phone number"
         value={formData.phone}
         onChange={updateField("phone")}
+        error={getFieldError(errors, "phone")}
         autoComplete="tel"
         disabled={loading}
       />
@@ -169,6 +218,18 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
           maxLength={1000}
           disabled={loading}
         />
+        {getFieldError(errors, "bio") && (
+          <p
+            className="form-error"
+            style={{
+              color: "var(--color-error)",
+              fontSize: "0.75rem",
+              marginTop: "0.25rem",
+            }}
+          >
+            {getFieldError(errors, "bio")}
+          </p>
+        )}
       </div>
 
       <Input
@@ -281,8 +342,10 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
         </>
       )}
 
-      <div className="form-group">
-        <label className="form-label">I want to:</label>
+      <fieldset className="form-group">
+        <legend className="form-label" style={{ marginBottom: "0.5rem" }}>
+          I want to:
+        </legend>
         <div className="grid grid-cols-2 gap-4">
           {ROLES.map((role) => (
             <RoleButton
@@ -294,7 +357,19 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
             />
           ))}
         </div>
-      </div>
+        {getFieldError(errors, "roles") && (
+          <p
+            className="form-error"
+            style={{
+              color: "var(--color-error)",
+              fontSize: "0.75rem",
+              marginTop: "0.25rem",
+            }}
+          >
+            {getFieldError(errors, "roles")}
+          </p>
+        )}
+      </fieldset>
 
       <Button type="submit" disabled={loading || !isValid}>
         {loading ? "Creating account..." : "Sign Up"}

@@ -5,6 +5,11 @@ import { useEffect, useState } from "react";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { apiCall } from "@/services/api";
+import {
+  profileUpdateSchema,
+  validateForm,
+  getFieldError,
+} from "@/shared/lib/validation";
 
 const parseCsv = (value = "") =>
   value
@@ -53,6 +58,7 @@ export default function EditProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+  const [formErrors, setFormErrors] = useState({});
   const [formData, setFormData] = useState(makeInitialForm(null));
   const router = useRouter();
 
@@ -112,6 +118,7 @@ export default function EditProfilePage() {
     event.preventDefault();
     setFormError("");
     setFormSuccess("");
+    setFormErrors({});
     setIsSaving(true);
 
     try {
@@ -123,11 +130,10 @@ export default function EditProfilePage() {
       };
 
       const hasCoordinates = formData.lat !== "" || formData.lng !== "";
+      let lat, lng;
       if (hasCoordinates) {
-        location.coordinates = {
-          lat: formData.lat === "" ? undefined : Number(formData.lat),
-          lng: formData.lng === "" ? undefined : Number(formData.lng),
-        };
+        lat = formData.lat === "" ? undefined : Number(formData.lat);
+        lng = formData.lng === "" ? undefined : Number(formData.lng);
       }
 
       const payload = {
@@ -135,17 +141,58 @@ export default function EditProfilePage() {
         phone: formData.phone.trim() || null,
         avatar: formData.avatar.trim() || null,
         bio: formData.bio.trim(),
-        location,
+        address: location.address || undefined,
+        city: location.city || undefined,
+        district: location.district || undefined,
+        province: location.province || undefined,
+        lat,
+        lng,
       };
 
       if (isFreelancerProfile) {
-        payload.skills = parseCsv(formData.skills);
+        payload.skills = formData.skills;
         payload.hourlyRate = Number(formData.hourlyRate) || 0;
         payload.experienceLevel = formData.experienceLevel;
         payload.jobTypePreference = formData.jobTypePreference;
         payload.availabilityStatus = formData.availabilityStatus;
-        payload.languages = parseCsv(formData.languages);
+        payload.languages = formData.languages;
         payload.portfolio = formData.portfolio.map((item) => ({
+          title: item.title?.trim() || undefined,
+          description: item.description?.trim() || undefined,
+          imageUrls: item.imageUrls || undefined,
+          projectUrl: item.projectUrl?.trim() || undefined,
+          skills: item.skills || undefined,
+          completedAt: item.completedAt || undefined,
+        }));
+      }
+
+      const { errors: validationErrors, data } = validateForm(
+        profileUpdateSchema,
+        payload,
+      );
+
+      if (validationErrors) {
+        setFormErrors(validationErrors);
+        setIsSaving(false);
+        return;
+      }
+
+      const finalPayload = {
+        name: data.name,
+        phone: data.phone,
+        avatar: data.avatar,
+        bio: data.bio,
+        location,
+      };
+
+      if (isFreelancerProfile) {
+        finalPayload.skills = parseCsv(formData.skills);
+        finalPayload.hourlyRate = data.hourlyRate;
+        finalPayload.experienceLevel = data.experienceLevel;
+        finalPayload.jobTypePreference = data.jobTypePreference;
+        finalPayload.availabilityStatus = data.availabilityStatus;
+        finalPayload.languages = parseCsv(formData.languages);
+        finalPayload.portfolio = formData.portfolio.map((item) => ({
           title: item.title?.trim(),
           description: item.description?.trim(),
           imageUrls: parseCsv(item.imageUrls || ""),
@@ -157,7 +204,7 @@ export default function EditProfilePage() {
 
       const response = await apiCall("/api/users/me", {
         method: "PATCH",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(finalPayload),
       });
 
       const updated = response?.data?.user;
@@ -201,7 +248,10 @@ export default function EditProfilePage() {
             <h1 style={{ marginBottom: "var(--space-6)" }}>Edit Profile</h1>
 
             {formError && (
-              <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>
+              <div
+                className="card-error"
+                style={{ marginBottom: "var(--space-4)" }}
+              >
                 {formError}
               </div>
             )}
@@ -220,18 +270,32 @@ export default function EditProfilePage() {
             )}
 
             <form id="profile-edit-form" onSubmit={handleSaveProfile}>
-              <div className="grid grid-cols-2" style={{ gap: "var(--space-4)" }}>
+              <div
+                className="grid grid-cols-2"
+                style={{ gap: "var(--space-4)" }}
+              >
                 <div className="form-group">
                   <label className="form-label" htmlFor="profile-name">
                     Name
                   </label>
                   <input
                     id="profile-name"
-                    className="form-input"
+                    className={`form-input ${formErrors.name ? "form-input-error" : ""}`}
                     value={formData.name}
                     onChange={handleChange("name")}
                     required
                   />
+                  {formErrors.name && (
+                    <p
+                      style={{
+                        color: "var(--color-error)",
+                        fontSize: "0.75rem",
+                        marginTop: "0.25rem",
+                      }}
+                    >
+                      {formErrors.name}
+                    </p>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="profile-phone">
@@ -239,10 +303,21 @@ export default function EditProfilePage() {
                   </label>
                   <input
                     id="profile-phone"
-                    className="form-input"
+                    className={`form-input ${formErrors.phone ? "form-input-error" : ""}`}
                     value={formData.phone}
                     onChange={handleChange("phone")}
                   />
+                  {formErrors.phone && (
+                    <p
+                      style={{
+                        color: "var(--color-error)",
+                        fontSize: "0.75rem",
+                        marginTop: "0.25rem",
+                      }}
+                    >
+                      {formErrors.phone}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -252,10 +327,21 @@ export default function EditProfilePage() {
                 </label>
                 <input
                   id="profile-avatar"
-                  className="form-input"
+                  className={`form-input ${formErrors.avatar ? "form-input-error" : ""}`}
                   value={formData.avatar}
                   onChange={handleChange("avatar")}
                 />
+                {formErrors.avatar && (
+                  <p
+                    style={{
+                      color: "var(--color-error)",
+                      fontSize: "0.75rem",
+                      marginTop: "0.25rem",
+                    }}
+                  >
+                    {formErrors.avatar}
+                  </p>
+                )}
               </div>
 
               <div className="form-group">
@@ -264,16 +350,30 @@ export default function EditProfilePage() {
                 </label>
                 <textarea
                   id="profile-bio"
-                  className="form-input"
+                  className={`form-input ${formErrors.bio ? "form-input-error" : ""}`}
                   rows={4}
                   maxLength={1000}
                   value={formData.bio}
                   onChange={handleChange("bio")}
                 />
+                {formErrors.bio && (
+                  <p
+                    style={{
+                      color: "var(--color-error)",
+                      fontSize: "0.75rem",
+                      marginTop: "0.25rem",
+                    }}
+                  >
+                    {formErrors.bio}
+                  </p>
+                )}
               </div>
 
               <h3 style={{ marginBottom: "var(--space-4)" }}>Location</h3>
-              <div className="grid grid-cols-2" style={{ gap: "var(--space-4)" }}>
+              <div
+                className="grid grid-cols-2"
+                style={{ gap: "var(--space-4)" }}
+              >
                 <div className="form-group">
                   <label className="form-label" htmlFor="profile-address">
                     Address
@@ -367,10 +467,7 @@ export default function EditProfilePage() {
                       />
                     </div>
                     <div className="form-group">
-                      <label
-                        className="form-label"
-                        htmlFor="profile-languages"
-                      >
+                      <label className="form-label" htmlFor="profile-languages">
                         Languages (comma separated)
                       </label>
                       <input
@@ -415,10 +512,7 @@ export default function EditProfilePage() {
                       </select>
                     </div>
                     <div className="form-group">
-                      <label
-                        className="form-label"
-                        htmlFor="profile-job-type"
-                      >
+                      <label className="form-label" htmlFor="profile-job-type">
                         Job Type Preference
                       </label>
                       <select
@@ -508,7 +602,10 @@ export default function EditProfilePage() {
                         style={{ gap: "var(--space-4)" }}
                       >
                         <div className="form-group">
-                          <label className="form-label" htmlFor={`portfolio-title-${index}`}>
+                          <label
+                            className="form-label"
+                            htmlFor={`portfolio-title-${index}`}
+                          >
                             Title
                           </label>
                           <input
@@ -525,7 +622,10 @@ export default function EditProfilePage() {
                           />
                         </div>
                         <div className="form-group">
-                          <label className="form-label" htmlFor={`portfolio-url-${index}`}>
+                          <label
+                            className="form-label"
+                            htmlFor={`portfolio-url-${index}`}
+                          >
                             Project URL
                           </label>
                           <input
@@ -543,7 +643,10 @@ export default function EditProfilePage() {
                         </div>
                       </div>
                       <div className="form-group">
-                        <label className="form-label" htmlFor={`portfolio-desc-${index}`}>
+                        <label
+                          className="form-label"
+                          htmlFor={`portfolio-desc-${index}`}
+                        >
                           Description
                         </label>
                         <textarea
@@ -565,7 +668,10 @@ export default function EditProfilePage() {
                         style={{ gap: "var(--space-4)" }}
                       >
                         <div className="form-group">
-                          <label className="form-label" htmlFor={`portfolio-images-${index}`}>
+                          <label
+                            className="form-label"
+                            htmlFor={`portfolio-images-${index}`}
+                          >
                             Image URLs (comma separated)
                           </label>
                           <input
@@ -582,7 +688,10 @@ export default function EditProfilePage() {
                           />
                         </div>
                         <div className="form-group">
-                          <label className="form-label" htmlFor={`portfolio-skills-${index}`}>
+                          <label
+                            className="form-label"
+                            htmlFor={`portfolio-skills-${index}`}
+                          >
                             Skills (comma separated)
                           </label>
                           <input
@@ -600,7 +709,10 @@ export default function EditProfilePage() {
                         </div>
                       </div>
                       <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" htmlFor={`portfolio-date-${index}`}>
+                        <label
+                          className="form-label"
+                          htmlFor={`portfolio-date-${index}`}
+                        >
                           Completed At
                         </label>
                         <input

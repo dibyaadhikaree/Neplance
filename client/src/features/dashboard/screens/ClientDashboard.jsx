@@ -12,6 +12,10 @@ import {
   JOB_CATEGORIES,
   NEPAL_PROVINCES,
 } from "@/shared/constants/jobCategories";
+import {
+  jobCreateSchema,
+  validateForm as validateFormSchema,
+} from "@/shared/lib/validation";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const [activeTab, setActiveTab] = useState("create");
@@ -207,41 +211,93 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   };
 
   const validateForm = (requireMilestones = true) => {
-    const errors = [];
-    const validationErrors = {};
+    const tags = formState.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
 
-    if (!formState.title.trim()) {
-      errors.push("Job title is required.");
-    }
+    const requiredSkills = formState.requiredSkills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-    if (!formState.category) {
-      errors.push("Category is required.");
-    }
+    const milestones = formState.milestones
+      .filter((m) => m.title.trim())
+      .map((m) => ({
+        title: m.title.trim(),
+        description: m.description.trim(),
+        value: Number(m.value) || 0,
+        dueDate: formatDateValue(m.dueDate),
+      }));
 
-    if (!formState.budgetMin || Number(formState.budgetMin) <= 0) {
-      errors.push("Minimum budget is required.");
-    }
+    const location =
+      formState.jobType === "physical"
+        ? {
+            city: formState.locationCity.trim() || undefined,
+            district: formState.locationDistrict.trim() || undefined,
+            province: formState.locationProvince.trim() || undefined,
+          }
+        : undefined;
 
-    if (requireMilestones) {
-      formState.milestones.forEach((milestone, index) => {
-        const entryErrors = [];
-        if (!milestone.title.trim()) entryErrors.push("Title is required.");
-        if (!milestone.value || Number(milestone.value) <= 0)
-          entryErrors.push("Value must be greater than 0.");
-        if (entryErrors.length > 0) validationErrors[index] = entryErrors;
+    const payload = {
+      title: formState.title.trim(),
+      description: formState.description.trim(),
+      jobType: formState.jobType,
+      category: formState.category.trim(),
+      subcategory: formState.subcategory.trim() || undefined,
+      tags,
+      requiredSkills,
+      experienceLevel: formState.experienceLevel || undefined,
+      budgetType: formState.budgetType,
+      budget: {
+        min: Number(formState.budgetMin) || 0,
+        max: formState.budgetMax ? Number(formState.budgetMax) : undefined,
+        currency: "NPR",
+      },
+      deadline: formState.deadline || undefined,
+      isUrgent: formState.isUrgent,
+      location,
+      milestones: requireMilestones ? milestones : [],
+      isPublic: true,
+    };
+
+    const { errors: validationErrors, data } = validateFormSchema(
+      jobCreateSchema,
+      payload,
+    );
+
+    if (validationErrors) {
+      const flatErrors = [];
+      const milestoneErrorsObj = {};
+
+      Object.entries(validationErrors).forEach(([key, value]) => {
+        if (key.startsWith("milestones.")) {
+          const match = key.match(/milestones\.(\d+)\.(.+)/);
+          if (match) {
+            const idx = parseInt(match[1], 10);
+            if (!milestoneErrorsObj[idx]) milestoneErrorsObj[idx] = [];
+            milestoneErrorsObj[idx].push(value);
+          }
+        } else {
+          flatErrors.push(value);
+        }
       });
 
-      const validMilestones = formState.milestones.filter((m) =>
-        m.title.trim(),
-      );
-      if (validMilestones.length === 0) {
-        errors.push("Add at least one milestone with a title and value.");
+      if (
+        requireMilestones &&
+        (!data.milestones || data.milestones.length === 0)
+      ) {
+        flatErrors.push("Add at least one milestone with a title and value.");
       }
+
+      setFormErrors(flatErrors);
+      setMilestoneErrors(milestoneErrorsObj);
+      return false;
     }
 
-    setFormErrors(errors);
-    setMilestoneErrors(validationErrors);
-    return errors.length === 0 && Object.keys(validationErrors).length === 0;
+    setFormErrors([]);
+    setMilestoneErrors({});
+    return true;
   };
 
   const handleSaveDraft = async () => {
@@ -249,6 +305,34 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       setFormErrors(["Job title is required to save as draft."]);
       return;
     }
+
+    const tags = formState.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const requiredSkills = formState.requiredSkills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const location =
+      formState.jobType === "physical"
+        ? {
+            city: formState.locationCity.trim() || undefined,
+            district: formState.locationDistrict.trim() || undefined,
+            province: formState.locationProvince.trim() || undefined,
+          }
+        : undefined;
+
+    const milestones = formState.milestones
+      .filter((m) => m.title.trim())
+      .map((m) => ({
+        title: m.title.trim(),
+        description: m.description.trim(),
+        value: Number(m.value) || 0,
+        dueDate: formatDateValue(m.dueDate),
+      }));
 
     setSubmitting(true);
     try {
