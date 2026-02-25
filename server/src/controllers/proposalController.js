@@ -73,7 +73,7 @@ const acceptProposal = catchAsync(async (req, res, next) => {
 
   // Only allow job owner (creator) to accept proposals
   ensureCreator(job, req.user.id, "You can't accept proposals for this job");
-  ensureStatus(job, "DRAFT", "Contract is not open for hiring");
+  ensureStatus(job, "OPEN", "Contract is not open for hiring. Please publish your job first.");
 
   // 2) Accept this proposal
   proposal.status = "accepted";
@@ -90,7 +90,7 @@ const acceptProposal = catchAsync(async (req, res, next) => {
   const updatedJob = await Job.findByIdAndUpdate(
     jobId,
     {
-      status: "ACTIVE",
+      status: "IN_PROGRESS",
       updatedAt: Date.now(),
       $addToSet: {
         parties: {
@@ -144,10 +144,39 @@ const getProposalById = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: "success", data: populatedProposal });
 });
 
+const withdrawProposal = catchAsync(async (req, res, next) => {
+  const proposalId = req.params.id;
+
+  const proposal = await Proposal.findById(proposalId);
+
+  if (!proposal) {
+    return next(new AppError("Proposal not found", 404));
+  }
+
+  if (proposal.freelancer.toString() !== req.user.id.toString()) {
+    return next(new AppError("You can only withdraw your own proposals", 403));
+  }
+
+  if (proposal.status !== "pending") {
+    return next(new AppError("You can only withdraw pending proposals", 400));
+  }
+
+  proposal.status = "withdrawn";
+  proposal.withdrawnAt = Date.now();
+  await proposal.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Proposal withdrawn successfully",
+    data: proposal,
+  });
+});
+
 module.exports = {
   createProposal,
   getProposalForJob,
   acceptProposal,
   getMyProposals,
   getProposalById,
+  withdrawProposal,
 };

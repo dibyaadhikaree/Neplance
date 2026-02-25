@@ -5,6 +5,7 @@ const {
   acceptProposal,
   getMyProposals,
   getProposalById,
+  withdrawProposal,
 } = require("../controllers/proposalController");
 const { restrictTo, protect } = require("../middlewares/authMiddleware");
 
@@ -25,5 +26,7 @@ router.route("/job/:jobId").get(restrictTo("client"), getProposalForJob);
 router.route("/:id/accept").patch(restrictTo("client"), acceptProposal);
 
 router.route("/:id").get(getProposalById);
+
+router.route("/:id/withdraw").patch(restrictTo("freelancer"), withdrawProposal);
 
 module.exports = router;

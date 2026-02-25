@@ -66,7 +66,7 @@ export const JobCard = ({
     const statusLower = status?.toLowerCase();
     if (statusLower === "draft") return "badge-warning";
     if (statusLower === "open") return "badge-success";
-    if (statusLower === "active") return "badge-primary";
+    if (statusLower === "in_progress" || statusLower === "active") return "badge-primary";
     if (statusLower === "completed") return "badge-info";
     if (statusLower === "cancelled") return "badge-error";
     return "";
@@ -289,7 +289,7 @@ export const JobCard = ({
             </button>
           )}
 
-          {variant === "current" && status === "ACTIVE" && onMarkComplete && (
+          {variant === "current" && status === "IN_PROGRESS" && onMarkComplete && (
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -304,7 +304,7 @@ export const JobCard = ({
   );
 };
 
-export const ProposalCard = ({ proposal, onViewDetails: _onViewDetails }) => {
+export const ProposalCard = ({ proposal, onViewDetails: _onViewDetails, onWithdraw }) => {
   const {
     job,
     amount,
@@ -330,6 +330,7 @@ export const ProposalCard = ({ proposal, onViewDetails: _onViewDetails }) => {
     if (statusLower === "accepted") return "badge-success";
     if (statusLower === "pending") return "badge-warning";
     if (statusLower === "rejected") return "badge-error";
+    if (statusLower === "withdrawn") return "badge-info";
     return "";
   };
 
@@ -521,6 +522,16 @@ export const ProposalCard = ({ proposal, onViewDetails: _onViewDetails }) => {
         >
           View Details
         </Link>
+        {status === "pending" && onWithdraw && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ color: "var(--color-error)" }}
+            onClick={() => onWithdraw(proposal)}
+          >
+            Withdraw
+          </button>
+        )}
       </div>
     </article>
   );

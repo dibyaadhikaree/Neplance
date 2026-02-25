@@ -111,7 +111,7 @@ export const JobModal = ({
     (milestone) => milestone?.status === "COMPLETED",
   ).length;
   const canSubmitMilestone =
-    userRole === "freelancer" && job.status === "ACTIVE";
+    userRole === "freelancer" && job.status === "IN_PROGRESS";
   const canApproveMilestone = userRole === "client";
   const creatorLabel = getCreatorLabel(job.creatorAddress);
   const budgetDisplay = job.budget

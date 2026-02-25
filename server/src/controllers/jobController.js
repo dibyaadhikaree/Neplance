@@ -105,7 +105,7 @@ const findJobs = catchAsync(async (req, res) => {
     limit = 20,
   } = req.query;
 
-  const query = { isPublic: true, status: { $in: ["OPEN", "ACTIVE"] } };
+  const query = { isPublic: true, status: "OPEN" };
 
   if (category) query.category = category;
   if (jobType) query.jobType = jobType;
@@ -272,7 +272,7 @@ const deleteJob = catchAsync(async (req, res) => {
   const job = await getJobOrThrow(jobId);
   ensureCreator(job, req.user.id, "You can only delete your own jobs");
 
-  if (job.status === "ACTIVE") {
+  if (job.status === "IN_PROGRESS") {
     throw new AppError("Cannot delete active jobs", 400);
   }
 
@@ -289,7 +289,7 @@ const markCompleted = catchAsync(async (req, res, next) => {
 
   const job = await getJobOrThrow(jobId);
   ensureContractor(job, req.user.id, "Only the contractor can mark completion");
-  ensureStatus(job, "ACTIVE", "Contract is not active, cannot mark as completed");
+  ensureStatus(job, "IN_PROGRESS", "Contract is not active, cannot mark as completed");
 
   job.status = "COMPLETED";
   job.updatedAt = Date.now();
@@ -332,7 +332,7 @@ const submitMilestone = catchAsync(async (req, res, next) => {
 
   const job = await getJobOrThrow(jobId);
   ensureContractor(job, req.user.id, "Only the contractor can submit milestones");
-  ensureStatus(job, "ACTIVE", "Contract is not active, cannot submit milestones");
+  ensureStatus(job, "IN_PROGRESS", "Contract is not active, cannot submit milestones");
 
   const milestoneIndex = Number(index);
   if (Number.isNaN(milestoneIndex) || milestoneIndex < 0) {

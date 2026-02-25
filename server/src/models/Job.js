@@ -140,7 +140,7 @@ const jobSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["DRAFT", "OPEN", "ACTIVE", "COMPLETED", "CANCELLED"],
+    enum: ["DRAFT", "OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
     default: "DRAFT",
   },
   milestones: [milestoneSchema],

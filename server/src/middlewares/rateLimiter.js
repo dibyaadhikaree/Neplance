@@ -2,7 +2,7 @@ const rateLimit = require("express-rate-limit");
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 100,
   message: {
     status: "fail",
     message: "Too many attempts. Please try again in 15 minutes.",
@@ -13,7 +13,7 @@ const authLimiter = rateLimit({
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 50,
   message: {
     status: "fail",
     message: "Too many login attempts. Please try again in 15 minutes.",
@@ -24,7 +24,7 @@ const loginLimiter = rateLimit({
 
 const refreshLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 150,
   message: {
     status: "fail",
     message: "Too many refresh attempts. Please try again in 15 minutes.",

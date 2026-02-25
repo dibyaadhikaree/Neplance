@@ -6,12 +6,24 @@ import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard, ProposalCard } from "@/features/dashboard/components/JobCard";
 
 import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancerDashboard";
+import { apiCall } from "@/services/api";
 
 export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
   const [activeTab, setActiveTab] = useState("proposals");
 
-  const { proposedJobs, ongoingJobs, loading, error, EMPTY_STATES } =
+  const { proposedJobs, ongoingJobs, loading, error, EMPTY_STATES, refetch } =
     useFreelancerDashboard();
+
+  const handleWithdrawProposal = async (proposal) => {
+    if (!confirm("Are you sure you want to withdraw this proposal?")) return;
+    
+    try {
+      await apiCall(`/api/proposals/${proposal._id}/withdraw`, { method: "PATCH" });
+      refetch();
+    } catch (err) {
+      alert(err.message || "Failed to withdraw proposal");
+    }
+  };
 
   if (loading) {
     return (
@@ -90,6 +102,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
         <ProposalCard
           key={proposal._id}
           proposal={proposal}
+          onWithdraw={handleWithdrawProposal}
         />
       ))
     ) : (
