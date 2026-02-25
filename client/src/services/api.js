@@ -14,7 +14,9 @@ const subscribeTokenRefresh = (cb) => {
 };
 
 const onTokenRefreshed = () => {
-  refreshSubscribers.forEach((cb) => cb());
+  refreshSubscribers.forEach((cb) => {
+    cb();
+  });
   refreshSubscribers = [];
 };
 
@@ -26,6 +28,20 @@ export class APIError extends Error {
   }
 }
 
+const parseJsonResponse = async (response) => {
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  const text = await response.text();
+  return text || null;
+};
+
 const refreshAccessToken = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
@@ -36,7 +52,7 @@ const refreshAccessToken = async () => {
       },
     });
 
-    const data = await response.json();
+    const data = await parseJsonResponse(response);
 
     if (!response.ok) {
       throw new APIError(
@@ -76,7 +92,7 @@ export async function apiCall(endpoint, options = {}) {
         headers,
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
 
       if (!response.ok) {
         if (
@@ -153,7 +169,7 @@ export async function apiAuthCall(endpoint, body) {
       credentials: "include",
     });
 
-    const data = await response.json();
+    const data = await parseJsonResponse(response);
 
     if (!response.ok) {
       throw new APIError(
