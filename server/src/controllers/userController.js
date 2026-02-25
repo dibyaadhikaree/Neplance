@@ -1,5 +1,8 @@
 const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/appError");
 const User = require("../models/User");
+const Job = require("../models/Job");
+const Proposal = require("../models/Proposal");
 const { pickUserFields } = require("../utils/userFields");
 
 const getMyProfile = catchAsync(async (req, res, next) => {
@@ -29,12 +32,72 @@ const updateMyProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-const deactivateMyAccount = catchAsync(async (req, res, next) => {
-  await User.findByIdAndUpdate(req.user.id, { active: false });
+const checkDeleteEligibility = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const [activeJob, activeProposal] = await Promise.all([
+    Job.findOne({
+      $or: [
+        { creatorAddress: userId, status: "IN_PROGRESS" },
+        { hiredFreelancer: userId, status: "IN_PROGRESS" },
+      ],
+    }).select("title status"),
+    Proposal.findOne({
+      freelancer: userId,
+      status: { $in: ["pending", "accepted"] },
+    }).populate("job", "title"),
+  ]);
+
+  const reasons = [];
+  if (activeJob) {
+    reasons.push({
+      type: "active_job",
+      message: `You have an active job: "${activeJob.title}"`,
+    });
+  }
+  if (activeProposal) {
+    reasons.push({
+      type: "active_proposal",
+      message: `You have an active proposal for: "${activeProposal.job?.title || "a job"}"`,
+    });
+  }
 
   res.status(200).json({
     status: "success",
-    message: "Account deactivated successfully",
+    canDelete: reasons.length === 0,
+    reasons,
+  });
+});
+
+const deactivateMyAccount = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const [activeJob, activeProposal] = await Promise.all([
+    Job.findOne({
+      $or: [
+        { creatorAddress: userId, status: "IN_PROGRESS" },
+        { hiredFreelancer: userId, status: "IN_PROGRESS" },
+      ],
+    }),
+    Proposal.findOne({
+      freelancer: userId,
+      status: { $in: ["pending", "accepted"] },
+    }),
+  ]);
+
+  if (activeJob) {
+    throw new AppError("Cannot delete account while active in a job", 400);
+  }
+
+  if (activeProposal) {
+    throw new AppError("Cannot delete account with active proposals", 400);
+  }
+
+  await User.findByIdAndDelete(userId);
+
+  res.status(200).json({
+    status: "success",
+    message: "Account deleted successfully",
   });
 });
 
@@ -87,6 +150,7 @@ module.exports = {
   getMyProfile,
   updateMyProfile,
   deactivateMyAccount,
+  checkDeleteEligibility,
   getFreelancers,
   getFreelancerById,
 };

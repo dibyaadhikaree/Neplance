@@ -207,6 +207,12 @@ export default function JobDetailPage({ params }) {
   const locationText = formatLocation(job.location);
   const deadlineText = formatDate(job.deadline);
 
+  const isJobOwner = user && (
+    job.creatorAddress?._id === user.id ||
+    job.creatorAddress === user.id ||
+    job.creatorAddress?.id === user.id
+  );
+
   return (
     <>
       <Navbar user={user} onLogout={logout} onRoleSwitch={switchRole} />
@@ -496,7 +502,7 @@ export default function JobDetailPage({ params }) {
             ) : null}
           </div>
 
-          {job.status === "OPEN" && (
+          {job.status === "OPEN" && !isJobOwner && (
             <div className="card" style={{ marginTop: "var(--space-6)" }}>
               <h2
                 style={{

@@ -6,6 +6,7 @@ const {
   getMyProfile,
   updateMyProfile,
   deactivateMyAccount,
+  checkDeleteEligibility,
   getFreelancers,
   getFreelancerById,
 } = require("../controllers/userController");
@@ -13,5 +14,6 @@ const {
 router.get("/freelancers", getFreelancers);
 router.get("/freelancers/:id", getFreelancerById);
 router.route("/me").get(protect, getMyProfile).patch(protect, updateMyProfile).delete(protect, deactivateMyAccount);
+router.get("/me/check-delete-eligibility", protect, checkDeleteEligibility);
 
 module.exports = router;

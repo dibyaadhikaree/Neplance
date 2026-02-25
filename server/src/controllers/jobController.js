@@ -214,7 +214,7 @@ const updateJob = catchAsync(async (req, res) => {
   const jobId = req.params.id;
   const job = await getJobOrThrow(jobId);
   ensureCreator(job, req.user.id, "You can only update your own jobs");
-  ensureStatus(job, "DRAFT", "Can only update draft jobs");
+  ensureStatus(job, ["DRAFT", "OPEN"], "Can only update draft or open jobs");
 
   const allowedUpdates = [
     "title", "description", "jobType", "category", "subcategory",
@@ -272,8 +272,8 @@ const deleteJob = catchAsync(async (req, res) => {
   const job = await getJobOrThrow(jobId);
   ensureCreator(job, req.user.id, "You can only delete your own jobs");
 
-  if (job.status === "IN_PROGRESS") {
-    throw new AppError("Cannot delete active jobs", 400);
+  if (!["DRAFT", "OPEN"].includes(job.status)) {
+    throw new AppError("Can only delete draft or open jobs", 400);
   }
 
   await Job.findByIdAndDelete(jobId);

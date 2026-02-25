@@ -17,11 +17,30 @@ const getMyProposals = catchAsync(async (req, res) => {
 });
 
 const createProposal = catchAsync(async (req, res) => {
-  const { job, status, amount, coverLetter, deliveryDays, revisionsIncluded, attachments } = req.body;
+  const { job: jobId, status, amount, coverLetter, deliveryDays, revisionsIncluded, attachments } = req.body;
+
+  const job = await Job.findById(jobId);
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+
+  if (job.creatorAddress.toString() === req.user.id.toString()) {
+    throw new AppError("You cannot submit a proposal on your own job", 400);
+  }
+
+  const existingProposal = await Proposal.findOne({
+    freelancer: req.user.id,
+    job: jobId,
+    status: { $nin: ["withdrawn", "rejected"] },
+  });
+
+  if (existingProposal) {
+    throw new AppError("You have already submitted a proposal for this job", 400);
+  }
 
   const data = await Proposal.create({
     freelancer: req.user.id,
-    job,
+    job: jobId,
     status,
     amount,
     coverLetter,

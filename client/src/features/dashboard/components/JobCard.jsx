@@ -33,6 +33,7 @@ export const JobCard = ({
   onViewDetails: _onViewDetails,
   onPostJob,
   onDeleteJob,
+  onEditJob,
 }) => {
   const {
     title,
@@ -61,6 +62,8 @@ export const JobCard = ({
       ? `NPR ${totalValue.toLocaleString()}`
       : "Negotiable";
   const isDraft = status === "DRAFT";
+  const isOpen = status === "OPEN";
+  const canEdit = isDraft || isOpen;
 
   const getStatusBadgeClass = (status) => {
     const statusLower = status?.toLowerCase();
@@ -268,7 +271,17 @@ export const JobCard = ({
             </button>
           )}
 
-          {isDraft && onDeleteJob && (
+          {canEdit && onEditJob && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => onEditJob?.(job)}
+            >
+              Edit
+            </button>
+          )}
+
+          {canEdit && onDeleteJob && (
             <button
               type="button"
               className="btn btn-ghost btn-sm"

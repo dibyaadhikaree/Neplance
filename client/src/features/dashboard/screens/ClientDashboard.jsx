@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard } from "@/features/dashboard/components/JobCard";
@@ -18,6 +19,7 @@ import {
 } from "@/shared/lib/validation";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("create");
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState([]);
@@ -93,7 +95,10 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   };
 
   const handleDeleteJob = async (job) => {
-    if (!confirm("Are you sure you want to delete this draft?")) return;
+    const confirmMessage = job.status === "DRAFT" 
+      ? "Are you sure you want to delete this draft?" 
+      : "Are you sure you want to delete this job? This action cannot be undone.";
+    if (!confirm(confirmMessage)) return;
     try {
       await apiCall(`/api/jobs/${job._id}`, { method: "DELETE" });
       await fetchContracts();
@@ -101,6 +106,10 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       console.error("Failed to delete job:", err);
       alert(err?.message || "Failed to delete job");
     }
+  };
+
+  const handleEditJob = (job) => {
+    router.push(`/jobs/${job._id}/edit`);
   };
 
   const handleFormChange = (field, value) => {
@@ -990,6 +999,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     variant="default"
                     onPostJob={handlePostDraftJob}
                     onDeleteJob={handleDeleteJob}
+                    onEditJob={handleEditJob}
                   />
                 ))
               ) : (

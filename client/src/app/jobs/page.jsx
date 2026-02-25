@@ -324,6 +324,7 @@ export default function JobsPage() {
           onClose={handleCloseModal}
           loading={submitting}
           userRole={user?.role?.[0]}
+          currentUser={user}
         />
       )}
     </>

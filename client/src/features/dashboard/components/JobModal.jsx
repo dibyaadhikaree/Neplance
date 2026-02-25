@@ -56,7 +56,13 @@ export const JobModal = ({
   onClose,
   loading = false,
   userRole,
+  currentUser,
 }) => {
+  const isJobOwner = currentUser && (
+    job.creatorAddress?._id === currentUser.id ||
+    job.creatorAddress === currentUser.id ||
+    job.creatorAddress?.id === currentUser.id
+  );
   const [amount, setAmount] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("");
@@ -426,7 +432,7 @@ export const JobModal = ({
           )}
         </div>
 
-        {isProposalMode ? (
+        {isProposalMode && !isJobOwner ? (
           <form onSubmit={handleSubmit} className="proposal-modal-form">
             <Input
               type="number"

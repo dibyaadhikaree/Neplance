@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
@@ -19,9 +19,25 @@ export default function ProfilePage() {
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateError, setDeactivateError] = useState("");
+  const [deleteEligibility, setDeleteEligibility] = useState(null);
+  const [checkingEligibility, setCheckingEligibility] = useState(true);
   const router = useRouter();
 
   const { completedJobs, loading } = useProfileData({ user, currentRole });
+
+  useEffect(() => {
+    const checkEligibility = async () => {
+      try {
+        const response = await apiCall("/api/users/me/check-delete-eligibility");
+        setDeleteEligibility(response);
+      } catch (err) {
+        console.error("Failed to check delete eligibility:", err);
+      } finally {
+        setCheckingEligibility(false);
+      }
+    };
+    checkEligibility();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -528,31 +544,56 @@ export default function ProfilePage() {
               </h3>
               <p className="text-light" style={{ marginBottom: "var(--space-4)" }}>
                 Once you deactivate your account, you will not be able to log in
-                or access your profile. Your data will be soft-deleted and hidden
-                from other users.
+                or access your profile. Your data will be permanently deleted.
               </p>
-              <button
-                type="button"
-                className="btn"
-                style={{
-                  backgroundColor: "var(--color-error)",
-                  color: "white",
-                }}
-                onClick={() => setShowDeactivateModal(true)}
-              >
-                Deactivate Account
-              </button>
+              {checkingEligibility ? (
+                <p className="text-light">Checking eligibility...</p>
+              ) : deleteEligibility?.canDelete ? (
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    backgroundColor: "var(--color-error)",
+                    color: "white",
+                  }}
+                  onClick={() => setShowDeactivateModal(true)}
+                >
+                  Delete Account
+                </button>
+              ) : (
+                <div>
+                  <p
+                    className="text-light"
+                    style={{ color: "var(--color-error)", marginBottom: "var(--space-3)" }}
+                  >
+                    You cannot delete your account right now due to the following:
+                  </p>
+                  <ul style={{ marginLeft: "var(--space-4)", marginBottom: "var(--space-3)" }}>
+                    {(deleteEligibility?.reasons?.length
+                      ? deleteEligibility.reasons
+                      : [{ type: "unknown", message: "You have active commitments that must be resolved before deleting your account." }]
+                    ).map((reason) => (
+                      <li key={reason.type} className="text-light">
+                        {reason.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {selectedJob && (
-        <JobModal job={selectedJob} mode="view" onClose={handleCloseModal} />
+        <JobModal job={selectedJob} mode="view" onClose={handleCloseModal} currentUser={user} />
       )}
 
       {showDeactivateModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
           style={{
             position: "fixed",
             inset: 0,
@@ -562,20 +603,46 @@ export default function ProfilePage() {
             justifyContent: "center",
             zIndex: 1000,
           }}
-          onClick={() => !isDeactivating && setShowDeactivateModal(false)}
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !isDeactivating) {
+              setShowDeactivateModal(false);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && !isDeactivating) {
+              setShowDeactivateModal(false);
+            }
+          }}
         >
           <div
             className="card"
             style={{ maxWidth: "400px", width: "90%" }}
-            onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ marginBottom: "var(--space-4)" }}>
-              Deactivate Account?
+              Delete Account?
             </h3>
-            <p className="text-light" style={{ marginBottom: "var(--space-6)" }}>
-              Are you sure you want to deactivate your account? This action cannot
-              be undone. You will be logged out immediately.
-            </p>
+            {deleteEligibility?.canDelete ? (
+              <p className="text-light" style={{ marginBottom: "var(--space-6)" }}>
+                Are you sure you want to delete your account? This action cannot
+                be undone. You will be logged out immediately.
+              </p>
+            ) : (
+              <div style={{ marginBottom: "var(--space-6)" }}>
+                <p
+                  className="text-light"
+                  style={{ color: "var(--color-error)", marginBottom: "var(--space-3)" }}
+                >
+                  You cannot delete your account right now due to the following:
+                </p>
+                <ul style={{ marginLeft: "var(--space-4)" }}>
+                  {deleteEligibility?.reasons?.map((reason) => (
+                    <li key={reason.type} className="text-light">
+                      {reason.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {deactivateError && (
               <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>
                 {deactivateError}
@@ -598,9 +665,9 @@ export default function ProfilePage() {
                   color: "white",
                 }}
                 onClick={handleDeactivateAccount}
-                disabled={isDeactivating}
+                disabled={isDeactivating || !deleteEligibility?.canDelete}
               >
-                {isDeactivating ? "Deactivating..." : "Deactivate"}
+                {isDeactivating ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
