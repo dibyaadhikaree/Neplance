@@ -2,14 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Navbar } from "@/shared/navigation/Navbar";
-import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { apiCall } from "@/services/api";
-import {
-  profileUpdateSchema,
-  validateForm,
-  getFieldError,
-} from "@/shared/lib/validation";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { profileUpdateSchema, validateForm } from "@/shared/lib/validation";
+import { Navbar } from "@/shared/navigation/Navbar";
 
 const parseCsv = (value = "") =>
   value
@@ -18,6 +14,9 @@ const parseCsv = (value = "") =>
     .filter(Boolean);
 
 const toCsv = (value = []) => (Array.isArray(value) ? value.join(", ") : "");
+
+const createPortfolioItemId = () =>
+  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const makeInitialForm = (user) => ({
   name: user?.name || "",
@@ -38,6 +37,7 @@ const makeInitialForm = (user) => ({
   languages: toCsv(user?.languages),
   portfolio: Array.isArray(user?.portfolio)
     ? user.portfolio.map((item) => ({
+        id: item?._id || item?.id || createPortfolioItemId(),
         title: item?.title || "",
         description: item?.description || "",
         imageUrls: toCsv(item?.imageUrls),
@@ -96,6 +96,7 @@ export default function EditProfilePage() {
       portfolio: [
         ...prev.portfolio,
         {
+          id: createPortfolioItemId(),
           title: "",
           description: "",
           imageUrls: "",
@@ -237,6 +238,7 @@ export default function EditProfilePage() {
       <div className="dashboard">
         <div className="container section-sm">
           <button
+            type="button"
             onClick={() => router.push("/profile")}
             className="btn btn-ghost"
             style={{ marginBottom: "var(--space-4)", padding: 0 }}
@@ -576,7 +578,7 @@ export default function EditProfilePage() {
 
                   {formData.portfolio.map((item, index) => (
                     <div
-                      key={`edit-portfolio-${index}`}
+                      key={item.id}
                       className="card-sm"
                       style={{ marginBottom: "var(--space-4)" }}
                     >

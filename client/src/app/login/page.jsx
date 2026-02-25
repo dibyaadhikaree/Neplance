@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { AuthPanel } from "@/features/auth/components/AuthPanel";
-import { Navbar } from "@/shared/navigation/Navbar";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { Navbar } from "@/shared/navigation/Navbar";
 
 export default function LoginPage() {
   const { isHydrated, updateUser } = useAuthGate({ mode: "redirect-authed" });

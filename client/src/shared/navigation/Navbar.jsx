@@ -15,6 +15,7 @@ const Logo = () => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
+    <title>Neplance logo</title>
     <circle cx="16" cy="16" r="16" fill="#14a800" />
     <path
       d="M12 10L16 20L20 10"

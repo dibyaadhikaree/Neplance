@@ -11,8 +11,8 @@ import {
 import { apiCall } from "@/services/api";
 import {
   getStoredActiveRole,
-  normalizeRoleList,
   logoutRequest,
+  normalizeRoleList,
   persistActiveRole,
 } from "@/shared/utils/auth";
 

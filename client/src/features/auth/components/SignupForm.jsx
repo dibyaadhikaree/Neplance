@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input } from "@/shared/ui/UI";
 import {
+  getFieldError,
   signupSchema,
   validateForm,
-  getFieldError,
 } from "@/shared/lib/validation";
+import { Button, Input } from "@/shared/ui/UI";
 
 const ROLES = ["freelancer", "client"];
 

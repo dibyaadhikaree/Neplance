@@ -1,20 +1,20 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useEffect } from "react";
-import { Navbar } from "@/shared/navigation/Navbar";
+import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
-import { EmptyState } from "@/features/dashboard/components/EmptyState";
-import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { useProfileData } from "@/features/dashboard/hooks/useProfileData";
 import { apiCall } from "@/services/api";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { Navbar } from "@/shared/navigation/Navbar";
 
 export default function ProfilePage() {
-  const { user, currentRole, isHydrated, logout, switchRole } =
-    useAuthGate({
-      mode: "require-auth",
-    });
+  const { user, currentRole, isHydrated, logout, switchRole } = useAuthGate({
+    mode: "require-auth",
+  });
   const [selectedJob, setSelectedJob] = useState(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
@@ -28,7 +28,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const checkEligibility = async () => {
       try {
-        const response = await apiCall("/api/users/me/check-delete-eligibility");
+        const response = await apiCall(
+          "/api/users/me/check-delete-eligibility",
+        );
         setDeleteEligibility(response);
       } catch (err) {
         console.error("Failed to check delete eligibility:", err);
@@ -114,9 +116,12 @@ export default function ProfilePage() {
                 }}
               >
                 {user.avatar ? (
-                  <img
+                  <Image
                     src={user.avatar}
                     alt={user.name}
+                    width={120}
+                    height={120}
+                    unoptimized
                     style={{
                       width: "100%",
                       height: "100%",
@@ -542,7 +547,10 @@ export default function ProfilePage() {
               >
                 Danger Zone
               </h3>
-              <p className="text-light" style={{ marginBottom: "var(--space-4)" }}>
+              <p
+                className="text-light"
+                style={{ marginBottom: "var(--space-4)" }}
+              >
                 Once you deactivate your account, you will not be able to log in
                 or access your profile. Your data will be permanently deleted.
               </p>
@@ -564,14 +572,29 @@ export default function ProfilePage() {
                 <div>
                   <p
                     className="text-light"
-                    style={{ color: "var(--color-error)", marginBottom: "var(--space-3)" }}
+                    style={{
+                      color: "var(--color-error)",
+                      marginBottom: "var(--space-3)",
+                    }}
                   >
-                    You cannot delete your account right now due to the following:
+                    You cannot delete your account right now due to the
+                    following:
                   </p>
-                  <ul style={{ marginLeft: "var(--space-4)", marginBottom: "var(--space-3)" }}>
+                  <ul
+                    style={{
+                      marginLeft: "var(--space-4)",
+                      marginBottom: "var(--space-3)",
+                    }}
+                  >
                     {(deleteEligibility?.reasons?.length
                       ? deleteEligibility.reasons
-                      : [{ type: "unknown", message: "You have active commitments that must be resolved before deleting your account." }]
+                      : [
+                          {
+                            type: "unknown",
+                            message:
+                              "You have active commitments that must be resolved before deleting your account.",
+                          },
+                        ]
                     ).map((reason) => (
                       <li key={reason.type} className="text-light">
                         {reason.message}
@@ -586,7 +609,12 @@ export default function ProfilePage() {
       </div>
 
       {selectedJob && (
-        <JobModal job={selectedJob} mode="view" onClose={handleCloseModal} currentUser={user} />
+        <JobModal
+          job={selectedJob}
+          mode="view"
+          onClose={handleCloseModal}
+          currentUser={user}
+        />
       )}
 
       {showDeactivateModal && (
@@ -614,15 +642,13 @@ export default function ProfilePage() {
             }
           }}
         >
-          <div
-            className="card"
-            style={{ maxWidth: "400px", width: "90%" }}
-          >
-            <h3 style={{ marginBottom: "var(--space-4)" }}>
-              Delete Account?
-            </h3>
+          <div className="card" style={{ maxWidth: "400px", width: "90%" }}>
+            <h3 style={{ marginBottom: "var(--space-4)" }}>Delete Account?</h3>
             {deleteEligibility?.canDelete ? (
-              <p className="text-light" style={{ marginBottom: "var(--space-6)" }}>
+              <p
+                className="text-light"
+                style={{ marginBottom: "var(--space-6)" }}
+              >
                 Are you sure you want to delete your account? This action cannot
                 be undone. You will be logged out immediately.
               </p>
@@ -630,7 +656,10 @@ export default function ProfilePage() {
               <div style={{ marginBottom: "var(--space-6)" }}>
                 <p
                   className="text-light"
-                  style={{ color: "var(--color-error)", marginBottom: "var(--space-3)" }}
+                  style={{
+                    color: "var(--color-error)",
+                    marginBottom: "var(--space-3)",
+                  }}
                 >
                   You cannot delete your account right now due to the following:
                 </p>
@@ -644,11 +673,20 @@ export default function ProfilePage() {
               </div>
             )}
             {deactivateError && (
-              <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>
+              <div
+                className="card-error"
+                style={{ marginBottom: "var(--space-4)" }}
+              >
                 {deactivateError}
               </div>
             )}
-            <div style={{ display: "flex", gap: "var(--space-3)", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-3)",
+                justifyContent: "flex-end",
+              }}
+            >
               <button
                 type="button"
                 className="btn btn-secondary"

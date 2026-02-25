@@ -1,42 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import {
+  getFieldError,
+  proposalSchema,
+  validateForm,
+} from "@/shared/lib/validation";
 import { Button, Input } from "@/shared/ui/UI";
 import {
+  formatBudget,
+  formatLocation,
   formatStatus,
   getCreatorLabel,
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
-import {
-  proposalSchema,
-  validateForm,
-  getFieldError,
-} from "@/shared/lib/validation";
-
-const formatBudget = (budget, budgetType) => {
-  if (!budget?.min) return "Negotiable";
-  const currency = budget.currency || "NPR";
-  if (budgetType === "hourly") {
-    return `${currency} ${budget.min.toLocaleString()}-${budget.max?.toLocaleString() || "N/A"}/hr`;
-  }
-  if (budget.max) {
-    return `${currency} ${budget.min.toLocaleString()}-${budget.max.toLocaleString()}`;
-  }
-  return `${currency} ${budget.min.toLocaleString()}`;
-};
-
-const formatLocation = (location) => {
-  if (!location) return null;
-  if (location.isRemote) return "Remote";
-  const parts = [
-    location.address,
-    location.city,
-    location.district,
-    location.province,
-  ].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : null;
-};
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -58,11 +36,11 @@ export const JobModal = ({
   userRole,
   currentUser,
 }) => {
-  const isJobOwner = currentUser && (
-    job.creatorAddress?._id === currentUser.id ||
-    job.creatorAddress === currentUser.id ||
-    job.creatorAddress?.id === currentUser.id
-  );
+  const isJobOwner =
+    currentUser &&
+    (job.creatorAddress?._id === currentUser.id ||
+      job.creatorAddress === currentUser.id ||
+      job.creatorAddress?.id === currentUser.id);
   const [amount, setAmount] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("");
@@ -369,12 +347,6 @@ export const JobModal = ({
                       const previousCompleted =
                         index === 0 ||
                         milestones[index - 1]?.status === "COMPLETED";
-                      const canSubmitThis =
-                        canSubmitMilestone &&
-                        milestone?.status === "ACTIVE" &&
-                        onSubmitMilestone &&
-                        previousCompleted;
-
                       if (
                         !canSubmitMilestone ||
                         milestone?.status !== "ACTIVE"

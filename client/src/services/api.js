@@ -2,7 +2,11 @@
  * API utility for making authenticated requests
  */
 
-import { getAccessToken, setAccessToken, clearAccessToken } from "@/shared/utils/auth";
+import {
+  clearAccessToken,
+  getAccessToken,
+  setAccessToken,
+} from "@/shared/utils/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -43,30 +47,26 @@ const parseJsonResponse = async (response) => {
 };
 
 const refreshAccessToken = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+  const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-    const data = await parseJsonResponse(response);
+  const data = await parseJsonResponse(response);
 
-    if (!response.ok) {
-      throw new APIError(
-        data.message || "Failed to refresh token",
-        response.status,
-        data.errorCode,
-      );
-    }
-
-    setAccessToken(data.accessToken);
-    return data.accessToken;
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new APIError(
+      data.message || "Failed to refresh token",
+      response.status,
+      data.errorCode,
+    );
   }
+
+  setAccessToken(data.accessToken);
+  return data.accessToken;
 };
 
 /**
@@ -76,7 +76,7 @@ export async function apiCall(endpoint, options = {}) {
   const makeRequest = async (retryCount = 0) => {
     try {
       const accessToken = getAccessToken();
-      
+
       const headers = {
         "Content-Type": "application/json",
         ...options.headers,
@@ -97,30 +97,29 @@ export async function apiCall(endpoint, options = {}) {
       if (!response.ok) {
         if (
           response.status === 401 &&
-          data.errorCode === "TOKEN_EXPIRED" &&
-          retryCount === 0 &&
-          !isRefreshing
+          data?.errorCode === "TOKEN_EXPIRED" &&
+          retryCount === 0
         ) {
-          if (!isRefreshing) {
-            isRefreshing = true;
-            try {
-              await refreshAccessToken();
-              isRefreshing = false;
-              onTokenRefreshed();
-              return makeRequest(retryCount + 1);
-            } catch (refreshError) {
-              isRefreshing = false;
-              clearAccessToken();
-              window.location.href = "/";
-              throw new APIError("Session expired. Please log in again.", 401);
-            }
+          if (isRefreshing) {
+            return new Promise((resolve) => {
+              subscribeTokenRefresh(() => {
+                resolve(makeRequest(retryCount + 1));
+              });
+            });
           }
 
-          return new Promise((resolve) => {
-            subscribeTokenRefresh(() => {
-              resolve(makeRequest(retryCount + 1));
-            });
-          });
+          isRefreshing = true;
+          try {
+            await refreshAccessToken();
+            isRefreshing = false;
+            onTokenRefreshed();
+            return makeRequest(retryCount + 1);
+          } catch (_refreshError) {
+            isRefreshing = false;
+            clearAccessToken();
+            window.location.href = "/";
+            throw new APIError("Session expired. Please log in again.", 401);
+          }
         }
 
         if (response.status === 401) {
@@ -129,16 +128,16 @@ export async function apiCall(endpoint, options = {}) {
             window.location.href = "/";
           }
           throw new APIError(
-            data.message || "You are not logged in",
+            data?.message || "You are not logged in",
             401,
-            data.errorCode,
+            data?.errorCode,
           );
         }
 
         throw new APIError(
-          data.message || `Request failed with status ${response.status}`,
+          data?.message || `Request failed with status ${response.status}`,
           response.status,
-          data.errorCode,
+          data?.errorCode,
         );
       }
 

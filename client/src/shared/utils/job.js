@@ -23,3 +23,37 @@ export const getCreatorLabel = (creatorAddress) =>
   creatorAddress?.email ||
   creatorAddress ||
   "Unknown Creator";
+
+export const formatBudget = (budget, budgetType) => {
+  if (!budget?.min) return "Negotiable";
+  const currency = budget.currency || "NPR";
+  if (budgetType === "hourly") {
+    return `${currency} ${budget.min.toLocaleString()}-${budget.max?.toLocaleString() || "N/A"}/hr`;
+  }
+  if (budget.max) {
+    return `${currency} ${budget.min.toLocaleString()}-${budget.max.toLocaleString()}`;
+  }
+  return `${currency} ${budget.min.toLocaleString()}`;
+};
+
+export const formatLocation = (
+  location,
+  {
+    includeAddress = true,
+    includeCity = true,
+    includeDistrict = true,
+    includeProvince = true,
+  } = {},
+) => {
+  if (!location) return null;
+  if (location.isRemote) return "Remote";
+  const parts = [];
+
+  if (includeAddress) parts.push(location.address);
+  if (includeCity) parts.push(location.city);
+  if (includeDistrict) parts.push(location.district);
+  if (includeProvince) parts.push(location.province);
+
+  const filtered = parts.filter(Boolean);
+  return filtered.length > 0 ? filtered.join(", ") : null;
+};

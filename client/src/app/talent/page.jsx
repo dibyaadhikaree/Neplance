@@ -101,7 +101,9 @@ export default function TalentPage() {
                   className="form-input"
                   style={{ flex: 1 }}
                 />
-                <button className="btn btn-primary">Search</button>
+                <button type="button" className="btn btn-primary">
+                  Search
+                </button>
               </div>
             </div>
           </div>
@@ -193,7 +195,9 @@ export default function TalentPage() {
                     type="button"
                     className="btn btn-secondary btn-sm"
                     style={{ width: "100%" }}
-                    onClick={() => router.push(`/freelancers/${freelancer._id}`)}
+                    onClick={() =>
+                      router.push(`/freelancers/${freelancer._id}`)
+                    }
                   >
                     View Profile
                   </button>

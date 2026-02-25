@@ -1,29 +1,12 @@
 import Link from "next/link";
 import {
+  formatBudget,
+  formatLocation,
   formatStatus,
   getCreatorLabel,
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
-
-const formatBudget = (budget, budgetType) => {
-  if (!budget?.min) return "Negotiable";
-  const currency = budget.currency || "NPR";
-  if (budgetType === "hourly") {
-    return `${currency} ${budget.min.toLocaleString()}-${budget.max?.toLocaleString() || "N/A"}/hr`;
-  }
-  if (budget.max) {
-    return `${currency} ${budget.min.toLocaleString()}-${budget.max.toLocaleString()}`;
-  }
-  return `${currency} ${budget.min.toLocaleString()}`;
-};
-
-const formatLocation = (location) => {
-  if (!location) return null;
-  if (location.isRemote) return "Remote";
-  const parts = [location.city, location.district].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : null;
-};
 
 export const JobCard = ({
   job,
@@ -55,7 +38,7 @@ export const JobCard = ({
     ? getMilestoneTotal(milestones)
     : null;
   const creatorLabel = getCreatorLabel(creatorAddress);
-  const locationText = formatLocation(location);
+  const locationText = formatLocation(location, { includeAddress: false });
   const budgetDisplay = budget
     ? formatBudget(budget, budgetType)
     : totalValue !== null
@@ -69,7 +52,8 @@ export const JobCard = ({
     const statusLower = status?.toLowerCase();
     if (statusLower === "draft") return "badge-warning";
     if (statusLower === "open") return "badge-success";
-    if (statusLower === "in_progress" || statusLower === "active") return "badge-primary";
+    if (statusLower === "in_progress" || statusLower === "active")
+      return "badge-primary";
     if (statusLower === "completed") return "badge-info";
     if (statusLower === "cancelled") return "badge-error";
     return "";
@@ -302,22 +286,28 @@ export const JobCard = ({
             </button>
           )}
 
-          {variant === "current" && status === "IN_PROGRESS" && onMarkComplete && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => onMarkComplete?.(job)}
-            >
-              Complete
-            </button>
-          )}
+          {variant === "current" &&
+            status === "IN_PROGRESS" &&
+            onMarkComplete && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => onMarkComplete?.(job)}
+              >
+                Complete
+              </button>
+            )}
         </div>
       </div>
     </article>
   );
 };
 
-export const ProposalCard = ({ proposal, onViewDetails: _onViewDetails, onWithdraw }) => {
+export const ProposalCard = ({
+  proposal,
+  onViewDetails: _onViewDetails,
+  onWithdraw,
+}) => {
   const {
     job,
     amount,

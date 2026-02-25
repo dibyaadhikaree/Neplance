@@ -1,16 +1,16 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Navbar } from "@/shared/navigation/Navbar";
-import { Button, Input } from "@/shared/ui/UI";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
-import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import {
   JOB_CATEGORIES,
   NEPAL_PROVINCES,
 } from "@/shared/constants/jobCategories";
+import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { Navbar } from "@/shared/navigation/Navbar";
+import { Button, Input } from "@/shared/ui/UI";
 
 export default function EditJobPage() {
   const params = useParams();
@@ -24,7 +24,7 @@ export default function EditJobPage() {
   const [loadError, setLoadError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState([]);
-  const [milestoneErrors, setMilestoneErrors] = useState({});
+  const [milestoneErrors, _setMilestoneErrors] = useState({});
   const [formState, setFormState] = useState({
     title: "",
     description: "",
@@ -100,7 +100,9 @@ export default function EditJobPage() {
             title: m.title || "",
             description: m.description || "",
             value: m.value?.toString() || "",
-            dueDate: m.dueDate ? new Date(m.dueDate).toISOString().split("T")[0] : "",
+            dueDate: m.dueDate
+              ? new Date(m.dueDate).toISOString().split("T")[0]
+              : "",
           })),
         });
       } catch (err) {
@@ -203,7 +205,9 @@ export default function EditJobPage() {
       router.push("/dashboard");
     } catch (err) {
       console.error("Failed to update job:", err);
-      setFormErrors([err?.message || "Failed to update job. Please try again."]);
+      setFormErrors([
+        err?.message || "Failed to update job. Please try again.",
+      ]);
     } finally {
       setSubmitting(false);
     }
@@ -264,7 +268,10 @@ export default function EditJobPage() {
 
           <form className="card" onSubmit={handleSubmit}>
             {formErrors.length > 0 && (
-              <div className="card-error" style={{ marginBottom: "var(--space-4)" }}>
+              <div
+                className="card-error"
+                style={{ marginBottom: "var(--space-4)" }}
+              >
                 {formErrors.map((error) => (
                   <p key={error} style={{ margin: 0 }}>
                     {error}
@@ -273,7 +280,13 @@ export default function EditJobPage() {
               </div>
             )}
 
-            <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-4)",
+                flexWrap: "wrap",
+              }}
+            >
               <div style={{ flex: "1", minWidth: "200px" }}>
                 <Input
                   label="Job Title"
@@ -294,7 +307,13 @@ export default function EditJobPage() {
               disabled={submitting}
             />
 
-            <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-4)",
+                flexWrap: "wrap",
+              }}
+            >
               <div style={{ flex: "1", minWidth: "150px" }}>
                 <label
                   htmlFor="jobType"
@@ -331,7 +350,8 @@ export default function EditJobPage() {
                     fontWeight: "var(--font-weight-medium)",
                   }}
                 >
-                  Category <span style={{ color: "var(--color-error)" }}>*</span>
+                  Category{" "}
+                  <span style={{ color: "var(--color-error)" }}>*</span>
                 </label>
                 <select
                   id="category"
@@ -358,14 +378,22 @@ export default function EditJobPage() {
                 <Input
                   label="Subcategory"
                   value={formState.subcategory}
-                  onChange={(e) => handleFormChange("subcategory", e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("subcategory", e.target.value)
+                  }
                   placeholder="e.g. Frontend"
                   disabled={submitting}
                 />
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-4)",
+                flexWrap: "wrap",
+              }}
+            >
               <div style={{ flex: "1", minWidth: "200px" }}>
                 <Input
                   label="Tags (comma separated)"
@@ -379,7 +407,9 @@ export default function EditJobPage() {
                 <Input
                   label="Required Skills (comma separated)"
                   value={formState.requiredSkills}
-                  onChange={(e) => handleFormChange("requiredSkills", e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("requiredSkills", e.target.value)
+                  }
                   placeholder="e.g. JavaScript, CSS"
                   disabled={submitting}
                 />
@@ -398,7 +428,9 @@ export default function EditJobPage() {
                 <select
                   id="experienceLevel"
                   value={formState.experienceLevel}
-                  onChange={(e) => handleFormChange("experienceLevel", e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("experienceLevel", e.target.value)
+                  }
                   disabled={submitting}
                   style={{
                     width: "100%",
@@ -437,7 +469,9 @@ export default function EditJobPage() {
                 <select
                   id="budgetType"
                   value={formState.budgetType}
-                  onChange={(e) => handleFormChange("budgetType", e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("budgetType", e.target.value)
+                  }
                   disabled={submitting}
                   style={{
                     width: "100%",
@@ -455,7 +489,9 @@ export default function EditJobPage() {
                   label="Budget Min (NPR)"
                   type="number"
                   value={formState.budgetMin}
-                  onChange={(e) => handleFormChange("budgetMin", e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("budgetMin", e.target.value)
+                  }
                   placeholder="5000"
                   required
                   disabled={submitting}
@@ -466,7 +502,9 @@ export default function EditJobPage() {
                   label="Budget Max (NPR)"
                   type="number"
                   value={formState.budgetMax}
-                  onChange={(e) => handleFormChange("budgetMax", e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("budgetMax", e.target.value)
+                  }
                   placeholder="10000"
                   disabled={submitting}
                 />
@@ -492,7 +530,9 @@ export default function EditJobPage() {
                   type="checkbox"
                   id="isUrgent"
                   checked={formState.isUrgent}
-                  onChange={(e) => handleFormChange("isUrgent", e.target.checked)}
+                  onChange={(e) =>
+                    handleFormChange("isUrgent", e.target.checked)
+                  }
                   disabled={submitting}
                 />
                 <label htmlFor="isUrgent" style={{ cursor: "pointer" }}>
@@ -516,7 +556,9 @@ export default function EditJobPage() {
                   <Input
                     label="City"
                     value={formState.locationCity}
-                    onChange={(e) => handleFormChange("locationCity", e.target.value)}
+                    onChange={(e) =>
+                      handleFormChange("locationCity", e.target.value)
+                    }
                     placeholder="Kathmandu"
                     disabled={submitting}
                   />
@@ -525,7 +567,9 @@ export default function EditJobPage() {
                   <Input
                     label="District"
                     value={formState.locationDistrict}
-                    onChange={(e) => handleFormChange("locationDistrict", e.target.value)}
+                    onChange={(e) =>
+                      handleFormChange("locationDistrict", e.target.value)
+                    }
                     placeholder="Kathmandu"
                     disabled={submitting}
                   />
@@ -544,7 +588,9 @@ export default function EditJobPage() {
                   <select
                     id="locationProvince"
                     value={formState.locationProvince}
-                    onChange={(e) => handleFormChange("locationProvince", e.target.value)}
+                    onChange={(e) =>
+                      handleFormChange("locationProvince", e.target.value)
+                    }
                     disabled={submitting}
                     style={{
                       width: "100%",
@@ -586,7 +632,10 @@ export default function EditJobPage() {
               {formState.milestones.map((milestone, index) => (
                 <div key={milestone.id} className="card-sm">
                   {milestoneErrors[index] && (
-                    <div className="card-error" style={{ marginBottom: "var(--space-3)" }}>
+                    <div
+                      className="card-error"
+                      style={{ marginBottom: "var(--space-3)" }}
+                    >
                       {milestoneErrors[index].map((error) => (
                         <p key={error} style={{ margin: 0 }}>
                           {error}
@@ -597,13 +646,21 @@ export default function EditJobPage() {
                   <Input
                     label="Title"
                     value={milestone.title}
-                    onChange={(e) => handleMilestoneChange(index, "title", e.target.value)}
+                    onChange={(e) =>
+                      handleMilestoneChange(index, "title", e.target.value)
+                    }
                     disabled={submitting}
                   />
                   <Input
                     label="Description"
                     value={milestone.description}
-                    onChange={(e) => handleMilestoneChange(index, "description", e.target.value)}
+                    onChange={(e) =>
+                      handleMilestoneChange(
+                        index,
+                        "description",
+                        e.target.value,
+                      )
+                    }
                     disabled={submitting}
                   />
                   <div style={{ display: "flex", gap: "var(--space-4)" }}>
@@ -611,14 +668,18 @@ export default function EditJobPage() {
                       label="Value (NPR)"
                       type="number"
                       value={milestone.value}
-                      onChange={(e) => handleMilestoneChange(index, "value", e.target.value)}
+                      onChange={(e) =>
+                        handleMilestoneChange(index, "value", e.target.value)
+                      }
                       disabled={submitting}
                     />
                     <Input
                       label="Due Date"
                       type="date"
                       value={milestone.dueDate}
-                      onChange={(e) => handleMilestoneChange(index, "dueDate", e.target.value)}
+                      onChange={(e) =>
+                        handleMilestoneChange(index, "dueDate", e.target.value)
+                      }
                       disabled={submitting}
                     />
                   </div>

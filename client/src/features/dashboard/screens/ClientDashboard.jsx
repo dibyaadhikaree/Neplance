@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Navbar } from "@/shared/navigation/Navbar";
+import { useEffect, useState } from "react";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard } from "@/features/dashboard/components/JobCard";
-import { apiCall } from "@/services/api";
-import { Input } from "@/shared/ui/UI";
 import { useClientDashboard } from "@/features/dashboard/hooks/useClientDashboard";
+import { apiCall } from "@/services/api";
 import {
   JOB_CATEGORIES,
   NEPAL_PROVINCES,
@@ -17,6 +15,8 @@ import {
   jobCreateSchema,
   validateForm as validateFormSchema,
 } from "@/shared/lib/validation";
+import { Navbar } from "@/shared/navigation/Navbar";
+import { Input } from "@/shared/ui/UI";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const router = useRouter();
@@ -95,9 +95,10 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   };
 
   const handleDeleteJob = async (job) => {
-    const confirmMessage = job.status === "DRAFT" 
-      ? "Are you sure you want to delete this draft?" 
-      : "Are you sure you want to delete this job? This action cannot be undone.";
+    const confirmMessage =
+      job.status === "DRAFT"
+        ? "Are you sure you want to delete this draft?"
+        : "Are you sure you want to delete this job? This action cannot be undone.";
     if (!confirm(confirmMessage)) return;
     try {
       await apiCall(`/api/jobs/${job._id}`, { method: "DELETE" });
@@ -141,7 +142,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     }));
   };
 
-  const buildJobPayload = (status) => {
+  const buildJobPayload = (status, { includeMilestones = true } = {}) => {
     const tags = formState.tags
       .split(",")
       .map((t) => t.trim())
@@ -161,14 +162,16 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
           }
         : undefined;
 
-    const milestones = formState.milestones
-      .filter((m) => m.title.trim())
-      .map((m) => ({
-        title: m.title.trim(),
-        description: m.description.trim(),
-        value: Number(m.value) || 0,
-        dueDate: formatDateValue(m.dueDate),
-      }));
+    const milestones = includeMilestones
+      ? formState.milestones
+          .filter((m) => m.title.trim())
+          .map((m) => ({
+            title: m.title.trim(),
+            description: m.description.trim(),
+            value: Number(m.value) || 0,
+            dueDate: formatDateValue(m.dueDate),
+          }))
+      : [];
 
     return {
       title: formState.title.trim(),
@@ -181,7 +184,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       experienceLevel: formState.experienceLevel || undefined,
       budgetType: formState.budgetType,
       budget: {
-        min: Number(formState.budgetMin),
+        min: Number(formState.budgetMin) || 0,
         max: formState.budgetMax ? Number(formState.budgetMax) : undefined,
         currency: "NPR",
       },
@@ -190,6 +193,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       location,
       milestones,
       status,
+      isPublic: true,
     };
   };
 
@@ -220,55 +224,9 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   };
 
   const validateForm = (requireMilestones = true) => {
-    const tags = formState.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const requiredSkills = formState.requiredSkills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const milestones = formState.milestones
-      .filter((m) => m.title.trim())
-      .map((m) => ({
-        title: m.title.trim(),
-        description: m.description.trim(),
-        value: Number(m.value) || 0,
-        dueDate: formatDateValue(m.dueDate),
-      }));
-
-    const location =
-      formState.jobType === "physical"
-        ? {
-            city: formState.locationCity.trim() || undefined,
-            district: formState.locationDistrict.trim() || undefined,
-            province: formState.locationProvince.trim() || undefined,
-          }
-        : undefined;
-
-    const payload = {
-      title: formState.title.trim(),
-      description: formState.description.trim(),
-      jobType: formState.jobType,
-      category: formState.category.trim(),
-      subcategory: formState.subcategory.trim() || undefined,
-      tags,
-      requiredSkills,
-      experienceLevel: formState.experienceLevel || undefined,
-      budgetType: formState.budgetType,
-      budget: {
-        min: Number(formState.budgetMin) || 0,
-        max: formState.budgetMax ? Number(formState.budgetMax) : undefined,
-        currency: "NPR",
-      },
-      deadline: formState.deadline || undefined,
-      isUrgent: formState.isUrgent,
-      location,
-      milestones: requireMilestones ? milestones : [],
-      isPublic: true,
-    };
+    const payload = buildJobPayload("OPEN", {
+      includeMilestones: requireMilestones,
+    });
 
     const { errors: validationErrors, data } = validateFormSchema(
       jobCreateSchema,
@@ -314,34 +272,6 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       setFormErrors(["Job title is required to save as draft."]);
       return;
     }
-
-    const tags = formState.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const requiredSkills = formState.requiredSkills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const location =
-      formState.jobType === "physical"
-        ? {
-            city: formState.locationCity.trim() || undefined,
-            district: formState.locationDistrict.trim() || undefined,
-            province: formState.locationProvince.trim() || undefined,
-          }
-        : undefined;
-
-    const milestones = formState.milestones
-      .filter((m) => m.title.trim())
-      .map((m) => ({
-        title: m.title.trim(),
-        description: m.description.trim(),
-        value: Number(m.value) || 0,
-        dueDate: formatDateValue(m.dueDate),
-      }));
 
     setSubmitting(true);
     try {

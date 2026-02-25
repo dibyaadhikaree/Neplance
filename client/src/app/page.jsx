@@ -1,13 +1,13 @@
 "use client";
 
 import {
+  CategoriesSection,
   HeroSection,
   HowItWorksSection,
   TestimonialsSection,
-  CategoriesSection,
 } from "@/shared/brand/HeroSection";
-import { Navbar } from "@/shared/navigation/Navbar";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { Navbar } from "@/shared/navigation/Navbar";
 
 export default function Home() {
   const { isHydrated } = useAuthGate({ mode: "redirect-authed" });
@@ -70,6 +70,7 @@ export default function Home() {
                       fill="none"
                       style={{ flexShrink: 0, marginTop: "2px" }}
                     >
+                      <title>Post a job for free</title>
                       <circle
                         cx="12"
                         cy="12"
@@ -114,6 +115,7 @@ export default function Home() {
                       fill="none"
                       style={{ flexShrink: 0, marginTop: "2px" }}
                     >
+                      <title>Review vetted talent</title>
                       <circle
                         cx="12"
                         cy="12"
@@ -158,6 +160,7 @@ export default function Home() {
                       fill="none"
                       style={{ flexShrink: 0, marginTop: "2px" }}
                     >
+                      <title>Pay with confidence</title>
                       <circle
                         cx="12"
                         cy="12"
@@ -589,6 +592,7 @@ export default function Home() {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
+                  <title>Neplance logo</title>
                   <circle cx="16" cy="16" r="16" fill="#14a800" />
                   <path
                     d="M12 10L16 20L20 10"
@@ -715,7 +719,7 @@ export default function Home() {
               <ul style={{ listStyle: "none", padding: 0 }}>
                 <li style={{ marginBottom: "var(--space-2)" }}>
                   <a
-                    href="#"
+                    href="/about"
                     style={{
                       color: "rgba(255, 255, 255, 0.7)",
                       textDecoration: "none",
@@ -727,7 +731,7 @@ export default function Home() {
                 </li>
                 <li style={{ marginBottom: "var(--space-2)" }}>
                   <a
-                    href="#"
+                    href="/trust"
                     style={{
                       color: "rgba(255, 255, 255, 0.7)",
                       textDecoration: "none",
@@ -739,7 +743,7 @@ export default function Home() {
                 </li>
                 <li style={{ marginBottom: "var(--space-2)" }}>
                   <a
-                    href="#"
+                    href="/contact"
                     style={{
                       color: "rgba(255, 255, 255, 0.7)",
                       textDecoration: "none",
@@ -774,7 +778,7 @@ export default function Home() {
             </p>
             <div style={{ display: "flex", gap: "var(--space-4)" }}>
               <a
-                href="#"
+                href="/privacy"
                 style={{
                   color: "rgba(255, 255, 255, 0.5)",
                   fontSize: "var(--text-sm)",
@@ -784,7 +788,7 @@ export default function Home() {
                 Privacy Policy
               </a>
               <a
-                href="#"
+                href="/terms"
                 style={{
                   color: "rgba(255, 255, 255, 0.5)",
                   fontSize: "var(--text-sm)",
@@ -794,7 +798,7 @@ export default function Home() {
                 Terms of Service
               </a>
               <a
-                href="#"
+                href="/cookies"
                 style={{
                   color: "rgba(255, 255, 255, 0.5)",
                   fontSize: "var(--text-sm)",

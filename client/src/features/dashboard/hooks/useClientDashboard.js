@@ -32,9 +32,11 @@ export const useClientDashboard = () => {
     try {
       const results = await Promise.all(
         contractList.map(async (contract) => {
-          const proposalsData = await apiCall(`/api/proposals/job/${contract._id}`);
+          const proposalsData = await apiCall(
+            `/api/proposals/job/${contract._id}`,
+          );
           return [contract._id, proposalsData.data || []];
-        })
+        }),
       );
 
       setProposalsByContract(Object.fromEntries(results));

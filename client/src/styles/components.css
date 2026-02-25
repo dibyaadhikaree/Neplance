@@ -87,17 +87,13 @@
   flex-wrap: wrap;
 }
 
-.milestone-action-row .form-group {
-  margin-bottom: 0;
+.form-group {
+  margin-bottom: var(--space-6);
 }
 
 /* ===================================
    FORM ELEMENTS
    =================================== */
-
-.form-group {
-  margin-bottom: var(--space-6);
-}
 
 .form-label {
   display: block;
@@ -280,4 +276,7 @@
   font-size: var(--text-base);
   color: var(--color-text-light);
   margin: 0;
+}
+.milestone-action-row .form-group {
+  margin-bottom: 0;
 }

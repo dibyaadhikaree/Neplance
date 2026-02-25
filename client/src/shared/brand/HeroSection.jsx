@@ -104,10 +104,10 @@ export const HowItWorksSection = () => {
           </p>
         </div>
         <div className="grid grid-cols-3" style={{ gap: "var(--space-8)" }}>
-          {steps.map((step, index) => (
+          {steps.map((step) => (
             <div
-              key={index}
               style={{ textAlign: "center", position: "relative" }}
+              key={step.title}
             >
               <div
                 style={{
@@ -187,8 +187,12 @@ export const TestimonialsSection = () => {
           </p>
         </div>
         <div className="grid grid-cols-3" style={{ gap: "var(--space-6)" }}>
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className="card" style={{ height: "100%" }}>
+          {testimonials.map((testimonial) => (
+            <div
+              key={`${testimonial.name}-${testimonial.company}`}
+              className="card"
+              style={{ height: "100%" }}
+            >
               <div
                 style={{
                   marginBottom: "var(--space-4)",
@@ -257,9 +261,9 @@ export const CategoriesSection = () => {
           </p>
         </div>
         <div className="grid grid-cols-4" style={{ gap: "var(--space-4)" }}>
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <div
-              key={index}
+              key={category.name}
               className="card"
               style={{
                 textAlign: "center",

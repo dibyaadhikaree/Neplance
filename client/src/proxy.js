@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 
-const protectedRoutes = ["/dashboard", "/jobs", "/talent", "/profile", "/proposals"];
+const protectedRoutes = [
+  "/dashboard",
+  "/jobs",
+  "/talent",
+  "/profile",
+  "/proposals",
+];
 const publicRoutes = ["/freelancers"];
 
 export function proxy(request) {
   const { pathname } = request.nextUrl;
 
   const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 
   if (isPublicRoute) {
@@ -15,7 +21,7 @@ export function proxy(request) {
   }
 
   const isProtectedRoute = protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 
   if (!isProtectedRoute) {

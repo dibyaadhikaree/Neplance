@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/shared/navigation/Navbar";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard, ProposalCard } from "@/features/dashboard/components/JobCard";
-
 import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancerDashboard";
 import { apiCall } from "@/services/api";
+import { Navbar } from "@/shared/navigation/Navbar";
 
 export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
   const [activeTab, setActiveTab] = useState("proposals");
@@ -16,9 +15,11 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
 
   const handleWithdrawProposal = async (proposal) => {
     if (!confirm("Are you sure you want to withdraw this proposal?")) return;
-    
+
     try {
-      await apiCall(`/api/proposals/${proposal._id}/withdraw`, { method: "PATCH" });
+      await apiCall(`/api/proposals/${proposal._id}/withdraw`, {
+        method: "PATCH",
+      });
       refetch();
     } catch (err) {
       alert(err.message || "Failed to withdraw proposal");
@@ -85,13 +86,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
 
   const renderJobCards = (jobs, variant = "current") =>
     jobs.length > 0 ? (
-      jobs.map((job) => (
-        <JobCard
-          key={job._id}
-          job={job}
-          variant={variant}
-        />
-      ))
+      jobs.map((job) => <JobCard key={job._id} job={job} variant={variant} />)
     ) : (
       <EmptyState {...getEmptyState()} />
     );

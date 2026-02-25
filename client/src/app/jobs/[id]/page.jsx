@@ -7,35 +7,13 @@ import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Button, Input } from "@/shared/ui/UI";
 import {
+  formatBudget,
+  formatLocation,
   formatStatus,
   getCreatorLabel,
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
-
-const formatBudget = (budget, budgetType) => {
-  if (!budget?.min) return "Negotiable";
-  const currency = budget.currency || "NPR";
-  if (budgetType === "hourly") {
-    return `${currency} ${budget.min.toLocaleString()}-${budget.max?.toLocaleString() || "N/A"}/hr`;
-  }
-  if (budget.max) {
-    return `${currency} ${budget.min.toLocaleString()}-${budget.max.toLocaleString()}`;
-  }
-  return `${currency} ${budget.min.toLocaleString()}`;
-};
-
-const formatLocation = (location) => {
-  if (!location) return null;
-  if (location.isRemote) return "Remote";
-  const parts = [
-    location.address,
-    location.city,
-    location.district,
-    location.province,
-  ].filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : null;
-};
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -62,7 +40,9 @@ export default function JobDetailPage({ params }) {
   const [revisionsIncluded, setRevisionsIncluded] = useState("0");
   const [attachments, setAttachments] = useState("");
 
-  const { user, isHydrated, logout, switchRole } = useAuthGate({ mode: "none" });
+  const { user, isHydrated, logout, switchRole } = useAuthGate({
+    mode: "none",
+  });
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -207,11 +187,11 @@ export default function JobDetailPage({ params }) {
   const locationText = formatLocation(job.location);
   const deadlineText = formatDate(job.deadline);
 
-  const isJobOwner = user && (
-    job.creatorAddress?._id === user.id ||
-    job.creatorAddress === user.id ||
-    job.creatorAddress?.id === user.id
-  );
+  const isJobOwner =
+    user &&
+    (job.creatorAddress?._id === user.id ||
+      job.creatorAddress === user.id ||
+      job.creatorAddress?.id === user.id);
 
   return (
     <>
