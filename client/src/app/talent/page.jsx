@@ -8,7 +8,8 @@ import { Navbar } from "@/shared/navigation/Navbar";
 
 export default function TalentPage() {
   const { user, isHydrated, logout, switchRole } = useAuthGate({
-    mode: "none",
+    mode: "require-auth",
+    redirectTo: "/",
   });
   const [freelancers, setFreelancers] = useState([]);
   const [loading, setLoading] = useState(true);

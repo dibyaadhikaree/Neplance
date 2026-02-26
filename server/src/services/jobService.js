@@ -56,7 +56,7 @@ const publishJob = async (job) => {
   }
 
   job.status = JOB_STATUS.OPEN;
-  job.updatedAt = Date.now();
+  job.updatedAt = new Date();
   await job.save();
   return job;
 };
@@ -84,8 +84,8 @@ const submitMilestone = async (job, milestoneIndex, evidence) => {
   if (typeof evidence === "string" && evidence.trim().length > 0) {
     milestone.evidence = evidence.trim();
   }
-  milestone.completedAt = Date.now();
-  job.updatedAt = Date.now();
+  milestone.completedAt = new Date();
+  job.updatedAt = new Date();
   await job.save();
   return job;
 };
@@ -115,7 +115,7 @@ const approveMilestone = async (job, milestoneIndex, approverId) => {
     job.status = JOB_STATUS.COMPLETED;
   }
 
-  job.updatedAt = Date.now();
+  job.updatedAt = new Date();
   await job.save();
   return { job, allCompleted };
 };
@@ -137,9 +137,9 @@ const requestCancellation = async (job, userId, reason) => {
     initiatedBy: userId,
     initiatedRole: isCreator ? "CREATOR" : "CONTRACTOR",
     reason: typeof reason === "string" ? reason.trim() : undefined,
-    requestedAt: Date.now(),
+    requestedAt: new Date(),
   };
-  job.updatedAt = Date.now();
+  job.updatedAt = new Date();
   await job.save();
   return job;
 };
@@ -161,11 +161,11 @@ const respondCancellation = async (job, userId, action) => {
     ? CANCELLATION_STATUS.ACCEPTED
     : CANCELLATION_STATUS.REJECTED;
   job.cancellation.respondedBy = userId;
-  job.cancellation.respondedAt = Date.now();
+  job.cancellation.respondedAt = new Date();
   if (accepted) {
     job.status = JOB_STATUS.CANCELLED;
   }
-  job.updatedAt = Date.now();
+  job.updatedAt = new Date();
   await job.save();
   return { job, accepted };
 };

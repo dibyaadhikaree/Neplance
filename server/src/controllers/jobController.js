@@ -102,8 +102,8 @@ const createJob = catchAsync(async (req, res) => {
     parties: normalizedParties,
     terms,
     attachments: normalizedDefaults.attachments,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
 
   res.status(201).json({
@@ -293,7 +293,7 @@ const updateJob = catchAsync(async (req, res) => {
     }
   });
 
-  updates.updatedAt = Date.now();
+  updates.updatedAt = new Date();
 
   const updatedJob = await Job.findByIdAndUpdate(jobId, updates, {
     new: true,

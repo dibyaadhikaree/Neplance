@@ -140,7 +140,6 @@ const logout = (req, res) => {
     cookieOptions.secure = true;
   }
 
-  res.clearCookie("accessToken", cookieOptions);
   res.clearCookie("refreshToken", cookieOptions);
 
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");

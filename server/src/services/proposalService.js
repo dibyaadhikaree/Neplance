@@ -29,7 +29,7 @@ const acceptProposal = async (proposal, job) => {
     {
       status: JOB_STATUS.IN_PROGRESS,
       hiredFreelancer: proposal.freelancer,
-      updatedAt: Date.now(),
+      updatedAt: new Date(),
       $addToSet: {
         parties: {
           address: contractorAddress,
@@ -48,8 +48,8 @@ const rejectProposal = async (proposal, job, reason) => {
 
   proposal.status = PROPOSAL_STATUS.REJECTED;
   proposal.rejectionReason = typeof reason === "string" ? reason.trim() : undefined;
-  proposal.rejectedAt = Date.now();
-  proposal.updatedAt = Date.now();
+  proposal.rejectedAt = new Date();
+  proposal.updatedAt = new Date();
   await proposal.save();
   return proposal;
 };
@@ -57,7 +57,7 @@ const rejectProposal = async (proposal, job, reason) => {
 const withdrawProposal = async (proposal) => {
   assertProposalCanWithdraw(proposal);
   proposal.status = PROPOSAL_STATUS.WITHDRAWN;
-  proposal.withdrawnAt = Date.now();
+  proposal.withdrawnAt = new Date();
   await proposal.save();
   return proposal;
 };

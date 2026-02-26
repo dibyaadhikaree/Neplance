@@ -14,7 +14,8 @@ import { Navbar } from "@/shared/navigation/Navbar";
 
 export default function JobsPage() {
   const { user, isHydrated, logout, switchRole } = useAuthGate({
-    mode: "none",
+    mode: "require-auth",
+    redirectTo: "/",
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalMode, setModalMode] = useState("view");

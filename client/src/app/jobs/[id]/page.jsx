@@ -54,7 +54,8 @@ export default function JobDetailPage({ params }) {
   const [milestoneError, setMilestoneError] = useState("");
 
   const { user, isHydrated, logout, switchRole } = useAuthGate({
-    mode: "none",
+    mode: "require-auth",
+    redirectTo: "/",
   });
 
   const handleLogout = async () => {

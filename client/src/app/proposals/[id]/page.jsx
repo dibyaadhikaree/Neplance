@@ -29,7 +29,10 @@ export default function ProposalDetailPage({ params }) {
   });
   const [resubmitting, setResubmitting] = useState(false);
   const [resubmitError, setResubmitError] = useState("");
-  const { user, logout, switchRole } = useAuthGate({ mode: "none" });
+  const { user, logout, switchRole } = useAuthGate({
+    mode: "require-auth",
+    redirectTo: "/",
+  });
 
   useEffect(() => {
     const fetchProposal = async () => {

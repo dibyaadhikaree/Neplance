@@ -10,7 +10,8 @@ import { Navbar } from "@/shared/navigation/Navbar";
 export default function FreelancerProfilePage() {
   const params = useParams();
   const { user, isHydrated, logout, switchRole } = useAuthGate({
-    mode: "none",
+    mode: "require-auth",
+    redirectTo: "/",
   });
   const [freelancer, setFreelancer] = useState(null);
   const [loading, setLoading] = useState(true);
