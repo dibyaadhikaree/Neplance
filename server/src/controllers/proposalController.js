@@ -3,7 +3,7 @@ const Proposal = require("../models/Proposal");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const { getJobOrThrow, ensureCreator } = require("../utils/jobAccess");
-const { PROPOSAL_STATUS } = require("../constants/statuses");
+const { JOB_STATUS, PROPOSAL_STATUS } = require("../constants/statuses");
 const {
   acceptProposal: acceptProposalService,
   rejectProposal: rejectProposalService,
@@ -43,6 +43,10 @@ const createProposal = catchAsync(async (req, res) => {
 
   if (job.creatorAddress.toString() === req.user.id.toString()) {
     throw new AppError("You cannot submit a proposal on your own job", 400);
+  }
+
+  if (job.status !== JOB_STATUS.OPEN) {
+    throw new AppError("Proposals can only be submitted for open jobs", 400);
   }
 
   const existingProposal = await Proposal.findOne({
