@@ -46,7 +46,7 @@ const createProposal = catchAsync(async (req, res) => {
     throw new AppError("You cannot submit a proposal on your own job", 400);
   }
 
-  createProposalService(job);
+  await createProposalService(job);
 
   const existingProposal = await Proposal.findOne({
     freelancer: req.user.id,
