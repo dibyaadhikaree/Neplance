@@ -87,8 +87,8 @@ export default function JobDetailPage({ params }) {
       setSubmitting(false);
       return;
     }
-    if (!coverLetter || coverLetter.trim().length === 0) {
-      setSubmitError("Please enter a cover letter");
+    if (!coverLetter || coverLetter.trim().length < 5) {
+      setSubmitError("Cover letter must be at least 5 characters");
       setSubmitting(false);
       return;
     }
@@ -99,6 +99,21 @@ export default function JobDetailPage({ params }) {
     }
 
     try {
+      const attachmentsArray = attachments
+        ? attachments
+            .split(",")
+            .map((a) => a.trim())
+            .filter(Boolean)
+        : [];
+      const invalidUrl = attachmentsArray.find(
+        (item) => !/^https?:\/\//i.test(item),
+      );
+      if (invalidUrl) {
+        setSubmitError("Attachments must be valid URLs");
+        setSubmitting(false);
+        return;
+      }
+
       await apiCall("/api/proposals", {
         method: "POST",
         body: JSON.stringify({
@@ -107,12 +122,7 @@ export default function JobDetailPage({ params }) {
           coverLetter: coverLetter.trim(),
           deliveryDays: Number(deliveryDays),
           revisionsIncluded: Number(revisionsIncluded) || 0,
-          attachments: attachments
-            ? attachments
-                .split(",")
-                .map((a) => a.trim())
-                .filter(Boolean)
-            : [],
+          attachments: attachmentsArray,
         }),
       });
       router.push("/dashboard");

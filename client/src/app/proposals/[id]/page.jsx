@@ -107,8 +107,8 @@ export default function ProposalDetailPage({ params }) {
       setResubmitError("Please enter a valid amount");
       return;
     }
-    if (!resubmitData.coverLetter.trim()) {
-      setResubmitError("Please enter a cover letter");
+    if (resubmitData.coverLetter.trim().length < 5) {
+      setResubmitError("Cover letter must be at least 5 characters");
       return;
     }
     if (!resubmitData.deliveryDays || Number(resubmitData.deliveryDays) <= 0) {
@@ -117,6 +117,20 @@ export default function ProposalDetailPage({ params }) {
     }
 
     setResubmitting(true);
+    const attachmentsArray = resubmitData.attachments
+      ? resubmitData.attachments
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+    const invalidUrl = attachmentsArray.find(
+      (item) => !/^https?:\/\//i.test(item),
+    );
+    if (invalidUrl) {
+      setResubmitError("Attachments must be valid URLs");
+      return;
+    }
+
     try {
       const response = await apiCall("/api/proposals", {
         method: "POST",
@@ -126,12 +140,7 @@ export default function ProposalDetailPage({ params }) {
           coverLetter: resubmitData.coverLetter.trim(),
           deliveryDays: Number(resubmitData.deliveryDays),
           revisionsIncluded: Number(resubmitData.revisionsIncluded) || 0,
-          attachments: resubmitData.attachments
-            ? resubmitData.attachments
-                .split(",")
-                .map((item) => item.trim())
-                .filter(Boolean)
-            : [],
+          attachments: attachmentsArray,
         }),
       });
       const newId = response?.data?._id;

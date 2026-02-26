@@ -23,6 +23,7 @@ const acceptProposal = async (proposal, job) => {
     job._id,
     {
       status: JOB_STATUS.IN_PROGRESS,
+      hiredFreelancer: proposal.freelancer,
       updatedAt: Date.now(),
       $addToSet: {
         parties: {

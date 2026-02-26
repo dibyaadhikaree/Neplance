@@ -79,6 +79,18 @@ export const JobModal = ({
     );
 
     if (validationErrors) {
+      if (attachmentsArray.length > 0) {
+        const invalidUrl = attachmentsArray.find(
+          (item) => !/^https?:\/\//i.test(item),
+        );
+        if (invalidUrl) {
+          setErrors((prev) => ({
+            ...prev,
+            attachments: "Attachments must be valid URLs",
+          }));
+          return;
+        }
+      }
       setErrors(validationErrors);
       return;
     }

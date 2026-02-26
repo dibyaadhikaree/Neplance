@@ -74,6 +74,7 @@ const jobSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    minlength: 5,
     maxlength: 200,
   },
   description: {

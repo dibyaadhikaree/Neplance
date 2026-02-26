@@ -20,17 +20,19 @@ const proposalSchema = new mongoose.Schema({
   coverLetter: {
     type: String,
     required: true,
+    minlength: 5,
     maxlength: 5000,
   },
   deliveryDays: {
     type: Number,
     required: true,
+    min: 1,
   },
   revisionsIncluded: {
     type: Number,
     default: 0,
+    min: 0,
   },
-  attachments: [String],
   isRead: {
     type: Boolean,
     default: false,
@@ -54,3 +56,16 @@ const proposalSchema = new mongoose.Schema({
 const Proposal = mongoose.model("Proposal", proposalSchema);
 
 module.exports = Proposal;
+  amount: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+  attachments: {
+    type: [String],
+    validate: {
+      validator: (values) =>
+        (values || []).every((value) => /^https?:\/\//i.test(value)),
+      message: "Attachments must be valid URLs",
+    },
+  },

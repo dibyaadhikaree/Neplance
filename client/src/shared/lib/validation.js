@@ -136,7 +136,7 @@ export const proposalSchema = z.object({
   coverLetter: z
     .string()
     .min(1, "Cover letter is required")
-    .min(50, "Cover letter must be at least 50 characters")
+    .min(5, "Cover letter must be at least 5 characters")
     .max(5000, "Cover letter must be less than 5000 characters"),
   deliveryDays: z
     .number({ message: "Delivery days must be a number" })
