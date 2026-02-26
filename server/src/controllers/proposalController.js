@@ -3,8 +3,9 @@ const Proposal = require("../models/Proposal");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const { getJobOrThrow, ensureCreator } = require("../utils/jobAccess");
-const { JOB_STATUS, PROPOSAL_STATUS } = require("../constants/statuses");
+const { PROPOSAL_STATUS } = require("../constants/statuses");
 const {
+  createProposal: createProposalService,
   acceptProposal: acceptProposalService,
   rejectProposal: rejectProposalService,
   withdrawProposal: withdrawProposalService,
@@ -45,9 +46,7 @@ const createProposal = catchAsync(async (req, res) => {
     throw new AppError("You cannot submit a proposal on your own job", 400);
   }
 
-  if (job.status !== JOB_STATUS.OPEN) {
-    throw new AppError("Proposals can only be submitted for open jobs", 400);
-  }
+  createProposalService(job);
 
   const existingProposal = await Proposal.findOne({
     freelancer: req.user.id,

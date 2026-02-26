@@ -5,6 +5,7 @@ const {
   assertProposalCanAccept,
   assertProposalCanReject,
   assertProposalCanWithdraw,
+  assertProposalCanCreate,
 } = require("./statusTransitions");
 
 const acceptProposal = async (proposal, job) => {
@@ -58,7 +59,11 @@ const withdrawProposal = async (proposal) => {
 };
 
 module.exports = {
+  createProposal,
   acceptProposal,
   rejectProposal,
   withdrawProposal,
+};
+const createProposal = async (job) => {
+  assertProposalCanCreate(job);
 };

@@ -12,6 +12,12 @@ const assertJobCanUpdate = (job) => {
   }
 };
 
+const normalizeJobCreateStatus = (status) => {
+  return [JOB_STATUS.DRAFT, JOB_STATUS.OPEN].includes(status)
+    ? status
+    : JOB_STATUS.DRAFT;
+};
+
 const assertJobCanPublish = (job) => {
   if (job.status !== JOB_STATUS.DRAFT) {
     throw new AppError("Only draft jobs can be published", 400);
@@ -90,6 +96,12 @@ const assertProposalCanAccept = (job) => {
   }
 };
 
+const assertProposalCanCreate = (job) => {
+  if (job.status !== JOB_STATUS.OPEN) {
+    throw new AppError("Proposals can only be submitted for open jobs", 400);
+  }
+};
+
 const assertProposalCanReject = (job, proposal) => {
   if (![JOB_STATUS.OPEN, JOB_STATUS.IN_PROGRESS].includes(job.status)) {
     throw new AppError("Job is not open for rejection", 400);
@@ -112,6 +124,7 @@ const assertProposalCanWithdraw = (proposal) => {
 };
 
 module.exports = {
+  normalizeJobCreateStatus,
   assertJobCanUpdate,
   assertJobCanPublish,
   assertJobCanDelete,
@@ -121,6 +134,7 @@ module.exports = {
   assertJobCanApproveMilestone,
   assertJobCanRequestCancellation,
   assertJobCanRespondCancellation,
+  assertProposalCanCreate,
   assertProposalCanAccept,
   assertProposalCanReject,
   assertProposalCanWithdraw,

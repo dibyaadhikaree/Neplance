@@ -6,6 +6,7 @@ const {
   MILESTONE_STATUS,
 } = require("../constants/statuses");
 const {
+  normalizeJobCreateStatus,
   assertJobCanUpdate,
   assertJobCanPublish,
   assertJobCanDelete,
@@ -14,6 +15,8 @@ const {
   assertJobCanRequestCancellation,
   assertJobCanRespondCancellation,
 } = require("./statusTransitions");
+
+const getCreateStatus = (status) => normalizeJobCreateStatus(status);
 
 const validateJobUpdate = (job) => {
   assertJobCanUpdate(job);
@@ -142,6 +145,7 @@ const respondCancellation = async (job, userId, action) => {
 };
 
 module.exports = {
+  getCreateStatus,
   validateJobUpdate,
   publishJob,
   deleteJob,

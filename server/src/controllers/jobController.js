@@ -14,6 +14,7 @@ const {
 } = require("../constants/statuses");
 const {
   validateJobUpdate,
+  getCreateStatus,
   publishJob: publishJobService,
   deleteJob: deleteJobService,
   submitMilestone: submitMilestoneService,
@@ -64,9 +65,7 @@ const createJob = catchAsync(async (req, res) => {
       })),
   ];
 
-  const jobStatus = [JOB_STATUS.DRAFT, JOB_STATUS.OPEN].includes(status)
-    ? status
-    : JOB_STATUS.DRAFT;
+  const jobStatus = getCreateStatus(status);
 
   const data = await Job.create({
     title,
