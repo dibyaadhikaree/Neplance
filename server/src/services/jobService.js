@@ -18,6 +18,32 @@ const {
 
 const getCreateStatus = (status) => normalizeJobCreateStatus(status);
 
+const normalizeJobCreateDefaults = ({
+  jobType,
+  budgetType,
+  isPublic,
+  isUrgent,
+  tags,
+  requiredSkills,
+  milestones,
+  attachments,
+  parties,
+  status,
+}) => {
+  return {
+    jobType: jobType || "digital",
+    budgetType: budgetType || "fixed",
+    isPublic: isPublic !== undefined ? isPublic : true,
+    isUrgent: isUrgent !== undefined ? isUrgent : false,
+    tags: Array.isArray(tags) ? tags : [],
+    requiredSkills: Array.isArray(requiredSkills) ? requiredSkills : [],
+    milestones: Array.isArray(milestones) ? milestones : [],
+    attachments: Array.isArray(attachments) ? attachments : [],
+    parties: Array.isArray(parties) ? parties : [],
+    status: normalizeJobCreateStatus(status),
+  };
+};
+
 const validateJobUpdate = (job) => {
   assertJobCanUpdate(job);
 };
@@ -146,6 +172,7 @@ const respondCancellation = async (job, userId, action) => {
 
 module.exports = {
   getCreateStatus,
+  normalizeJobCreateDefaults,
   validateJobUpdate,
   publishJob,
   deleteJob,

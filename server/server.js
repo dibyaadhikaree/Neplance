@@ -9,7 +9,11 @@ const cors = require("cors");
 const AppError = require("./src/utils/appError");
 const connectDB = require("./src/config/db");
 
-const frontendUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+const frontendUrl =
+  process.env.FRONTEND_BASE_URL ||
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
 
 const app = express();
 

@@ -36,7 +36,7 @@ const updateMyProfile = catchAsync(async (req, res, next) => {
 const checkDeleteEligibility = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
 
-  const [activeJob, activeProposal] = await Promise.all([
+  const [activeJob, activeProposal, openJob] = await Promise.all([
     Job.findOne({
       $or: [
         { creatorAddress: userId, status: JOB_STATUS.IN_PROGRESS },
@@ -47,6 +47,9 @@ const checkDeleteEligibility = catchAsync(async (req, res, next) => {
       freelancer: userId,
       status: { $in: [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.ACCEPTED] },
     }).populate("job", "title"),
+    Job.findOne({ creatorAddress: userId, status: JOB_STATUS.OPEN }).select(
+      "title status"
+    ),
   ]);
 
   const reasons = [];
@@ -62,6 +65,12 @@ const checkDeleteEligibility = catchAsync(async (req, res, next) => {
       message: `You have an active proposal for: "${activeProposal.job?.title || "a job"}"`,
     });
   }
+  if (openJob) {
+    reasons.push({
+      type: "open_job",
+      message: `You have an open job: "${openJob.title}"`,
+    });
+  }
 
   res.status(200).json({
     status: "success",
@@ -73,7 +82,7 @@ const checkDeleteEligibility = catchAsync(async (req, res, next) => {
 const deactivateMyAccount = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
 
-  const [activeJob, activeProposal] = await Promise.all([
+  const [activeJob, activeProposal, openJob] = await Promise.all([
     Job.findOne({
       $or: [
         { creatorAddress: userId, status: JOB_STATUS.IN_PROGRESS },
@@ -84,6 +93,7 @@ const deactivateMyAccount = catchAsync(async (req, res, next) => {
       freelancer: userId,
       status: { $in: [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.ACCEPTED] },
     }),
+    Job.findOne({ creatorAddress: userId, status: JOB_STATUS.OPEN }),
   ]);
 
   if (activeJob) {
@@ -94,11 +104,19 @@ const deactivateMyAccount = catchAsync(async (req, res, next) => {
     throw new AppError("Cannot delete account with active proposals", 400);
   }
 
-  await User.findByIdAndDelete(userId);
+  if (openJob) {
+    throw new AppError("Cannot delete account with open jobs", 400);
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+  await user.deactivate();
 
   res.status(200).json({
     status: "success",
-    message: "Account deleted successfully",
+    message: "Account deactivated successfully",
   });
 });
 

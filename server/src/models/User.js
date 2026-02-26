@@ -98,6 +98,10 @@ const userSchema = new mongoose.Schema({
     default: true,
     select: false,
   },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 userSchema.pre("save", async function (next) {

@@ -15,6 +15,7 @@ const {
 const {
   validateJobUpdate,
   getCreateStatus,
+  normalizeJobCreateDefaults,
   publishJob: publishJobService,
   deleteJob: deleteJobService,
   submitMilestone: submitMilestoneService,
@@ -27,29 +28,42 @@ const createJob = catchAsync(async (req, res) => {
   const {
     title,
     description,
-    jobType = "digital",
     category,
     subcategory,
-    tags = [],
-    requiredSkills = [],
     experienceLevel,
-    budgetType = "fixed",
     budget,
     deadline,
-    isUrgent = false,
     location,
-    isPublic = true,
-    milestones = [],
     terms,
-    attachments = [],
-    parties = [],
-    status = JOB_STATUS.DRAFT,
+    status,
+    jobType,
+    budgetType,
+    isPublic,
+    isUrgent,
+    tags,
+    requiredSkills,
+    milestones,
+    attachments,
+    parties,
   } = req.body;
 
   const creatorAddress = req.user.id.toString();
+  const normalizedDefaults = normalizeJobCreateDefaults({
+    jobType,
+    budgetType,
+    isPublic,
+    isUrgent,
+    tags,
+    requiredSkills,
+    milestones,
+    attachments,
+    parties,
+    status,
+  });
+
   const normalizedParties = [
     { address: creatorAddress, role: "CREATOR" },
-    ...parties
+    ...normalizedDefaults.parties
       .filter(
         (party) =>
           party &&
@@ -65,29 +79,29 @@ const createJob = catchAsync(async (req, res) => {
       })),
   ];
 
-  const jobStatus = getCreateStatus(status);
+  const jobStatus = normalizedDefaults.status;
 
   const data = await Job.create({
     title,
     description,
     creatorAddress,
     status: jobStatus,
-    jobType,
+    jobType: normalizedDefaults.jobType,
     category,
     subcategory,
-    tags,
-    requiredSkills,
+    tags: normalizedDefaults.tags,
+    requiredSkills: normalizedDefaults.requiredSkills,
     experienceLevel,
-    budgetType,
+    budgetType: normalizedDefaults.budgetType,
     budget,
     deadline,
-    isUrgent,
+    isUrgent: normalizedDefaults.isUrgent,
     location,
-    isPublic,
-    milestones,
+    isPublic: normalizedDefaults.isPublic,
+    milestones: normalizedDefaults.milestones,
     parties: normalizedParties,
     terms,
-    attachments,
+    attachments: normalizedDefaults.attachments,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   });
