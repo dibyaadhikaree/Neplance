@@ -1,4 +1,5 @@
 const Job = require("../models/Job");
+const Proposal = require("../models/Proposal");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const {
@@ -169,13 +170,29 @@ const findJobs = catchAsync(async (req, res) => {
     Job.countDocuments(query),
   ]);
 
+  const jobIds = data.map((job) => job._id);
+  const proposalCounts = jobIds.length
+    ? await Proposal.aggregate([
+        { $match: { job: { $in: jobIds } } },
+        { $group: { _id: "$job", count: { $sum: 1 } } },
+      ])
+    : [];
+  const proposalCountMap = proposalCounts.reduce((acc, item) => {
+    acc[item._id.toString()] = item.count;
+    return acc;
+  }, {});
+  const responseData = data.map((job) => ({
+    ...job.toObject(),
+    proposalCount: proposalCountMap[job._id.toString()] || 0,
+  }));
+
   res.status(200).json({
     status: "success",
     results: data.length,
     total,
     page: Number(page),
     pages: Math.ceil(total / Number(limit)),
-    data,
+    data: responseData,
   });
 });
 
@@ -197,13 +214,29 @@ const findMyJobs = catchAsync(async (req, res) => {
     Job.countDocuments(query),
   ]);
 
+  const jobIds = data.map((job) => job._id);
+  const proposalCounts = jobIds.length
+    ? await Proposal.aggregate([
+        { $match: { job: { $in: jobIds } } },
+        { $group: { _id: "$job", count: { $sum: 1 } } },
+      ])
+    : [];
+  const proposalCountMap = proposalCounts.reduce((acc, item) => {
+    acc[item._id.toString()] = item.count;
+    return acc;
+  }, {});
+  const responseData = data.map((job) => ({
+    ...job.toObject(),
+    proposalCount: proposalCountMap[job._id.toString()] || 0,
+  }));
+
   res.status(200).json({
     status: "success",
     results: data.length,
     total,
     page: Number(page),
     pages: Math.ceil(total / Number(limit)),
-    data,
+    data: responseData,
   });
 });
 
@@ -219,9 +252,11 @@ const getJob = catchAsync(async (req, res) => {
     await job.save();
   }
 
+  const proposalCount = await Proposal.countDocuments({ job: job._id });
+
   res.status(200).json({
     status: "success",
-    data: job,
+    data: { ...job.toObject(), proposalCount },
   });
 });
 
@@ -370,20 +405,6 @@ const getJobCategories = catchAsync(async (req, res) => {
   });
 });
 
-const incrementProposalCount = catchAsync(async (req, res) => {
-  const job = await Job.findByIdAndUpdate(
-    req.params.id,
-    { $inc: { proposalCount: 1 } },
-    { new: true }
-  );
-
-  if (!job) throw new AppError("Job not found", 404);
-
-  res.status(200).json({
-    status: "success",
-    proposalCount: job.proposalCount,
-  });
-});
 
 module.exports = {
   createJob,
@@ -396,7 +417,6 @@ module.exports = {
   submitMilestone,
   approveMilestone,
   getJobCategories,
-  incrementProposalCount,
   requestCancellation,
   respondCancellation,
 };

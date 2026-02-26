@@ -1,4 +1,5 @@
 const AppError = require("../utils/appError");
+const Proposal = require("../models/Proposal");
 const {
   JOB_STATUS,
   CANCELLATION_STATUS,
@@ -33,6 +34,7 @@ const publishJob = async (job) => {
 
 const deleteJob = async (job, deleteFn) => {
   assertJobCanDelete(job);
+  await Proposal.deleteMany({ job: job._id });
   await deleteFn(job._id);
 };
 

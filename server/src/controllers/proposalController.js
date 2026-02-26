@@ -70,6 +70,7 @@ const createProposal = catchAsync(async (req, res) => {
     attachments,
   });
 
+
   res.status(201).json({
     status: "success",
     data,

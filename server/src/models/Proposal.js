@@ -16,7 +16,11 @@ const proposalSchema = new mongoose.Schema({
     enum: Object.values(PROPOSAL_STATUS),
     default: PROPOSAL_STATUS.PENDING,
   },
-  amount: Number,
+  amount: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
   coverLetter: {
     type: String,
     required: true,
@@ -32,6 +36,14 @@ const proposalSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0,
+  },
+  attachments: {
+    type: [String],
+    validate: {
+      validator: (values) =>
+        (values || []).every((value) => /^https?:\/\//i.test(value)),
+      message: "Attachments must be valid URLs",
+    },
   },
   isRead: {
     type: Boolean,
@@ -56,16 +68,3 @@ const proposalSchema = new mongoose.Schema({
 const Proposal = mongoose.model("Proposal", proposalSchema);
 
 module.exports = Proposal;
-  amount: {
-    type: Number,
-    required: true,
-    min: 1,
-  },
-  attachments: {
-    type: [String],
-    validate: {
-      validator: (values) =>
-        (values || []).every((value) => /^https?:\/\//i.test(value)),
-      message: "Attachments must be valid URLs",
-    },
-  },

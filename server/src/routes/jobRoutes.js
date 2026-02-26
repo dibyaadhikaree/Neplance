@@ -13,7 +13,6 @@ const {
   submitMilestone,
   approveMilestone,
   getJobCategories,
-  incrementProposalCount,
   requestCancellation,
   respondCancellation,
 } = require("../controllers/jobController");
@@ -36,7 +35,6 @@ router
   .delete(restrictTo("client"), deleteJob);
 
 router.patch("/:id/publish", restrictTo("client"), publishJob);
-router.patch("/:id/increment-proposals", incrementProposalCount);
 
 router
   .route("/:id/milestones/:index/submit")
