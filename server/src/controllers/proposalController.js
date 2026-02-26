@@ -2,7 +2,7 @@ const Job = require("../models/Job");
 const Proposal = require("../models/Proposal");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
-const { getJobOrThrow, ensureCreator } = require("../utils/jobAccess");
+const { getJobOrThrow, ensureCreator, isPartyUser } = require("../utils/jobAccess");
 const { PROPOSAL_STATUS } = require("../constants/statuses");
 const {
   createProposal: createProposalService,
@@ -171,8 +171,9 @@ const getProposalById = catchAsync(async (req, res, next) => {
     return next(new AppError("Job not found", 404));
   }
 
-  const isJobOwner = String(job.creatorAddress) === userId ||
-    job.parties?.some(p => p.role === "CREATOR" && p.address === userId);
+  const isJobOwner =
+    String(job.creatorAddress) === userId ||
+    isPartyUser(job, userId, "CREATOR");
 
   if (!isJobOwner) {
     return next(new AppError("You are not authorized to view this proposal", 403));

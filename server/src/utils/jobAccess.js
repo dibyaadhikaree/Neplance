@@ -21,12 +21,18 @@ const ensureCreator = (job, userId, message) => {
   }
 };
 
-const ensureContractor = (job, userId, message) => {
-  const isContractor = (job.parties || []).some(
+const isPartyUser = (job, userId, role) => {
+  if (!job || !userId) return false;
+  return (job.parties || []).some(
     (party) =>
-      party.role === "CONTRACTOR" &&
+      party.role === role &&
+      party.address &&
       party.address.toString() === userId.toString()
   );
+};
+
+const ensureContractor = (job, userId, message) => {
+  const isContractor = isPartyUser(job, userId, "CONTRACTOR");
 
   if (!isContractor) {
     throw new AppError(
@@ -52,4 +58,5 @@ module.exports = {
   ensureCreator,
   ensureContractor,
   ensureStatus,
+  isPartyUser,
 };

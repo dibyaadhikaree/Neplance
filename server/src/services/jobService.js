@@ -1,5 +1,6 @@
 const AppError = require("../utils/appError");
 const Proposal = require("../models/Proposal");
+const { isPartyUser } = require("../utils/jobAccess");
 const {
   JOB_STATUS,
   CANCELLATION_STATUS,
@@ -42,6 +43,12 @@ const normalizeJobCreateDefaults = ({
     parties: Array.isArray(parties) ? parties : [],
     status: normalizeJobCreateStatus(status),
   };
+};
+
+const assertJobHasMilestones = (milestones) => {
+  if (!Array.isArray(milestones) || milestones.length === 0) {
+    throw new AppError("Jobs must include at least one milestone", 400);
+  }
 };
 
 const validateJobUpdate = (job) => {
@@ -124,9 +131,7 @@ const requestCancellation = async (job, userId, reason) => {
   assertJobCanRequestCancellation(job);
 
   const isCreator = job.creatorAddress?.toString() === userId;
-  const isContractor = (job.parties || []).some(
-    (party) => party.role === "CONTRACTOR" && party.address.toString() === userId
-  );
+  const isContractor = isPartyUser(job, userId, "CONTRACTOR");
 
   if (!isCreator && !isContractor) {
     throw new AppError("You are not authorized to cancel this job", 403);
@@ -148,9 +153,7 @@ const respondCancellation = async (job, userId, action) => {
   assertJobCanRespondCancellation(job, action, userId);
 
   const isCreator = job.creatorAddress?.toString() === userId;
-  const isContractor = (job.parties || []).some(
-    (party) => party.role === "CONTRACTOR" && party.address.toString() === userId
-  );
+  const isContractor = isPartyUser(job, userId, "CONTRACTOR");
 
   if (!isCreator && !isContractor) {
     throw new AppError("You are not authorized to respond", 403);
@@ -173,6 +176,7 @@ const respondCancellation = async (job, userId, action) => {
 module.exports = {
   getCreateStatus,
   normalizeJobCreateDefaults,
+  assertJobHasMilestones,
   validateJobUpdate,
   publishJob,
   deleteJob,

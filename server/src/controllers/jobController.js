@@ -16,6 +16,7 @@ const {
   validateJobUpdate,
   getCreateStatus,
   normalizeJobCreateDefaults,
+  assertJobHasMilestones,
   publishJob: publishJobService,
   deleteJob: deleteJobService,
   submitMilestone: submitMilestoneService,
@@ -60,6 +61,8 @@ const createJob = catchAsync(async (req, res) => {
     parties,
     status,
   });
+
+  assertJobHasMilestones(normalizedDefaults.milestones);
 
   const normalizedParties = [
     { address: creatorAddress, role: "CREATOR" },
@@ -294,6 +297,10 @@ const updateJob = catchAsync(async (req, res) => {
   });
 
   updates.updatedAt = new Date();
+
+  if (updates.milestones) {
+    assertJobHasMilestones(updates.milestones);
+  }
 
   const updatedJob = await Job.findByIdAndUpdate(jobId, updates, {
     new: true,
