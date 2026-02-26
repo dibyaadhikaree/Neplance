@@ -15,8 +15,6 @@ const {
   validateJobUpdate,
   publishJob: publishJobService,
   deleteJob: deleteJobService,
-  markCompleted: markCompletedService,
-  approveCompletion: approveCompletionService,
   submitMilestone: submitMilestoneService,
   approveMilestone: approveMilestoneService,
   requestCancellation: requestCancellationService,
@@ -287,40 +285,6 @@ const deleteJob = catchAsync(async (req, res) => {
   });
 });
 
-const markCompleted = catchAsync(async (req, res, next) => {
-  const jobId = req.params.id;
-
-  const job = await getJobOrThrow(jobId);
-  ensureContractor(job, req.user.id, "Only the contractor can mark completion");
-  await markCompletedService(job);
-
-  res.status(200).json({
-    status: "success",
-    message: "Contract marked as completed.",
-    job,
-  });
-});
-
-const approveCompletion = catchAsync(async (req, res, next) => {
-  const jobId = req.params.id;
-
-  const job = await getJobOrThrow(
-    jobId,
-    "The contract was not found or you are not authorized"
-  );
-  ensureCreator(
-    job,
-    req.user.id,
-    "You are not authorized to approve completion for this contract"
-  );
-  await approveCompletionService(job);
-
-  res.status(200).json({
-    status: "success",
-    job,
-    message: "Successfully approved contract completion",
-  });
-});
 
 const submitMilestone = catchAsync(async (req, res, next) => {
   const { id: jobId, index } = req.params;
@@ -429,8 +393,6 @@ module.exports = {
   updateJob,
   publishJob,
   deleteJob,
-  markCompleted,
-  approveCompletion,
   submitMilestone,
   approveMilestone,
   getJobCategories,

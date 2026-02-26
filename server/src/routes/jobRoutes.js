@@ -10,8 +10,6 @@ const {
   updateJob,
   publishJob,
   deleteJob,
-  markCompleted,
-  approveCompletion,
   submitMilestone,
   approveMilestone,
   getJobCategories,
@@ -39,13 +37,6 @@ router
 
 router.patch("/:id/publish", restrictTo("client"), publishJob);
 router.patch("/:id/increment-proposals", incrementProposalCount);
-
-router
-  .route("/:id/markCompleted")
-  .patch(restrictTo("freelancer"), markCompleted);
-router
-  .route("/:id/approveCompletion")
-  .patch(restrictTo("client"), approveCompletion);
 
 router
   .route("/:id/milestones/:index/submit")

@@ -8,8 +8,6 @@ const {
   assertJobCanUpdate,
   assertJobCanPublish,
   assertJobCanDelete,
-  assertJobCanMarkCompleted,
-  assertJobCanApproveCompletion,
   assertJobCanSubmitMilestone,
   assertJobCanApproveMilestone,
   assertJobCanRequestCancellation,
@@ -38,20 +36,6 @@ const deleteJob = async (job, deleteFn) => {
   await deleteFn(job._id);
 };
 
-const markCompleted = async (job) => {
-  assertJobCanMarkCompleted(job);
-  job.status = JOB_STATUS.COMPLETED;
-  job.updatedAt = Date.now();
-  await job.save();
-  return job;
-};
-
-const approveCompletion = async (job) => {
-  assertJobCanApproveCompletion(job);
-  job.updatedAt = Date.now();
-  await job.save();
-  return job;
-};
 
 const submitMilestone = async (job, milestoneIndex, evidence) => {
   if (Number.isNaN(milestoneIndex) || milestoneIndex < 0) {
@@ -159,8 +143,6 @@ module.exports = {
   validateJobUpdate,
   publishJob,
   deleteJob,
-  markCompleted,
-  approveCompletion,
   submitMilestone,
   approveMilestone,
   requestCancellation,

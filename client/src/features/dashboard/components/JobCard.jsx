@@ -20,7 +20,6 @@ export const JobCard = ({
   job,
   variant = "default",
   onSubmitProposal,
-  onMarkComplete,
   onViewDetails: _onViewDetails,
   onPostJob,
   onDeleteJob,
@@ -472,17 +471,6 @@ export const JobCard = ({
             </button>
           )}
 
-            {variant === "current" &&
-            status === JOB_STATUS.IN_PROGRESS &&
-            onMarkComplete && (
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => onMarkComplete?.(job)}
-              >
-                Complete
-              </button>
-            )}
         </div>
       </div>
     </article>
