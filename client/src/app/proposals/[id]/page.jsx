@@ -5,7 +5,7 @@ import { use, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
-import { Button } from "@/shared/ui/UI";
+import { Button, Input } from "@/shared/ui/UI";
 import { formatStatus } from "@/shared/utils/job";
 
 export default function ProposalDetailPage({ params }) {
@@ -17,6 +17,17 @@ export default function ProposalDetailPage({ params }) {
   const [rejectReason, setRejectReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
   const [rejectError, setRejectError] = useState("");
+  const [accepting, setAccepting] = useState(false);
+  const [acceptError, setAcceptError] = useState("");
+  const [resubmitData, setResubmitData] = useState({
+    amount: "",
+    coverLetter: "",
+    deliveryDays: "",
+    revisionsIncluded: "0",
+    attachments: "",
+  });
+  const [resubmitting, setResubmitting] = useState(false);
+  const [resubmitError, setResubmitError] = useState("");
   const { user, logout, switchRole } = useAuthGate({ mode: "none" });
 
   useEffect(() => {
@@ -33,6 +44,19 @@ export default function ProposalDetailPage({ params }) {
     fetchProposal();
   }, [id]);
 
+  useEffect(() => {
+    if (!proposal) return;
+    setResubmitData({
+      amount: proposal.amount?.toString() || "",
+      coverLetter: proposal.coverLetter || "",
+      deliveryDays: proposal.deliveryDays?.toString() || "",
+      revisionsIncluded: proposal.revisionsIncluded?.toString() || "0",
+      attachments: Array.isArray(proposal.attachments)
+        ? proposal.attachments.join(", ")
+        : "",
+    });
+  }, [proposal]);
+
   const handleReject = async () => {
     setRejectError("");
     setRejecting(true);
@@ -47,6 +71,76 @@ export default function ProposalDetailPage({ params }) {
       setRejectError(err.message || "Failed to reject proposal");
     } finally {
       setRejecting(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    setAcceptError("");
+    setAccepting(true);
+    try {
+      const response = await apiCall(`/api/proposals/${id}/accept`, {
+        method: "PATCH",
+      });
+      setProposal(response.job ? { ...proposal, status: "accepted" } : proposal);
+      if (response.acceptedProposal) {
+        setProposal(response.acceptedProposal);
+      }
+    } catch (err) {
+      setAcceptError(err.message || "Failed to accept proposal");
+    } finally {
+      setAccepting(false);
+    }
+  };
+
+  const handleResubmitChange = (field, value) => {
+    setResubmitData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleResubmit = async (event) => {
+    event.preventDefault();
+    setResubmitError("");
+
+    if (!resubmitData.amount || Number(resubmitData.amount) <= 0) {
+      setResubmitError("Please enter a valid amount");
+      return;
+    }
+    if (!resubmitData.coverLetter.trim()) {
+      setResubmitError("Please enter a cover letter");
+      return;
+    }
+    if (!resubmitData.deliveryDays || Number(resubmitData.deliveryDays) <= 0) {
+      setResubmitError("Please enter valid delivery days");
+      return;
+    }
+
+    setResubmitting(true);
+    try {
+      const response = await apiCall("/api/proposals", {
+        method: "POST",
+        body: JSON.stringify({
+          job: proposal.job?._id || proposal.job,
+          amount: Number(resubmitData.amount),
+          coverLetter: resubmitData.coverLetter.trim(),
+          deliveryDays: Number(resubmitData.deliveryDays),
+          revisionsIncluded: Number(resubmitData.revisionsIncluded) || 0,
+          attachments: resubmitData.attachments
+            ? resubmitData.attachments
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean)
+            : [],
+        }),
+      });
+      const newId = response?.data?._id;
+      if (newId) {
+        router.push(`/proposals/${newId}`);
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setResubmitError(err.message || "Failed to resubmit proposal");
+    } finally {
+      setResubmitting(false);
     }
   };
 
@@ -98,6 +192,8 @@ export default function ProposalDetailPage({ params }) {
   };
 
   const currentUserId = user?.id || user?._id;
+  const freelancerId =
+    proposal?.freelancer?._id || proposal?.freelancer || proposal?.freelancerId;
   const creatorId =
     proposal?.job?.creatorAddress?._id || proposal?.job?.creatorAddress;
   const jobRoles = Array.isArray(proposal?.job?.parties)
@@ -111,9 +207,17 @@ export default function ProposalDetailPage({ params }) {
   const isClient =
     currentUserId &&
     (String(creatorId) === String(currentUserId) || isCreatorParty);
+  const isFreelancer =
+    currentUserId && String(freelancerId) === String(currentUserId);
   const canReject =
     isClient &&
     proposal?.status === "pending";
+  const canAccept =
+    isClient &&
+    proposal?.status === "pending";
+  const canResubmit =
+    isFreelancer &&
+    proposal?.status === "rejected";
 
   return (
     <>
@@ -332,6 +436,143 @@ export default function ProposalDetailPage({ params }) {
               </div>
             )}
 
+            {canResubmit && (
+              <div style={{ marginTop: "var(--space-6)" }}>
+                <h3
+                  style={{
+                    fontSize: "var(--text-base)",
+                    fontWeight: "var(--font-weight-semibold)",
+                    marginBottom: "var(--space-2)",
+                  }}
+                >
+                  Resubmit Proposal
+                </h3>
+                <form
+                  onSubmit={handleResubmit}
+                  style={{
+                    padding: "var(--space-4)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg-secondary)",
+                  }}
+                >
+                  <Input
+                    type="number"
+                    label="Your Amount (NPR)"
+                    placeholder="Enter amount"
+                    value={resubmitData.amount}
+                    onChange={(e) =>
+                      handleResubmitChange("amount", e.target.value)
+                    }
+                    min="1"
+                    required
+                    disabled={resubmitting}
+                  />
+
+                  <div style={{ marginTop: "var(--space-4)" }}>
+                    <label
+                      htmlFor="resubmitCoverLetter"
+                      style={{
+                        display: "block",
+                        marginBottom: "var(--space-2)",
+                        fontWeight: "var(--font-weight-medium)",
+                      }}
+                    >
+                      Cover Letter *
+                    </label>
+                    <textarea
+                      id="resubmitCoverLetter"
+                      value={resubmitData.coverLetter}
+                      onChange={(e) =>
+                        handleResubmitChange("coverLetter", e.target.value)
+                      }
+                      placeholder="Describe why you're the best fit for this job..."
+                      rows={5}
+                      style={{
+                        width: "100%",
+                        padding: "var(--space-3)",
+                        borderRadius: "var(--radius)",
+                        border: "1px solid var(--color-border)",
+                        fontFamily: "inherit",
+                        fontSize: "var(--text-sm)",
+                        resize: "vertical",
+                      }}
+                      maxLength={5000}
+                      required
+                      disabled={resubmitting}
+                    />
+                    <p
+                      style={{
+                        fontSize: "var(--text-xs)",
+                        color: "var(--color-text-light)",
+                        marginTop: "var(--space-1)",
+                      }}
+                    >
+                      {resubmitData.coverLetter.length}/5000 characters
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "var(--space-4)",
+                      marginTop: "var(--space-4)",
+                    }}
+                  >
+                    <Input
+                      type="number"
+                      label="Delivery Days *"
+                      placeholder="e.g., 7"
+                      value={resubmitData.deliveryDays}
+                      onChange={(e) =>
+                        handleResubmitChange("deliveryDays", e.target.value)
+                      }
+                      min="1"
+                      required
+                      disabled={resubmitting}
+                    />
+                    <Input
+                      type="number"
+                      label="Revisions Included"
+                      placeholder="e.g., 2"
+                      value={resubmitData.revisionsIncluded}
+                      onChange={(e) =>
+                        handleResubmitChange("revisionsIncluded", e.target.value)
+                      }
+                      min="0"
+                      disabled={resubmitting}
+                    />
+                  </div>
+
+                  <div style={{ marginTop: "var(--space-4)" }}>
+                    <Input
+                      type="text"
+                      label="Attachments (comma-separated URLs)"
+                      placeholder="https://example.com/file1.pdf, https://example.com/file2.pdf"
+                      value={resubmitData.attachments}
+                      onChange={(e) =>
+                        handleResubmitChange("attachments", e.target.value)
+                      }
+                      disabled={resubmitting}
+                    />
+                  </div>
+
+                  {resubmitError && (
+                    <p className="card-error" style={{ marginTop: "var(--space-3)" }}>
+                      {resubmitError}
+                    </p>
+                  )}
+
+                  <div style={{ marginTop: "var(--space-4)" }}>
+                    <Button type="submit" disabled={resubmitting}>
+                      {resubmitting ? "Resubmitting..." : "Resubmit Proposal"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {proposal.attachments?.length > 0 && (
               <div>
                 <div
@@ -365,6 +606,41 @@ export default function ProposalDetailPage({ params }) {
                       📎 Attachment {index + 1}
                     </a>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {canAccept && (
+              <div style={{ marginTop: "var(--space-6)" }}>
+                <h3
+                  style={{
+                    fontSize: "var(--text-base)",
+                    fontWeight: "var(--font-weight-semibold)",
+                    marginBottom: "var(--space-2)",
+                  }}
+                >
+                  Accept Proposal
+                </h3>
+                <div
+                  style={{
+                    padding: "var(--space-4)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg-secondary)",
+                  }}
+                >
+                  {acceptError && (
+                    <p className="card-error" style={{ marginBottom: "var(--space-3)" }}>
+                      {acceptError}
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={handleAccept}
+                    disabled={accepting}
+                  >
+                    {accepting ? "Accepting..." : "Accept"}
+                  </Button>
                 </div>
               </div>
             )}

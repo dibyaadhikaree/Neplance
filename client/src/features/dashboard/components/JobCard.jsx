@@ -726,6 +726,14 @@ export const ProposalCard = ({
         >
           View Details
         </Link>
+        {status === "rejected" && (
+          <Link
+            href={`/proposals/${proposal._id}`}
+            className="btn btn-primary btn-sm"
+          >
+            Resubmit
+          </Link>
+        )}
         {status === "pending" && onWithdraw && (
           <button
             type="button"
