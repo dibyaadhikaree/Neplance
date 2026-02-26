@@ -28,6 +28,13 @@ module.exports = (err, req, res, next) => {
       .join(", ");
   }
 
+  if (err.name === "CastError") {
+    resolvedStatusCode = 400;
+    status = "fail";
+    message = `Invalid ${err.path}: ${err.value}`;
+    err.errorCode = "INVALID_ID";
+  }
+
   const response = {
     status,
     message: message,

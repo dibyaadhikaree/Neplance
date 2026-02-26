@@ -5,7 +5,7 @@ const proposalSchema = new mongoose.Schema({
   freelancer: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
-    required: "true",
+    required: true,
   },
   job: {
     type: mongoose.Schema.ObjectId,

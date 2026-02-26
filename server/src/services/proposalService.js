@@ -15,17 +15,23 @@ const createProposal = async (job) => {
 const acceptProposal = async (proposal, job) => {
   assertProposalCanAccept(job);
 
-  proposal.status = PROPOSAL_STATUS.ACCEPTED;
-  await proposal.save();
-
-  await Proposal.updateMany(
-    { job: job._id, _id: { $ne: proposal._id }, status: PROPOSAL_STATUS.PENDING },
-    { $set: { status: PROPOSAL_STATUS.REJECTED } }
+  const acceptedProposal = await Proposal.findOneAndUpdate(
+    { _id: proposal._id, status: PROPOSAL_STATUS.PENDING },
+    { $set: { status: PROPOSAL_STATUS.ACCEPTED } },
+    { new: true }
   );
 
+  if (!acceptedProposal) {
+    throw new AppError("Proposal is no longer pending", 409);
+  }
+
   const contractorAddress = proposal.freelancer.toString();
-  const updatedJob = await Job.findByIdAndUpdate(
-    job._id,
+  const updatedJob = await Job.findOneAndUpdate(
+    {
+      _id: job._id,
+      status: JOB_STATUS.OPEN,
+      $or: [{ hiredFreelancer: { $exists: false } }, { hiredFreelancer: null }],
+    },
     {
       status: JOB_STATUS.IN_PROGRESS,
       hiredFreelancer: proposal.freelancer,
@@ -40,7 +46,29 @@ const acceptProposal = async (proposal, job) => {
     { new: true }
   );
 
-  return { proposal, job: updatedJob };
+  if (!updatedJob) {
+    const currentJob = await Job.findById(job._id).select(
+      "status hiredFreelancer"
+    );
+    if (currentJob && currentJob.status !== JOB_STATUS.OPEN) {
+      await Proposal.findByIdAndUpdate(acceptedProposal._id, {
+        $set: { status: PROPOSAL_STATUS.REJECTED },
+      });
+      throw new AppError("Job is no longer open for hiring", 409);
+    }
+
+    await Proposal.findByIdAndUpdate(acceptedProposal._id, {
+      $set: { status: PROPOSAL_STATUS.PENDING },
+    });
+    throw new AppError("Failed to accept proposal", 409);
+  }
+
+  await Proposal.updateMany(
+    { job: job._id, _id: { $ne: proposal._id }, status: PROPOSAL_STATUS.PENDING },
+    { $set: { status: PROPOSAL_STATUS.REJECTED } }
+  );
+
+  return { proposal: acceptedProposal, job: updatedJob };
 };
 
 const rejectProposal = async (proposal, job, reason) => {
