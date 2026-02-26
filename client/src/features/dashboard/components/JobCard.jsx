@@ -10,6 +10,11 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
+import {
+  JOB_STATUS,
+  PROPOSAL_STATUS,
+  CANCELLATION_STATUS,
+} from "@/shared/constants/statuses";
 
 export const JobCard = ({
   job,
@@ -50,8 +55,8 @@ export const JobCard = ({
     : totalValue !== null
       ? `NPR ${totalValue.toLocaleString()}`
       : "Negotiable";
-  const isDraft = status === "DRAFT";
-  const isOpen = status === "OPEN";
+  const isDraft = status === JOB_STATUS.DRAFT;
+  const isOpen = status === JOB_STATUS.OPEN;
   const canEdit = isDraft || isOpen;
   const currentUserId = currentUser?.id || currentUser?._id;
   const isCreator =
@@ -64,8 +69,8 @@ export const JobCard = ({
       party.role === "CONTRACTOR" &&
       String(party.address) === String(currentUserId),
   );
-  const canCancel = status === "IN_PROGRESS" && (isCreator || isContractor);
-  const cancellation = job.cancellation || { status: "NONE" };
+  const canCancel = status === JOB_STATUS.IN_PROGRESS && (isCreator || isContractor);
+  const cancellation = job.cancellation || { status: CANCELLATION_STATUS.NONE };
   const initiatedBy = cancellation.initiatedBy?._id || cancellation.initiatedBy;
   const isInitiator = initiatedBy
     ? String(initiatedBy) === String(currentUserId)
@@ -73,7 +78,7 @@ export const JobCard = ({
       ? (cancellation.initiatedRole === "CREATOR" && isCreator) ||
         (cancellation.initiatedRole === "CONTRACTOR" && isContractor)
       : false;
-  const hasPendingCancellation = cancellation.status === "PENDING";
+  const hasPendingCancellation = cancellation.status === CANCELLATION_STATUS.PENDING;
   const canRespondCancellation =
     hasPendingCancellation &&
     !isInitiator &&
@@ -115,12 +120,15 @@ export const JobCard = ({
 
   const getStatusBadgeClass = (status) => {
     const statusLower = status?.toLowerCase();
-    if (statusLower === "draft") return "badge-warning";
-    if (statusLower === "open") return "badge-success";
-    if (statusLower === "in_progress" || statusLower === "active")
+    if (statusLower === JOB_STATUS.DRAFT.toLowerCase()) return "badge-warning";
+    if (statusLower === JOB_STATUS.OPEN.toLowerCase()) return "badge-success";
+    if (
+      statusLower === JOB_STATUS.IN_PROGRESS.toLowerCase() ||
+      statusLower === "active"
+    )
       return "badge-primary";
-    if (statusLower === "completed") return "badge-info";
-    if (statusLower === "cancelled") return "badge-error";
+    if (statusLower === JOB_STATUS.COMPLETED.toLowerCase()) return "badge-info";
+    if (statusLower === JOB_STATUS.CANCELLED.toLowerCase()) return "badge-error";
     return "";
   };
 
@@ -200,7 +208,7 @@ export const JobCard = ({
           </p>
         )}
 
-        {(canCancel || cancellation.status !== "NONE") && (
+        {(canCancel || cancellation.status !== CANCELLATION_STATUS.NONE) && (
           <div
             style={{
               marginTop: "var(--space-4)",
@@ -220,7 +228,7 @@ export const JobCard = ({
               }}
             >
               <span className="badge badge-warning">
-                {formatStatus(cancellation.status || "NONE")}
+                {formatStatus(cancellation.status || CANCELLATION_STATUS.NONE)}
               </span>
               {cancellation.initiatedRole && (
                 <span style={{ fontSize: "var(--text-xs)" }}>
@@ -464,8 +472,8 @@ export const JobCard = ({
             </button>
           )}
 
-          {variant === "current" &&
-            status === "IN_PROGRESS" &&
+            {variant === "current" &&
+            status === JOB_STATUS.IN_PROGRESS &&
             onMarkComplete && (
               <button
                 type="button"
@@ -509,10 +517,10 @@ export const ProposalCard = ({
 
   const getProposalStatusBadgeClass = (status) => {
     const statusLower = status?.toLowerCase();
-    if (statusLower === "accepted") return "badge-success";
-    if (statusLower === "pending") return "badge-warning";
-    if (statusLower === "rejected") return "badge-error";
-    if (statusLower === "withdrawn") return "badge-info";
+  if (statusLower === PROPOSAL_STATUS.ACCEPTED) return "badge-success";
+  if (statusLower === PROPOSAL_STATUS.PENDING) return "badge-warning";
+  if (statusLower === PROPOSAL_STATUS.REJECTED) return "badge-error";
+  if (statusLower === PROPOSAL_STATUS.WITHDRAWN) return "badge-info";
     return "";
   };
 
@@ -652,7 +660,7 @@ export const ProposalCard = ({
             </p>
           </div>
         )}
-        {status === "rejected" && rejectionReason && (
+        {status === PROPOSAL_STATUS.REJECTED && rejectionReason && (
           <div
             style={{
               marginBottom: "var(--space-3)",
@@ -726,7 +734,7 @@ export const ProposalCard = ({
         >
           View Details
         </Link>
-        {status === "rejected" && (
+        {status === PROPOSAL_STATUS.REJECTED && (
           <Link
             href={`/proposals/${proposal._id}`}
             className="btn btn-primary btn-sm"
@@ -734,7 +742,7 @@ export const ProposalCard = ({
             Resubmit
           </Link>
         )}
-        {status === "pending" && onWithdraw && (
+        {status === PROPOSAL_STATUS.PENDING && onWithdraw && (
           <button
             type="button"
             className="btn btn-ghost btn-sm"

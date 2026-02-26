@@ -17,6 +17,7 @@ import {
 } from "@/shared/lib/validation";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Input } from "@/shared/ui/UI";
+import { JOB_STATUS, PROPOSAL_STATUS } from "@/shared/constants/statuses";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const router = useRouter();
@@ -96,7 +97,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
   const handleDeleteJob = async (job) => {
     const confirmMessage =
-      job.status === "DRAFT"
+      job.status === JOB_STATUS.DRAFT
         ? "Are you sure you want to delete this draft?"
         : "Are you sure you want to delete this job? This action cannot be undone.";
     if (!confirm(confirmMessage)) return;
@@ -240,7 +241,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   };
 
   const validateForm = (requireMilestones = true) => {
-    const payload = buildJobPayload("OPEN", {
+    const payload = buildJobPayload(JOB_STATUS.OPEN, {
       includeMilestones: requireMilestones,
     });
 
@@ -294,7 +295,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       setFormErrors([]);
       await apiCall("/api/jobs", {
         method: "POST",
-        body: JSON.stringify(buildJobPayload("DRAFT")),
+        body: JSON.stringify(buildJobPayload(JOB_STATUS.DRAFT)),
       });
       resetForm();
       await fetchContracts();
@@ -318,7 +319,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
       setFormErrors([]);
       await apiCall("/api/jobs", {
         method: "POST",
-        body: JSON.stringify(buildJobPayload("OPEN")),
+        body: JSON.stringify(buildJobPayload(JOB_STATUS.OPEN)),
       });
       resetForm();
       await fetchContracts();
@@ -387,7 +388,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
             >
               View Details
             </Link>
-            {proposal.status === "pending" && (
+            {proposal.status === PROPOSAL_STATUS.PENDING && (
               <button
                 type="button"
                 className="btn btn-primary btn-sm"

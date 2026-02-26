@@ -7,6 +7,7 @@ import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Button, Input } from "@/shared/ui/UI";
 import { formatStatus } from "@/shared/utils/job";
+import { PROPOSAL_STATUS } from "@/shared/constants/statuses";
 
 export default function ProposalDetailPage({ params }) {
   const { id } = use(params);
@@ -81,7 +82,9 @@ export default function ProposalDetailPage({ params }) {
       const response = await apiCall(`/api/proposals/${id}/accept`, {
         method: "PATCH",
       });
-      setProposal(response.job ? { ...proposal, status: "accepted" } : proposal);
+      setProposal(
+        response.job ? { ...proposal, status: PROPOSAL_STATUS.ACCEPTED } : proposal,
+      );
       if (response.acceptedProposal) {
         setProposal(response.acceptedProposal);
       }
@@ -185,9 +188,9 @@ export default function ProposalDetailPage({ params }) {
 
   const getStatusBadgeClass = (status) => {
     const statusLower = status?.toLowerCase();
-    if (statusLower === "accepted") return "badge-success";
-    if (statusLower === "pending") return "badge-warning";
-    if (statusLower === "rejected") return "badge-error";
+    if (statusLower === PROPOSAL_STATUS.ACCEPTED) return "badge-success";
+    if (statusLower === PROPOSAL_STATUS.PENDING) return "badge-warning";
+    if (statusLower === PROPOSAL_STATUS.REJECTED) return "badge-error";
     return "";
   };
 
@@ -211,13 +214,13 @@ export default function ProposalDetailPage({ params }) {
     currentUserId && String(freelancerId) === String(currentUserId);
   const canReject =
     isClient &&
-    proposal?.status === "pending";
+    proposal?.status === PROPOSAL_STATUS.PENDING;
   const canAccept =
     isClient &&
-    proposal?.status === "pending";
+    proposal?.status === PROPOSAL_STATUS.PENDING;
   const canResubmit =
     isFreelancer &&
-    proposal?.status === "rejected";
+    proposal?.status === PROPOSAL_STATUS.REJECTED;
 
   return (
     <>

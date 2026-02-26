@@ -4,6 +4,7 @@ const User = require("../models/User");
 const Job = require("../models/Job");
 const Proposal = require("../models/Proposal");
 const { pickUserFields } = require("../utils/userFields");
+const { JOB_STATUS, PROPOSAL_STATUS } = require("../constants/statuses");
 
 const getMyProfile = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
@@ -38,13 +39,13 @@ const checkDeleteEligibility = catchAsync(async (req, res, next) => {
   const [activeJob, activeProposal] = await Promise.all([
     Job.findOne({
       $or: [
-        { creatorAddress: userId, status: "IN_PROGRESS" },
-        { hiredFreelancer: userId, status: "IN_PROGRESS" },
+        { creatorAddress: userId, status: JOB_STATUS.IN_PROGRESS },
+        { hiredFreelancer: userId, status: JOB_STATUS.IN_PROGRESS },
       ],
     }).select("title status"),
     Proposal.findOne({
       freelancer: userId,
-      status: { $in: ["pending", "accepted"] },
+      status: { $in: [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.ACCEPTED] },
     }).populate("job", "title"),
   ]);
 
@@ -75,13 +76,13 @@ const deactivateMyAccount = catchAsync(async (req, res, next) => {
   const [activeJob, activeProposal] = await Promise.all([
     Job.findOne({
       $or: [
-        { creatorAddress: userId, status: "IN_PROGRESS" },
-        { hiredFreelancer: userId, status: "IN_PROGRESS" },
+        { creatorAddress: userId, status: JOB_STATUS.IN_PROGRESS },
+        { hiredFreelancer: userId, status: JOB_STATUS.IN_PROGRESS },
       ],
     }),
     Proposal.findOne({
       freelancer: userId,
-      status: { $in: ["pending", "accepted"] },
+      status: { $in: [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.ACCEPTED] },
     }),
   ]);
 

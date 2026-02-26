@@ -14,6 +14,11 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
+import {
+  JOB_STATUS,
+  CANCELLATION_STATUS,
+  MILESTONE_STATUS,
+} from "@/shared/constants/statuses";
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -181,7 +186,7 @@ export default function JobDetailPage({ params }) {
   const milestones = Array.isArray(job.milestones) ? job.milestones : [];
   const totalValue = getMilestoneTotal(milestones);
   const completedCount = milestones.filter(
-    (milestone) => milestone?.status === "COMPLETED",
+    (milestone) => milestone?.status === MILESTONE_STATUS.COMPLETED,
   ).length;
   const creatorLabel = getCreatorLabel(job.creatorAddress);
   const budgetDisplay = job.budget
@@ -203,8 +208,9 @@ export default function JobDetailPage({ params }) {
       party.role === "CONTRACTOR" &&
       String(party.address) === String(currentUserId),
   );
-  const canCancel = job.status === "IN_PROGRESS" && (isJobOwner || isContractor);
-  const cancellation = job.cancellation || { status: "NONE" };
+  const canCancel =
+    job.status === JOB_STATUS.IN_PROGRESS && (isJobOwner || isContractor);
+  const cancellation = job.cancellation || { status: CANCELLATION_STATUS.NONE };
   const initiatedBy = cancellation.initiatedBy?._id || cancellation.initiatedBy;
   const isInitiator = initiatedBy
     ? String(initiatedBy) === String(currentUserId)
@@ -212,7 +218,8 @@ export default function JobDetailPage({ params }) {
       ? (cancellation.initiatedRole === "CREATOR" && isJobOwner) ||
         (cancellation.initiatedRole === "CONTRACTOR" && isContractor)
       : false;
-  const hasPendingCancellation = cancellation.status === "PENDING";
+  const hasPendingCancellation =
+    cancellation.status === CANCELLATION_STATUS.PENDING;
 
   const handleRequestCancellation = async () => {
     setCancellationError("");
@@ -566,7 +573,9 @@ export default function JobDetailPage({ params }) {
                     }}
                   >
                     <span className="badge badge-warning">
-                      {formatStatus(cancellation.status || "NONE")}
+                      {formatStatus(
+                        cancellation.status || CANCELLATION_STATUS.NONE,
+                      )}
                     </span>
                     {cancellation.initiatedRole && (
                       <span style={{ fontSize: "var(--text-sm)" }}>
@@ -659,7 +668,7 @@ export default function JobDetailPage({ params }) {
             )}
           </div>
 
-          {job.status === "OPEN" && !isJobOwner && (
+          {job.status === JOB_STATUS.OPEN && !isJobOwner && (
             <div className="card" style={{ marginTop: "var(--space-6)" }}>
               <h2
                 style={{

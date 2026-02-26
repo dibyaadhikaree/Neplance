@@ -8,6 +8,7 @@ import {
   JOB_CATEGORIES,
   NEPAL_PROVINCES,
 } from "@/shared/constants/jobCategories";
+import { JOB_STATUS } from "@/shared/constants/statuses";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Button, Input } from "@/shared/ui/UI";
@@ -73,7 +74,7 @@ export default function EditJobPage() {
           return;
         }
 
-        if (!["DRAFT", "OPEN"].includes(job.status)) {
+        if (![JOB_STATUS.DRAFT, JOB_STATUS.OPEN].includes(job.status)) {
           router.push("/dashboard");
           return;
         }

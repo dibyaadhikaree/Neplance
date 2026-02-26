@@ -1,4 +1,9 @@
 const mongoose = require("mongoose");
+const {
+  JOB_STATUS,
+  CANCELLATION_STATUS,
+  MILESTONE_STATUS,
+} = require("../constants/statuses");
 
 const milestoneSchema = new mongoose.Schema(
   {
@@ -9,8 +14,8 @@ const milestoneSchema = new mongoose.Schema(
     dueDate: Number,
     status: {
       type: String,
-      enum: ["ACTIVE", "SUBMITTED", "COMPLETED", "CANCELLED"],
-      default: "ACTIVE",
+      enum: Object.values(MILESTONE_STATUS),
+      default: MILESTONE_STATUS.ACTIVE,
     },
     createdAt: {
       type: Number,
@@ -140,14 +145,14 @@ const jobSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["DRAFT", "OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
-    default: "DRAFT",
+    enum: Object.values(JOB_STATUS),
+    default: JOB_STATUS.DRAFT,
   },
   cancellation: {
     status: {
       type: String,
-      enum: ["NONE", "PENDING", "ACCEPTED", "REJECTED"],
-      default: "NONE",
+      enum: Object.values(CANCELLATION_STATUS),
+      default: CANCELLATION_STATUS.NONE,
     },
     initiatedBy: {
       type: mongoose.Schema.ObjectId,

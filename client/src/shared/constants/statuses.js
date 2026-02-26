@@ -1,0 +1,28 @@
+export const JOB_STATUS = {
+  DRAFT: "DRAFT",
+  OPEN: "OPEN",
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+};
+
+export const PROPOSAL_STATUS = {
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  REJECTED: "rejected",
+  WITHDRAWN: "withdrawn",
+};
+
+export const CANCELLATION_STATUS = {
+  NONE: "NONE",
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  REJECTED: "REJECTED",
+};
+
+export const MILESTONE_STATUS = {
+  ACTIVE: "ACTIVE",
+  SUBMITTED: "SUBMITTED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+};

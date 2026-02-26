@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { PROPOSAL_STATUS } = require("../constants/statuses");
 
 const proposalSchema = new mongoose.Schema({
   freelancer: {
@@ -12,8 +13,8 @@ const proposalSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "accepted", "rejected", "withdrawn"],
-    default: "pending",
+    enum: Object.values(PROPOSAL_STATUS),
+    default: PROPOSAL_STATUS.PENDING,
   },
   amount: Number,
   coverLetter: {

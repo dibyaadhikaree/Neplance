@@ -7,6 +7,11 @@ const {
   ensureContractor,
   ensureStatus,
 } = require("../utils/jobAccess");
+const {
+  JOB_STATUS,
+  CANCELLATION_STATUS,
+  MILESTONE_STATUS,
+} = require("../constants/statuses");
 
 const createJob = catchAsync(async (req, res) => {
   const {
@@ -28,7 +33,7 @@ const createJob = catchAsync(async (req, res) => {
     terms,
     attachments = [],
     parties = [],
-    status = "DRAFT",
+    status = JOB_STATUS.DRAFT,
   } = req.body;
 
   const creatorAddress = req.user.id.toString();
@@ -50,7 +55,9 @@ const createJob = catchAsync(async (req, res) => {
       })),
   ];
 
-  const jobStatus = ["DRAFT", "OPEN"].includes(status) ? status : "DRAFT";
+  const jobStatus = [JOB_STATUS.DRAFT, JOB_STATUS.OPEN].includes(status)
+    ? status
+    : JOB_STATUS.DRAFT;
 
   const data = await Job.create({
     title,
@@ -105,7 +112,7 @@ const findJobs = catchAsync(async (req, res) => {
     limit = 20,
   } = req.query;
 
-  const query = { isPublic: true, status: "OPEN" };
+  const query = { isPublic: true, status: JOB_STATUS.OPEN };
 
   if (category) query.category = category;
   if (jobType) query.jobType = jobType;
@@ -214,7 +221,7 @@ const updateJob = catchAsync(async (req, res) => {
   const jobId = req.params.id;
   const job = await getJobOrThrow(jobId);
   ensureCreator(job, req.user.id, "You can only update your own jobs");
-  ensureStatus(job, ["DRAFT", "OPEN"], "Can only update draft or open jobs");
+  ensureStatus(job, [JOB_STATUS.DRAFT, JOB_STATUS.OPEN], "Can only update draft or open jobs");
 
   const allowedUpdates = [
     "title", "description", "jobType", "category", "subcategory",
@@ -248,7 +255,7 @@ const publishJob = catchAsync(async (req, res) => {
   const job = await getJobOrThrow(jobId);
   ensureCreator(job, req.user.id, "You can only publish your own jobs");
 
-  if (job.status !== "DRAFT") {
+  if (job.status !== JOB_STATUS.DRAFT) {
     throw new AppError("Only draft jobs can be published", 400);
   }
 
@@ -256,7 +263,7 @@ const publishJob = catchAsync(async (req, res) => {
     throw new AppError("Job must have category and budget to be published", 400);
   }
 
-  job.status = "OPEN";
+  job.status = JOB_STATUS.OPEN;
   job.updatedAt = Date.now();
   await job.save();
 
@@ -272,7 +279,7 @@ const deleteJob = catchAsync(async (req, res) => {
   const job = await getJobOrThrow(jobId);
   ensureCreator(job, req.user.id, "You can only delete your own jobs");
 
-  if (!["DRAFT", "OPEN"].includes(job.status)) {
+  if (![JOB_STATUS.DRAFT, JOB_STATUS.OPEN].includes(job.status)) {
     throw new AppError("Can only delete draft or open jobs", 400);
   }
 
@@ -289,9 +296,9 @@ const markCompleted = catchAsync(async (req, res, next) => {
 
   const job = await getJobOrThrow(jobId);
   ensureContractor(job, req.user.id, "Only the contractor can mark completion");
-  ensureStatus(job, "IN_PROGRESS", "Contract is not active, cannot mark as completed");
+  ensureStatus(job, JOB_STATUS.IN_PROGRESS, "Contract is not active, cannot mark as completed");
 
-  job.status = "COMPLETED";
+  job.status = JOB_STATUS.COMPLETED;
   job.updatedAt = Date.now();
   await job.save();
 
@@ -314,7 +321,7 @@ const approveCompletion = catchAsync(async (req, res, next) => {
     req.user.id,
     "You are not authorized to approve completion for this contract"
   );
-  ensureStatus(job, "COMPLETED", "The contract is not marked completed yet");
+  ensureStatus(job, JOB_STATUS.COMPLETED, "The contract is not marked completed yet");
 
   job.updatedAt = Date.now();
   await job.save();
@@ -332,7 +339,7 @@ const submitMilestone = catchAsync(async (req, res, next) => {
 
   const job = await getJobOrThrow(jobId);
   ensureContractor(job, req.user.id, "Only the contractor can submit milestones");
-  ensureStatus(job, "IN_PROGRESS", "Contract is not active, cannot submit milestones");
+  ensureStatus(job, JOB_STATUS.IN_PROGRESS, "Contract is not active, cannot submit milestones");
 
   const milestoneIndex = Number(index);
   if (Number.isNaN(milestoneIndex) || milestoneIndex < 0) {
@@ -344,13 +351,13 @@ const submitMilestone = catchAsync(async (req, res, next) => {
     return next(new AppError("Milestone not found", 404));
   }
 
-  if (milestone.status !== "ACTIVE") {
+  if (milestone.status !== MILESTONE_STATUS.ACTIVE) {
     return next(
       new AppError("Milestone is not active, cannot submit", 400)
     );
   }
 
-  milestone.status = "SUBMITTED";
+  milestone.status = MILESTONE_STATUS.SUBMITTED;
   if (typeof evidence === "string" && evidence.trim().length > 0) {
     milestone.evidence = evidence.trim();
   }
@@ -381,23 +388,23 @@ const approveMilestone = catchAsync(async (req, res, next) => {
     return next(new AppError("Milestone not found", 404));
   }
 
-  if (milestone.status !== "SUBMITTED") {
+  if (milestone.status !== MILESTONE_STATUS.SUBMITTED) {
     return next(
       new AppError("Milestone has not been submitted", 400)
     );
   }
 
-  milestone.status = "COMPLETED";
+  milestone.status = MILESTONE_STATUS.COMPLETED;
   milestone.approvedBy = Array.from(
     new Set([...(milestone.approvedBy || []), req.user.id.toString()])
   );
 
   const allCompleted = (job.milestones || []).every(
-    (item) => item.status === "COMPLETED"
+    (item) => item.status === MILESTONE_STATUS.COMPLETED
   );
 
   if (allCompleted) {
-    job.status = "COMPLETED";
+    job.status = JOB_STATUS.COMPLETED;
   }
 
   job.updatedAt = Date.now();
@@ -417,7 +424,7 @@ const requestCancellation = catchAsync(async (req, res, next) => {
   const { reason } = req.body;
 
   const job = await getJobOrThrow(jobId);
-  ensureStatus(job, "IN_PROGRESS", "Only active jobs can be canceled");
+  ensureStatus(job, JOB_STATUS.IN_PROGRESS, "Only active jobs can be canceled");
 
   const userId = req.user.id.toString();
   const isCreator = job.creatorAddress?.toString() === userId;
@@ -430,12 +437,12 @@ const requestCancellation = catchAsync(async (req, res, next) => {
     return next(new AppError("You are not authorized to cancel this job", 403));
   }
 
-  if (job.cancellation?.status === "PENDING") {
+  if (job.cancellation?.status === CANCELLATION_STATUS.PENDING) {
     return next(new AppError("Cancellation already requested", 400));
   }
 
   job.cancellation = {
-    status: "PENDING",
+    status: CANCELLATION_STATUS.PENDING,
     initiatedBy: req.user.id,
     initiatedRole: isCreator ? "CREATOR" : "CONTRACTOR",
     reason: typeof reason === "string" ? reason.trim() : undefined,
@@ -456,9 +463,9 @@ const respondCancellation = catchAsync(async (req, res, next) => {
   const { action } = req.body;
 
   const job = await getJobOrThrow(jobId);
-  ensureStatus(job, "IN_PROGRESS", "Only active jobs can be canceled");
+  ensureStatus(job, JOB_STATUS.IN_PROGRESS, "Only active jobs can be canceled");
 
-  if (!job.cancellation || job.cancellation.status !== "PENDING") {
+  if (!job.cancellation || job.cancellation.status !== CANCELLATION_STATUS.PENDING) {
     return next(new AppError("No pending cancellation request", 400));
   }
 
@@ -485,11 +492,13 @@ const respondCancellation = catchAsync(async (req, res, next) => {
 
   const accepted = action === "accept";
 
-  job.cancellation.status = accepted ? "ACCEPTED" : "REJECTED";
+  job.cancellation.status = accepted
+    ? CANCELLATION_STATUS.ACCEPTED
+    : CANCELLATION_STATUS.REJECTED;
   job.cancellation.respondedBy = req.user.id;
   job.cancellation.respondedAt = Date.now();
   if (accepted) {
-    job.status = "CANCELLED";
+    job.status = JOB_STATUS.CANCELLED;
   }
   job.updatedAt = Date.now();
   await job.save();

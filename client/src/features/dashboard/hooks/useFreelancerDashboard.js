@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
+import { JOB_STATUS, PROPOSAL_STATUS } from "@/shared/constants/statuses";
 
 const EMPTY_STATES = {
   proposed: {
@@ -32,15 +33,17 @@ export function useFreelancerDashboard() {
         const proposals = proposalsData.data;
 
         setProposedJobs(
-          proposals.filter((p) => ["pending", "rejected"].includes(p.status)),
+          proposals.filter((p) =>
+            [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.REJECTED].includes(p.status),
+          ),
         );
 
         const ongoing = proposals
           .filter(
             (p) =>
-              p.status === "accepted" &&
+              p.status === PROPOSAL_STATUS.ACCEPTED &&
               p.job &&
-              p.job.status === "IN_PROGRESS",
+              p.job.status === JOB_STATUS.IN_PROGRESS,
           )
           .map((p) => ({
             ...p.job,

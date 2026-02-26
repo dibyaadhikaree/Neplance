@@ -15,6 +15,7 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
+import { JOB_STATUS, MILESTONE_STATUS } from "@/shared/constants/statuses";
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -92,10 +93,10 @@ export const JobModal = ({
   const milestones = Array.isArray(job.milestones) ? job.milestones : [];
   const totalValue = getMilestoneTotal(milestones);
   const completedCount = milestones.filter(
-    (milestone) => milestone?.status === "COMPLETED",
+    (milestone) => milestone?.status === MILESTONE_STATUS.COMPLETED,
   ).length;
   const canSubmitMilestone =
-    userRole === "freelancer" && job.status === "IN_PROGRESS";
+    userRole === "freelancer" && job.status === JOB_STATUS.IN_PROGRESS;
   const canApproveMilestone = userRole === "client";
   const creatorLabel = getCreatorLabel(job.creatorAddress);
   const budgetDisplay = job.budget
@@ -346,7 +347,7 @@ export const JobModal = ({
                     {(() => {
                       const previousCompleted =
                         index === 0 ||
-                        milestones[index - 1]?.status === "COMPLETED";
+                        milestones[index - 1]?.status === MILESTONE_STATUS.COMPLETED;
                       if (
                         !canSubmitMilestone ||
                         milestone?.status !== "ACTIVE"
