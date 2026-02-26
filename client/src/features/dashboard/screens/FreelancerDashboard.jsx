@@ -26,6 +26,22 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
     }
   };
 
+  const handleRequestCancellation = async (job, reason) => {
+    await apiCall(`/api/jobs/${job._id}/cancel`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason: reason?.trim() || undefined }),
+    });
+    refetch();
+  };
+
+  const handleRespondCancellation = async (job, action) => {
+    await apiCall(`/api/jobs/${job._id}/cancel/respond`, {
+      method: "PATCH",
+      body: JSON.stringify({ action }),
+    });
+    refetch();
+  };
+
   if (loading) {
     return (
       <>
@@ -86,7 +102,16 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
 
   const renderJobCards = (jobs, variant = "current") =>
     jobs.length > 0 ? (
-      jobs.map((job) => <JobCard key={job._id} job={job} variant={variant} />)
+      jobs.map((job) => (
+        <JobCard
+          key={job._id}
+          job={job}
+          variant={variant}
+          currentUser={user}
+          onRequestCancellation={handleRequestCancellation}
+          onRespondCancellation={handleRespondCancellation}
+        />
+      ))
     ) : (
       <EmptyState {...getEmptyState()} />
     );

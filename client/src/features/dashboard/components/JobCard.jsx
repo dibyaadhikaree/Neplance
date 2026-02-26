@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import {
   formatBudget,
@@ -17,6 +20,9 @@ export const JobCard = ({
   onPostJob,
   onDeleteJob,
   onEditJob,
+  currentUser,
+  onRequestCancellation,
+  onRespondCancellation,
 }) => {
   const {
     title,
@@ -47,6 +53,65 @@ export const JobCard = ({
   const isDraft = status === "DRAFT";
   const isOpen = status === "OPEN";
   const canEdit = isDraft || isOpen;
+  const currentUserId = currentUser?.id || currentUser?._id;
+  const isCreator =
+    currentUser &&
+    (creatorAddress?._id === currentUserId ||
+      creatorAddress === currentUserId ||
+      creatorAddress?.id === currentUserId);
+  const isContractor = (job.parties || []).some(
+    (party) =>
+      party.role === "CONTRACTOR" &&
+      String(party.address) === String(currentUserId),
+  );
+  const canCancel = status === "IN_PROGRESS" && (isCreator || isContractor);
+  const cancellation = job.cancellation || { status: "NONE" };
+  const initiatedBy = cancellation.initiatedBy?._id || cancellation.initiatedBy;
+  const isInitiator = initiatedBy
+    ? String(initiatedBy) === String(currentUserId)
+    : cancellation.initiatedRole
+      ? (cancellation.initiatedRole === "CREATOR" && isCreator) ||
+        (cancellation.initiatedRole === "CONTRACTOR" && isContractor)
+      : false;
+  const hasPendingCancellation = cancellation.status === "PENDING";
+  const canRespondCancellation =
+    hasPendingCancellation &&
+    !isInitiator &&
+    canCancel &&
+    currentUser &&
+    onRespondCancellation;
+
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancellationError, setCancellationError] = useState("");
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [responseLoading, setResponseLoading] = useState(false);
+
+  const handleRequestCancellation = async () => {
+    if (!onRequestCancellation) return;
+    setCancellationError("");
+    setRequestLoading(true);
+    try {
+      await onRequestCancellation(job, cancellationReason);
+      setCancellationReason("");
+    } catch (err) {
+      setCancellationError(err.message || "Failed to request cancellation");
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const handleRespondCancellation = async (action) => {
+    if (!onRespondCancellation) return;
+    setCancellationError("");
+    setResponseLoading(true);
+    try {
+      await onRespondCancellation(job, action);
+    } catch (err) {
+      setCancellationError(err.message || "Failed to respond to cancellation");
+    } finally {
+      setResponseLoading(false);
+    }
+  };
 
   const getStatusBadgeClass = (status) => {
     const statusLower = status?.toLowerCase();
@@ -133,6 +198,119 @@ export const JobCard = ({
               ? `${description.slice(0, 150)}...`
               : description}
           </p>
+        )}
+
+        {(canCancel || cancellation.status !== "NONE") && (
+          <div
+            style={{
+              marginTop: "var(--space-4)",
+              padding: "var(--space-3)",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--color-border)",
+              background: "var(--color-bg-secondary)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-2)",
+                alignItems: "center",
+                marginBottom: "var(--space-2)",
+                flexWrap: "wrap",
+              }}
+            >
+              <span className="badge badge-warning">
+                {formatStatus(cancellation.status || "NONE")}
+              </span>
+              {cancellation.initiatedRole && (
+                <span style={{ fontSize: "var(--text-xs)" }}>
+                  Initiated by: {cancellation.initiatedRole.toLowerCase()}
+                </span>
+              )}
+            </div>
+
+            {cancellation.reason && (
+              <p className="text-light">Reason: {cancellation.reason}</p>
+            )}
+
+            {hasPendingCancellation ? (
+              isInitiator ? (
+                <p className="text-light">
+                  Waiting for the other party to respond.
+                </p>
+              ) : (
+                canRespondCancellation && (
+                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleRespondCancellation("accept")}
+                      disabled={responseLoading}
+                    >
+                      {responseLoading ? "Processing..." : "Accept"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => handleRespondCancellation("reject")}
+                      disabled={responseLoading}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )
+              )
+            ) : (
+              canCancel &&
+              onRequestCancellation && (
+                <div>
+                  <label
+                    htmlFor={`cancellation-${job._id}`}
+                    style={{
+                      display: "block",
+                      marginBottom: "var(--space-1)",
+                      fontSize: "var(--text-xs)",
+                    }}
+                  >
+                    Cancellation Reason
+                  </label>
+                  <textarea
+                    id={`cancellation-${job._id}`}
+                    value={cancellationReason}
+                    onChange={(e) => setCancellationReason(e.target.value)}
+                    placeholder="Share why you are cancelling (optional)"
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      padding: "var(--space-2)",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--color-border)",
+                      fontFamily: "inherit",
+                      fontSize: "var(--text-xs)",
+                      resize: "vertical",
+                    }}
+                    disabled={requestLoading}
+                  />
+                  <div style={{ marginTop: "var(--space-2)" }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleRequestCancellation}
+                      disabled={requestLoading}
+                    >
+                      {requestLoading ? "Requesting..." : "Request Cancellation"}
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
+
+            {cancellationError && (
+              <p className="card-error" style={{ marginTop: "var(--space-2)" }}>
+                {cancellationError}
+              </p>
+            )}
+          </div>
         )}
       </div>
 

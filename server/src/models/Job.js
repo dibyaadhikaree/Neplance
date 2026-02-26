@@ -143,6 +143,28 @@ const jobSchema = new mongoose.Schema({
     enum: ["DRAFT", "OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
     default: "DRAFT",
   },
+  cancellation: {
+    status: {
+      type: String,
+      enum: ["NONE", "PENDING", "ACCEPTED", "REJECTED"],
+      default: "NONE",
+    },
+    initiatedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
+    initiatedRole: {
+      type: String,
+      enum: ["CREATOR", "CONTRACTOR"],
+    },
+    reason: String,
+    requestedAt: Number,
+    respondedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+    },
+    respondedAt: Number,
+  },
   milestones: [milestoneSchema],
   parties: [partySchema],
   terms: mongoose.Schema.Types.Buffer,

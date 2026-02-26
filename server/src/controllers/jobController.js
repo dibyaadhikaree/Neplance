@@ -412,6 +412,97 @@ const approveMilestone = catchAsync(async (req, res, next) => {
   });
 });
 
+const requestCancellation = catchAsync(async (req, res, next) => {
+  const jobId = req.params.id;
+  const { reason } = req.body;
+
+  const job = await getJobOrThrow(jobId);
+  ensureStatus(job, "IN_PROGRESS", "Only active jobs can be canceled");
+
+  const userId = req.user.id.toString();
+  const isCreator = job.creatorAddress?.toString() === userId;
+  const isContractor = (job.parties || []).some(
+    (party) =>
+      party.role === "CONTRACTOR" && party.address.toString() === userId
+  );
+
+  if (!isCreator && !isContractor) {
+    return next(new AppError("You are not authorized to cancel this job", 403));
+  }
+
+  if (job.cancellation?.status === "PENDING") {
+    return next(new AppError("Cancellation already requested", 400));
+  }
+
+  job.cancellation = {
+    status: "PENDING",
+    initiatedBy: req.user.id,
+    initiatedRole: isCreator ? "CREATOR" : "CONTRACTOR",
+    reason: typeof reason === "string" ? reason.trim() : undefined,
+    requestedAt: Date.now(),
+  };
+  job.updatedAt = Date.now();
+  await job.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Cancellation requested",
+    data: job,
+  });
+});
+
+const respondCancellation = catchAsync(async (req, res, next) => {
+  const jobId = req.params.id;
+  const { action } = req.body;
+
+  const job = await getJobOrThrow(jobId);
+  ensureStatus(job, "IN_PROGRESS", "Only active jobs can be canceled");
+
+  if (!job.cancellation || job.cancellation.status !== "PENDING") {
+    return next(new AppError("No pending cancellation request", 400));
+  }
+
+  const userId = req.user.id.toString();
+  const isCreator = job.creatorAddress?.toString() === userId;
+  const isContractor = (job.parties || []).some(
+    (party) =>
+      party.role === "CONTRACTOR" && party.address.toString() === userId
+  );
+
+  if (!isCreator && !isContractor) {
+    return next(new AppError("You are not authorized to respond", 403));
+  }
+
+  if (job.cancellation.initiatedBy?.toString() === userId) {
+    return next(
+      new AppError("Initiator cannot respond to cancellation", 400)
+    );
+  }
+
+  if (action !== "accept" && action !== "reject") {
+    return next(new AppError("Action must be accept or reject", 400));
+  }
+
+  const accepted = action === "accept";
+
+  job.cancellation.status = accepted ? "ACCEPTED" : "REJECTED";
+  job.cancellation.respondedBy = req.user.id;
+  job.cancellation.respondedAt = Date.now();
+  if (accepted) {
+    job.status = "CANCELLED";
+  }
+  job.updatedAt = Date.now();
+  await job.save();
+
+  res.status(200).json({
+    status: "success",
+    message: accepted
+      ? "Cancellation accepted and job cancelled"
+      : "Cancellation rejected",
+    data: job,
+  });
+});
+
 const getJobCategories = catchAsync(async (req, res) => {
   const categories = await Job.distinct("category");
   res.status(200).json({
@@ -449,4 +540,6 @@ module.exports = {
   approveMilestone,
   getJobCategories,
   incrementProposalCount,
+  requestCancellation,
+  respondCancellation,
 };

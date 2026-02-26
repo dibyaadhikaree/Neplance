@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
@@ -39,24 +39,29 @@ export default function JobDetailPage({ params }) {
   const [deliveryDays, setDeliveryDays] = useState("");
   const [revisionsIncluded, setRevisionsIncluded] = useState("0");
   const [attachments, setAttachments] = useState("");
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancellationLoading, setCancellationLoading] = useState(false);
+  const [cancellationActionLoading, setCancellationActionLoading] = useState(false);
+  const [cancellationError, setCancellationError] = useState("");
 
   const { user, isHydrated, logout, switchRole } = useAuthGate({
     mode: "none",
   });
 
-  useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        const response = await apiCall(`/api/jobs/${id}`);
-        setJob(response.data);
-      } catch (err) {
-        setError(err.message || "Failed to load job");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJob();
+  const fetchJob = useCallback(async () => {
+    try {
+      const response = await apiCall(`/api/jobs/${id}`);
+      setJob(response.data);
+    } catch (err) {
+      setError(err.message || "Failed to load job");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchJob();
+  }, [fetchJob]);
 
   const handleSubmitProposal = async (e) => {
     e.preventDefault();
@@ -187,11 +192,62 @@ export default function JobDetailPage({ params }) {
   const locationText = formatLocation(job.location);
   const deadlineText = formatDate(job.deadline);
 
+  const currentUserId = user?.id || user?._id;
   const isJobOwner =
     user &&
-    (job.creatorAddress?._id === user.id ||
-      job.creatorAddress === user.id ||
-      job.creatorAddress?.id === user.id);
+    (job.creatorAddress?._id === currentUserId ||
+      job.creatorAddress === currentUserId ||
+      job.creatorAddress?.id === currentUserId);
+  const isContractor = (job.parties || []).some(
+    (party) =>
+      party.role === "CONTRACTOR" &&
+      String(party.address) === String(currentUserId),
+  );
+  const canCancel = job.status === "IN_PROGRESS" && (isJobOwner || isContractor);
+  const cancellation = job.cancellation || { status: "NONE" };
+  const initiatedBy = cancellation.initiatedBy?._id || cancellation.initiatedBy;
+  const isInitiator = initiatedBy
+    ? String(initiatedBy) === String(currentUserId)
+    : cancellation.initiatedRole
+      ? (cancellation.initiatedRole === "CREATOR" && isJobOwner) ||
+        (cancellation.initiatedRole === "CONTRACTOR" && isContractor)
+      : false;
+  const hasPendingCancellation = cancellation.status === "PENDING";
+
+  const handleRequestCancellation = async () => {
+    setCancellationError("");
+    setCancellationLoading(true);
+    try {
+      await apiCall(`/api/jobs/${job._id}/cancel`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          reason: cancellationReason.trim() || undefined,
+        }),
+      });
+      setCancellationReason("");
+      await fetchJob();
+    } catch (err) {
+      setCancellationError(err.message || "Failed to request cancellation");
+    } finally {
+      setCancellationLoading(false);
+    }
+  };
+
+  const handleRespondCancellation = async (action) => {
+    setCancellationError("");
+    setCancellationActionLoading(true);
+    try {
+      await apiCall(`/api/jobs/${job._id}/cancel/respond`, {
+        method: "PATCH",
+        body: JSON.stringify({ action }),
+      });
+      await fetchJob();
+    } catch (err) {
+      setCancellationError(err.message || "Failed to respond to cancellation");
+    } finally {
+      setCancellationActionLoading(false);
+    }
+  };
 
   return (
     <>
@@ -480,6 +536,127 @@ export default function JobDetailPage({ params }) {
                 </ul>
               </div>
             ) : null}
+
+            {canCancel && (
+              <div style={{ marginTop: "var(--space-6)" }}>
+                <h2
+                  style={{
+                    fontSize: "var(--text-lg)",
+                    fontWeight: "var(--font-weight-semibold)",
+                    marginBottom: "var(--space-3)",
+                  }}
+                >
+                  Cancellation
+                </h2>
+                <div
+                  style={{
+                    padding: "var(--space-4)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius)",
+                    background: "var(--color-bg-secondary)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "var(--space-2)",
+                      alignItems: "center",
+                      marginBottom: "var(--space-3)",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span className="badge badge-warning">
+                      {formatStatus(cancellation.status || "NONE")}
+                    </span>
+                    {cancellation.initiatedRole && (
+                      <span style={{ fontSize: "var(--text-sm)" }}>
+                        Initiated by: {cancellation.initiatedRole.toLowerCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  {cancellation.reason && (
+                    <p className="text-light" style={{ marginBottom: "var(--space-3)" }}>
+                      Reason: {cancellation.reason}
+                    </p>
+                  )}
+
+                  {hasPendingCancellation ? (
+                    isInitiator ? (
+                      <p className="text-light">
+                        Waiting for the other party to respond.
+                      </p>
+                    ) : (
+                      <div style={{ display: "flex", gap: "var(--space-3)" }}>
+                        <Button
+                          type="button"
+                          onClick={() => handleRespondCancellation("accept")}
+                          disabled={cancellationActionLoading}
+                        >
+                          {cancellationActionLoading ? "Processing..." : "Accept"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => handleRespondCancellation("reject")}
+                          disabled={cancellationActionLoading}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )
+                  ) : (
+                    <div>
+                      <label
+                        htmlFor="cancellationReason"
+                        style={{
+                          display: "block",
+                          marginBottom: "var(--space-2)",
+                          fontWeight: "var(--font-weight-medium)",
+                        }}
+                      >
+                        Cancellation Reason
+                      </label>
+                      <textarea
+                        id="cancellationReason"
+                        value={cancellationReason}
+                        onChange={(e) => setCancellationReason(e.target.value)}
+                        placeholder="Share why you are cancelling (optional)"
+                        rows={4}
+                        style={{
+                          width: "100%",
+                          padding: "var(--space-3)",
+                          borderRadius: "var(--radius)",
+                          border: "1px solid var(--color-border)",
+                          fontFamily: "inherit",
+                          fontSize: "var(--text-sm)",
+                          resize: "vertical",
+                        }}
+                        disabled={cancellationLoading}
+                      />
+                      <div style={{ marginTop: "var(--space-3)" }}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleRequestCancellation}
+                          disabled={cancellationLoading}
+                        >
+                          {cancellationLoading
+                            ? "Requesting..."
+                            : "Request Cancellation"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {cancellationError && (
+                    <p className="card-error" style={{ marginTop: "var(--space-3)" }}>
+                      {cancellationError}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {job.status === "OPEN" && !isJobOwner && (

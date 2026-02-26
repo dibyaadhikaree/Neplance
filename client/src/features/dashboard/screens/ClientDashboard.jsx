@@ -113,6 +113,22 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     router.push(`/jobs/${job._id}/edit`);
   };
 
+  const handleRequestCancellation = async (job, reason) => {
+    await apiCall(`/api/jobs/${job._id}/cancel`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason: reason?.trim() || undefined }),
+    });
+    await fetchContracts();
+  };
+
+  const handleRespondCancellation = async (job, action) => {
+    await apiCall(`/api/jobs/${job._id}/cancel/respond`, {
+      method: "PATCH",
+      body: JSON.stringify({ action }),
+    });
+    await fetchContracts();
+  };
+
   const handleFormChange = (field, value) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
@@ -930,6 +946,9 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onPostJob={handlePostDraftJob}
                     onDeleteJob={handleDeleteJob}
                     onEditJob={handleEditJob}
+                    currentUser={user}
+                    onRequestCancellation={handleRequestCancellation}
+                    onRespondCancellation={handleRespondCancellation}
                   />
                 ))
               ) : (
