@@ -34,7 +34,9 @@ export function useFreelancerDashboard() {
 
         setProposedJobs(
           proposals.filter((p) =>
-            [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.REJECTED].includes(p.status),
+            [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.REJECTED].includes(
+              p.status,
+            ),
           ),
         );
 

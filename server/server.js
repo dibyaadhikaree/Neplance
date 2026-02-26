@@ -3,7 +3,6 @@ dotenv.config({ path: "./.env" });
 
 const mongoose = require("mongoose");
 const express = require("express");
-const path = require("path");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const AppError = require("./src/utils/appError");

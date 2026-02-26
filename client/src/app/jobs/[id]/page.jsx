@@ -3,6 +3,11 @@
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
+import {
+  CANCELLATION_STATUS,
+  JOB_STATUS,
+  MILESTONE_STATUS,
+} from "@/shared/constants/statuses";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Button, Input } from "@/shared/ui/UI";
@@ -14,11 +19,6 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
-import {
-  JOB_STATUS,
-  CANCELLATION_STATUS,
-  MILESTONE_STATUS,
-} from "@/shared/constants/statuses";
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -46,7 +46,8 @@ export default function JobDetailPage({ params }) {
   const [attachments, setAttachments] = useState("");
   const [cancellationReason, setCancellationReason] = useState("");
   const [cancellationLoading, setCancellationLoading] = useState(false);
-  const [cancellationActionLoading, setCancellationActionLoading] = useState(false);
+  const [cancellationActionLoading, setCancellationActionLoading] =
+    useState(false);
   const [cancellationError, setCancellationError] = useState("");
   const [milestoneEvidence, setMilestoneEvidence] = useState({});
   const [milestoneSubmitting, setMilestoneSubmitting] = useState(false);
@@ -246,9 +247,7 @@ export default function JobDetailPage({ params }) {
     job.status === JOB_STATUS.IN_PROGRESS &&
     userRole === "freelancer" &&
     isContractor;
-  const canApproveMilestone =
-    userRole === "client" &&
-    isJobOwner;
+  const canApproveMilestone = userRole === "client" && isJobOwner;
 
   const handleMilestoneEvidenceChange = (index, value) => {
     setMilestoneEvidence((prev) => ({ ...prev, [index]: value }));
@@ -616,47 +615,53 @@ export default function JobDetailPage({ params }) {
                           Evidence: {milestone.evidence}
                         </p>
                       )}
-                      {canSubmitMilestone && milestone?.status === MILESTONE_STATUS.ACTIVE && (
-                        <div style={{ marginTop: "var(--space-2)" }}>
-                          <label
-                            htmlFor={`milestone-evidence-${index}`}
-                            style={{
-                              display: "block",
-                              marginBottom: "var(--space-1)",
-                              fontSize: "var(--text-xs)",
-                            }}
-                          >
-                            Evidence (optional)
-                          </label>
-                          <input
-                            id={`milestone-evidence-${index}`}
-                            type="text"
-                            value={milestoneEvidence[index] || ""}
-                            onChange={(e) =>
-                              handleMilestoneEvidenceChange(index, e.target.value)
-                            }
-                            placeholder="Paste link or notes"
-                            style={{
-                              width: "100%",
-                              padding: "var(--space-2)",
-                              borderRadius: "var(--radius)",
-                              border: "1px solid var(--color-border)",
-                              fontSize: "var(--text-sm)",
-                            }}
-                            disabled={milestoneSubmitting}
-                          />
+                      {canSubmitMilestone &&
+                        milestone?.status === MILESTONE_STATUS.ACTIVE && (
                           <div style={{ marginTop: "var(--space-2)" }}>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => handleSubmitMilestone(index)}
-                              disabled={milestoneSubmitting}
+                            <label
+                              htmlFor={`milestone-evidence-${index}`}
+                              style={{
+                                display: "block",
+                                marginBottom: "var(--space-1)",
+                                fontSize: "var(--text-xs)",
+                              }}
                             >
-                              {milestoneSubmitting ? "Submitting..." : "Submit"}
-                            </Button>
+                              Evidence (optional)
+                            </label>
+                            <input
+                              id={`milestone-evidence-${index}`}
+                              type="text"
+                              value={milestoneEvidence[index] || ""}
+                              onChange={(e) =>
+                                handleMilestoneEvidenceChange(
+                                  index,
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Paste link or notes"
+                              style={{
+                                width: "100%",
+                                padding: "var(--space-2)",
+                                borderRadius: "var(--radius)",
+                                border: "1px solid var(--color-border)",
+                                fontSize: "var(--text-sm)",
+                              }}
+                              disabled={milestoneSubmitting}
+                            />
+                            <div style={{ marginTop: "var(--space-2)" }}>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => handleSubmitMilestone(index)}
+                                disabled={milestoneSubmitting}
+                              >
+                                {milestoneSubmitting
+                                  ? "Submitting..."
+                                  : "Submit"}
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                       {canApproveMilestone &&
                         milestone?.status === MILESTONE_STATUS.SUBMITTED && (
                           <div style={{ marginTop: "var(--space-2)" }}>
@@ -674,7 +679,10 @@ export default function JobDetailPage({ params }) {
                   ))}
                 </ul>
                 {milestoneError && (
-                  <p className="card-error" style={{ marginTop: "var(--space-3)" }}>
+                  <p
+                    className="card-error"
+                    style={{ marginTop: "var(--space-3)" }}
+                  >
                     {milestoneError}
                   </p>
                 )}
@@ -722,7 +730,10 @@ export default function JobDetailPage({ params }) {
                   </div>
 
                   {cancellation.reason && (
-                    <p className="text-light" style={{ marginBottom: "var(--space-3)" }}>
+                    <p
+                      className="text-light"
+                      style={{ marginBottom: "var(--space-3)" }}
+                    >
                       Reason: {cancellation.reason}
                     </p>
                   )}
@@ -739,7 +750,9 @@ export default function JobDetailPage({ params }) {
                           onClick={() => handleRespondCancellation("accept")}
                           disabled={cancellationActionLoading}
                         >
-                          {cancellationActionLoading ? "Processing..." : "Accept"}
+                          {cancellationActionLoading
+                            ? "Processing..."
+                            : "Accept"}
                         </Button>
                         <Button
                           type="button"
@@ -796,7 +809,10 @@ export default function JobDetailPage({ params }) {
                   )}
 
                   {cancellationError && (
-                    <p className="card-error" style={{ marginTop: "var(--space-3)" }}>
+                    <p
+                      className="card-error"
+                      style={{ marginTop: "var(--space-3)" }}
+                    >
                       {cancellationError}
                     </p>
                   )}

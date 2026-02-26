@@ -1,5 +1,6 @@
 const Job = require("../models/Job");
 const Proposal = require("../models/Proposal");
+const AppError = require("../utils/appError");
 const { JOB_STATUS, PROPOSAL_STATUS } = require("../constants/statuses");
 const {
   assertProposalCanAccept,

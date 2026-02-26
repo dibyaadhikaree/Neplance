@@ -11,13 +11,13 @@ import {
   JOB_CATEGORIES,
   NEPAL_PROVINCES,
 } from "@/shared/constants/jobCategories";
+import { JOB_STATUS, PROPOSAL_STATUS } from "@/shared/constants/statuses";
 import {
   jobCreateSchema,
   validateForm as validateFormSchema,
 } from "@/shared/lib/validation";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Input } from "@/shared/ui/UI";
-import { JOB_STATUS, PROPOSAL_STATUS } from "@/shared/constants/statuses";
 
 export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const router = useRouter();

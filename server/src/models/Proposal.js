@@ -10,6 +10,7 @@ const proposalSchema = new mongoose.Schema({
   job: {
     type: mongoose.Schema.ObjectId,
     ref: "Job",
+    required: true,
   },
   status: {
     type: String,
@@ -64,6 +65,16 @@ const proposalSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+proposalSchema.index(
+  { freelancer: 1, job: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: { $in: [PROPOSAL_STATUS.PENDING, PROPOSAL_STATUS.ACCEPTED] },
+    },
+  }
+);
 
 const Proposal = mongoose.model("Proposal", proposalSchema);
 

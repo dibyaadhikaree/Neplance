@@ -16,8 +16,17 @@ module.exports = (err, req, res, next) => {
   if (err.code === 11000) {
     resolvedStatusCode = 400;
     status = "fail";
-    const field = Object.keys(err.keyValue)[0];
-    message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists. Please use a different ${field}.`;
+    const keys = Object.keys(err.keyPattern || err.keyValue || {});
+    const isProposalDuplicate =
+      keys.includes("freelancer") && keys.includes("job");
+
+    if (isProposalDuplicate) {
+      message = "You already have an active proposal for this job.";
+      err.errorCode = "DUPLICATE_PROPOSAL";
+    } else {
+      const field = Object.keys(err.keyValue || {})[0] || "field";
+      message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists. Please use a different ${field}.`;
+    }
   }
 
   if (err.name === "ValidationError") {

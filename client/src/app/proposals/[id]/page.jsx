@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { apiCall } from "@/services/api";
+import { PROPOSAL_STATUS } from "@/shared/constants/statuses";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Button, Input } from "@/shared/ui/UI";
 import { formatStatus } from "@/shared/utils/job";
-import { PROPOSAL_STATUS } from "@/shared/constants/statuses";
 
 export default function ProposalDetailPage({ params }) {
   const { id } = use(params);
@@ -86,7 +86,9 @@ export default function ProposalDetailPage({ params }) {
         method: "PATCH",
       });
       setProposal(
-        response.job ? { ...proposal, status: PROPOSAL_STATUS.ACCEPTED } : proposal,
+        response.job
+          ? { ...proposal, status: PROPOSAL_STATUS.ACCEPTED }
+          : proposal,
       );
       if (response.acceptedProposal) {
         setProposal(response.acceptedProposal);
@@ -224,15 +226,10 @@ export default function ProposalDetailPage({ params }) {
     (String(creatorId) === String(currentUserId) || isCreatorParty);
   const isFreelancer =
     currentUserId && String(freelancerId) === String(currentUserId);
-  const canReject =
-    isClient &&
-    proposal?.status === PROPOSAL_STATUS.PENDING;
-  const canAccept =
-    isClient &&
-    proposal?.status === PROPOSAL_STATUS.PENDING;
+  const canReject = isClient && proposal?.status === PROPOSAL_STATUS.PENDING;
+  const canAccept = isClient && proposal?.status === PROPOSAL_STATUS.PENDING;
   const canResubmit =
-    isFreelancer &&
-    proposal?.status === PROPOSAL_STATUS.REJECTED;
+    isFreelancer && proposal?.status === PROPOSAL_STATUS.REJECTED;
 
   return (
     <>
@@ -553,7 +550,10 @@ export default function ProposalDetailPage({ params }) {
                       placeholder="e.g., 2"
                       value={resubmitData.revisionsIncluded}
                       onChange={(e) =>
-                        handleResubmitChange("revisionsIncluded", e.target.value)
+                        handleResubmitChange(
+                          "revisionsIncluded",
+                          e.target.value,
+                        )
                       }
                       min="0"
                       disabled={resubmitting}
@@ -574,7 +574,10 @@ export default function ProposalDetailPage({ params }) {
                   </div>
 
                   {resubmitError && (
-                    <p className="card-error" style={{ marginTop: "var(--space-3)" }}>
+                    <p
+                      className="card-error"
+                      style={{ marginTop: "var(--space-3)" }}
+                    >
                       {resubmitError}
                     </p>
                   )}
@@ -645,7 +648,10 @@ export default function ProposalDetailPage({ params }) {
                   }}
                 >
                   {acceptError && (
-                    <p className="card-error" style={{ marginBottom: "var(--space-3)" }}>
+                    <p
+                      className="card-error"
+                      style={{ marginBottom: "var(--space-3)" }}
+                    >
                       {acceptError}
                     </p>
                   )}
@@ -707,7 +713,10 @@ export default function ProposalDetailPage({ params }) {
                     disabled={rejecting}
                   />
                   {rejectError && (
-                    <p className="card-error" style={{ marginTop: "var(--space-2)" }}>
+                    <p
+                      className="card-error"
+                      style={{ marginTop: "var(--space-2)" }}
+                    >
                       {rejectError}
                     </p>
                   )}

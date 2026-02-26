@@ -109,8 +109,6 @@ const acceptProposal = catchAsync(async (req, res, next) => {
   const job = proposal.job;
   if (!job) throw new AppError("Job not found", 404);
 
-  const jobId = job._id;
-
   // Only allow job owner (creator) to accept proposals
   ensureCreator(job, req.user.id, "You can't accept proposals for this job");
   const { proposal: acceptedProposal, job: updatedJob } =

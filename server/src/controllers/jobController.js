@@ -7,14 +7,9 @@ const {
   ensureCreator,
   ensureContractor,
 } = require("../utils/jobAccess");
-const {
-  JOB_STATUS,
-  CANCELLATION_STATUS,
-  MILESTONE_STATUS,
-} = require("../constants/statuses");
+const { JOB_STATUS } = require("../constants/statuses");
 const {
   validateJobUpdate,
-  getCreateStatus,
   normalizeJobCreateDefaults,
   assertJobHasMilestones,
   publishJob: publishJobService,

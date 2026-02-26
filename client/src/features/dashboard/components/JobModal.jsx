@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { JOB_STATUS, MILESTONE_STATUS } from "@/shared/constants/statuses";
 import {
   getFieldError,
   proposalSchema,
@@ -15,7 +16,6 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
-import { JOB_STATUS, MILESTONE_STATUS } from "@/shared/constants/statuses";
 
 const formatDate = (date) => {
   if (!date) return null;
@@ -360,7 +360,8 @@ export const JobModal = ({
                     {(() => {
                       const previousCompleted =
                         index === 0 ||
-                        milestones[index - 1]?.status === MILESTONE_STATUS.COMPLETED;
+                        milestones[index - 1]?.status ===
+                          MILESTONE_STATUS.COMPLETED;
                       if (
                         !canSubmitMilestone ||
                         milestone?.status !== "ACTIVE"

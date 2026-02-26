@@ -9,8 +9,8 @@ import {
   NEPAL_PROVINCES,
 } from "@/shared/constants/jobCategories";
 import { JOB_STATUS } from "@/shared/constants/statuses";
-import { jobCreateSchema, validateForm } from "@/shared/lib/validation";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { jobCreateSchema, validateForm } from "@/shared/lib/validation";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Button, Input } from "@/shared/ui/UI";
 

@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
+import {
+  CANCELLATION_STATUS,
+  JOB_STATUS,
+  PROPOSAL_STATUS,
+} from "@/shared/constants/statuses";
 import {
   formatBudget,
   formatLocation,
@@ -10,11 +15,6 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
-import {
-  JOB_STATUS,
-  PROPOSAL_STATUS,
-  CANCELLATION_STATUS,
-} from "@/shared/constants/statuses";
 
 export const JobCard = ({
   job,
@@ -68,7 +68,8 @@ export const JobCard = ({
       party.role === "CONTRACTOR" &&
       String(party.address) === String(currentUserId),
   );
-  const canCancel = status === JOB_STATUS.IN_PROGRESS && (isCreator || isContractor);
+  const canCancel =
+    status === JOB_STATUS.IN_PROGRESS && (isCreator || isContractor);
   const cancellation = job.cancellation || { status: CANCELLATION_STATUS.NONE };
   const initiatedBy = cancellation.initiatedBy?._id || cancellation.initiatedBy;
   const isInitiator = initiatedBy
@@ -77,7 +78,8 @@ export const JobCard = ({
       ? (cancellation.initiatedRole === "CREATOR" && isCreator) ||
         (cancellation.initiatedRole === "CONTRACTOR" && isContractor)
       : false;
-  const hasPendingCancellation = cancellation.status === CANCELLATION_STATUS.PENDING;
+  const hasPendingCancellation =
+    cancellation.status === CANCELLATION_STATUS.PENDING;
   const canRespondCancellation =
     hasPendingCancellation &&
     !isInitiator &&
@@ -127,7 +129,8 @@ export const JobCard = ({
     )
       return "badge-primary";
     if (statusLower === JOB_STATUS.COMPLETED.toLowerCase()) return "badge-info";
-    if (statusLower === JOB_STATUS.CANCELLED.toLowerCase()) return "badge-error";
+    if (statusLower === JOB_STATUS.CANCELLED.toLowerCase())
+      return "badge-error";
     return "";
   };
 
@@ -305,7 +308,9 @@ export const JobCard = ({
                       onClick={handleRequestCancellation}
                       disabled={requestLoading}
                     >
-                      {requestLoading ? "Requesting..." : "Request Cancellation"}
+                      {requestLoading
+                        ? "Requesting..."
+                        : "Request Cancellation"}
                     </button>
                   </div>
                 </div>
@@ -470,7 +475,6 @@ export const JobCard = ({
               Apply Now
             </button>
           )}
-
         </div>
       </div>
     </article>
@@ -505,10 +509,10 @@ export const ProposalCard = ({
 
   const getProposalStatusBadgeClass = (status) => {
     const statusLower = status?.toLowerCase();
-  if (statusLower === PROPOSAL_STATUS.ACCEPTED) return "badge-success";
-  if (statusLower === PROPOSAL_STATUS.PENDING) return "badge-warning";
-  if (statusLower === PROPOSAL_STATUS.REJECTED) return "badge-error";
-  if (statusLower === PROPOSAL_STATUS.WITHDRAWN) return "badge-info";
+    if (statusLower === PROPOSAL_STATUS.ACCEPTED) return "badge-success";
+    if (statusLower === PROPOSAL_STATUS.PENDING) return "badge-warning";
+    if (statusLower === PROPOSAL_STATUS.REJECTED) return "badge-error";
+    if (statusLower === PROPOSAL_STATUS.WITHDRAWN) return "badge-info";
     return "";
   };
 
