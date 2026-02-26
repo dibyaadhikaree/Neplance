@@ -89,6 +89,25 @@ export default function JobsPage() {
     }
   };
 
+  const handleSubmitMilestone = async (jobId, index, evidence) => {
+    await apiCall(`/api/jobs/${jobId}/milestones/${index}/submit`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        evidence: typeof evidence === "string" ? evidence.trim() : undefined,
+      }),
+    });
+    const response = await apiCall(`/api/jobs/${jobId}`);
+    setSelectedJob(response.data);
+  };
+
+  const handleApproveMilestone = async (jobId, index) => {
+    await apiCall(`/api/jobs/${jobId}/milestones/${index}/approve`, {
+      method: "PATCH",
+    });
+    const response = await apiCall(`/api/jobs/${jobId}`);
+    setSelectedJob(response.data);
+  };
+
   const handleFilterChange = (field, value) => {
     setSearchFilters((prev) => ({ ...prev, [field]: value }));
   };
@@ -321,6 +340,8 @@ export default function JobsPage() {
           job={selectedJob}
           mode={modalMode}
           onSubmit={handleSubmitProposal}
+          onSubmitMilestone={handleSubmitMilestone}
+          onApproveMilestone={handleApproveMilestone}
           onClose={handleCloseModal}
           loading={submitting}
           userRole={user?.role?.[0]}

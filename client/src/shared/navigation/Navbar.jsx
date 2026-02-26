@@ -75,9 +75,10 @@ export function Navbar({ user, onLogout, onRoleSwitch }) {
     onRoleSwitch?.({ ...user, role: nextRoles });
   };
 
-  const handleLogoutClick = () => {
+  const handleLogoutClick = async () => {
     setShowDropdown(false);
-    onLogout?.();
+    await onLogout?.();
+    router.push("/");
   };
 
   // ----- Guest (logged out) -----

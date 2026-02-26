@@ -48,10 +48,19 @@ export default function JobDetailPage({ params }) {
   const [cancellationLoading, setCancellationLoading] = useState(false);
   const [cancellationActionLoading, setCancellationActionLoading] = useState(false);
   const [cancellationError, setCancellationError] = useState("");
+  const [milestoneEvidence, setMilestoneEvidence] = useState({});
+  const [milestoneSubmitting, setMilestoneSubmitting] = useState(false);
+  const [milestoneApproving, setMilestoneApproving] = useState(false);
+  const [milestoneError, setMilestoneError] = useState("");
 
   const { user, isHydrated, logout, switchRole } = useAuthGate({
     mode: "none",
   });
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/");
+  };
 
   const fetchJob = useCallback(async () => {
     try {
@@ -132,7 +141,7 @@ export default function JobDetailPage({ params }) {
   if (loading) {
     return (
       <>
-        <Navbar user={user} onLogout={logout} onRoleSwitch={switchRole} />
+        <Navbar user={user} onLogout={handleLogout} onRoleSwitch={switchRole} />
         <div className="dashboard">
           <div
             className="dashboard-content"
@@ -208,6 +217,7 @@ export default function JobDetailPage({ params }) {
       party.role === "CONTRACTOR" &&
       String(party.address) === String(currentUserId),
   );
+  const userRole = user?.role?.[0];
   const canCancel =
     job.status === JOB_STATUS.IN_PROGRESS && (isJobOwner || isContractor);
   const cancellation = job.cancellation || { status: CANCELLATION_STATUS.NONE };
@@ -220,6 +230,52 @@ export default function JobDetailPage({ params }) {
       : false;
   const hasPendingCancellation =
     cancellation.status === CANCELLATION_STATUS.PENDING;
+
+  const canSubmitMilestone =
+    job.status === JOB_STATUS.IN_PROGRESS &&
+    userRole === "freelancer" &&
+    isContractor;
+  const canApproveMilestone =
+    userRole === "client" &&
+    isJobOwner;
+
+  const handleMilestoneEvidenceChange = (index, value) => {
+    setMilestoneEvidence((prev) => ({ ...prev, [index]: value }));
+  };
+
+  const handleSubmitMilestone = async (index) => {
+    setMilestoneError("");
+    setMilestoneSubmitting(true);
+    try {
+      await apiCall(`/api/jobs/${job._id}/milestones/${index}/submit`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          evidence: milestoneEvidence[index]?.trim() || undefined,
+        }),
+      });
+      setMilestoneEvidence((prev) => ({ ...prev, [index]: "" }));
+      await fetchJob();
+    } catch (err) {
+      setMilestoneError(err.message || "Failed to submit milestone");
+    } finally {
+      setMilestoneSubmitting(false);
+    }
+  };
+
+  const handleApproveMilestone = async (index) => {
+    setMilestoneError("");
+    setMilestoneApproving(true);
+    try {
+      await apiCall(`/api/jobs/${job._id}/milestones/${index}/approve`, {
+        method: "PATCH",
+      });
+      await fetchJob();
+    } catch (err) {
+      setMilestoneError(err.message || "Failed to approve milestone");
+    } finally {
+      setMilestoneApproving(false);
+    }
+  };
 
   const handleRequestCancellation = async () => {
     setCancellationError("");
@@ -538,9 +594,79 @@ export default function JobDetailPage({ params }) {
                       >
                         Status: {formatStatus(milestone?.status)}
                       </span>
+                      {milestone?.evidence && (
+                        <p
+                          style={{
+                            fontSize: "var(--text-xs)",
+                            color: "var(--color-text-light)",
+                            marginTop: "var(--space-1)",
+                          }}
+                        >
+                          Evidence: {milestone.evidence}
+                        </p>
+                      )}
+                      {canSubmitMilestone && milestone?.status === MILESTONE_STATUS.ACTIVE && (
+                        <div style={{ marginTop: "var(--space-2)" }}>
+                          <label
+                            htmlFor={`milestone-evidence-${index}`}
+                            style={{
+                              display: "block",
+                              marginBottom: "var(--space-1)",
+                              fontSize: "var(--text-xs)",
+                            }}
+                          >
+                            Evidence (optional)
+                          </label>
+                          <input
+                            id={`milestone-evidence-${index}`}
+                            type="text"
+                            value={milestoneEvidence[index] || ""}
+                            onChange={(e) =>
+                              handleMilestoneEvidenceChange(index, e.target.value)
+                            }
+                            placeholder="Paste link or notes"
+                            style={{
+                              width: "100%",
+                              padding: "var(--space-2)",
+                              borderRadius: "var(--radius)",
+                              border: "1px solid var(--color-border)",
+                              fontSize: "var(--text-sm)",
+                            }}
+                            disabled={milestoneSubmitting}
+                          />
+                          <div style={{ marginTop: "var(--space-2)" }}>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => handleSubmitMilestone(index)}
+                              disabled={milestoneSubmitting}
+                            >
+                              {milestoneSubmitting ? "Submitting..." : "Submit"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {canApproveMilestone &&
+                        milestone?.status === MILESTONE_STATUS.SUBMITTED && (
+                          <div style={{ marginTop: "var(--space-2)" }}>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => handleApproveMilestone(index)}
+                              disabled={milestoneApproving}
+                            >
+                              {milestoneApproving ? "Approving..." : "Approve"}
+                            </Button>
+                          </div>
+                        )}
                     </li>
                   ))}
                 </ul>
+                {milestoneError && (
+                  <p className="card-error" style={{ marginTop: "var(--space-3)" }}>
+                    {milestoneError}
+                  </p>
+                )}
               </div>
             ) : null}
 

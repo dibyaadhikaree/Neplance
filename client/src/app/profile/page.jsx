@@ -53,6 +53,25 @@ export default function ProfilePage() {
   const handleViewDetails = (job) => setSelectedJob(job);
   const handleCloseModal = () => setSelectedJob(null);
 
+  const handleSubmitMilestone = async (jobId, index, evidence) => {
+    await apiCall(`/api/jobs/${jobId}/milestones/${index}/submit`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        evidence: typeof evidence === "string" ? evidence.trim() : undefined,
+      }),
+    });
+    const response = await apiCall(`/api/jobs/${jobId}`);
+    setSelectedJob(response.data);
+  };
+
+  const handleApproveMilestone = async (jobId, index) => {
+    await apiCall(`/api/jobs/${jobId}/milestones/${index}/approve`, {
+      method: "PATCH",
+    });
+    const response = await apiCall(`/api/jobs/${jobId}`);
+    setSelectedJob(response.data);
+  };
+
   const profileLocation = useMemo(() => {
     if (!user?.location) return "N/A";
     const values = [
@@ -613,6 +632,8 @@ export default function ProfilePage() {
           job={selectedJob}
           mode="view"
           onClose={handleCloseModal}
+          onSubmitMilestone={handleSubmitMilestone}
+          onApproveMilestone={handleApproveMilestone}
           currentUser={user}
         />
       )}

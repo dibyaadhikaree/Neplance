@@ -37,11 +37,12 @@ export const JobModal = ({
   userRole,
   currentUser,
 }) => {
+  const currentUserId = currentUser?.id || currentUser?._id;
   const isJobOwner =
     currentUser &&
-    (job.creatorAddress?._id === currentUser.id ||
-      job.creatorAddress === currentUser.id ||
-      job.creatorAddress?.id === currentUser.id);
+    (job.creatorAddress?._id === currentUserId ||
+      job.creatorAddress === currentUserId ||
+      job.creatorAddress?.id === currentUserId);
   const [amount, setAmount] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("");
@@ -97,7 +98,7 @@ export const JobModal = ({
   ).length;
   const canSubmitMilestone =
     userRole === "freelancer" && job.status === JOB_STATUS.IN_PROGRESS;
-  const canApproveMilestone = userRole === "client";
+  const canApproveMilestone = userRole === "client" && isJobOwner;
   const creatorLabel = getCreatorLabel(job.creatorAddress);
   const budgetDisplay = job.budget
     ? formatBudget(job.budget, job.budgetType)
