@@ -285,8 +285,14 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   };
 
   const handleSaveDraft = async () => {
-    if (!formState.title.trim()) {
+    const title = formState.title.trim();
+    if (!title) {
       setFormErrors(["Job title is required to save as draft."]);
+      return;
+    }
+
+    if (title.length < 5) {
+      setFormErrors(["Job title must be at least 5 characters."]);
       return;
     }
 

@@ -9,6 +9,7 @@ import {
   NEPAL_PROVINCES,
 } from "@/shared/constants/jobCategories";
 import { JOB_STATUS } from "@/shared/constants/statuses";
+import { jobCreateSchema, validateForm } from "@/shared/lib/validation";
 import { useAuthGate } from "@/shared/hooks/useAuthGate";
 import { Navbar } from "@/shared/navigation/Navbar";
 import { Button, Input } from "@/shared/ui/UI";
@@ -195,6 +196,29 @@ export default function EditJobPage() {
       location,
       milestones,
     };
+
+    const { errors: validationErrors } = validateForm(jobCreateSchema, payload);
+    if (validationErrors) {
+      const flatErrors = [];
+      const milestoneErrorsObj = {};
+
+      Object.entries(validationErrors).forEach(([key, value]) => {
+        if (key.startsWith("milestones.")) {
+          const match = key.match(/milestones\.(\d+)\.(.+)/);
+          if (match) {
+            const idx = parseInt(match[1], 10);
+            if (!milestoneErrorsObj[idx]) milestoneErrorsObj[idx] = [];
+            milestoneErrorsObj[idx].push(value);
+          }
+        } else {
+          flatErrors.push(value);
+        }
+      });
+
+      setFormErrors(flatErrors);
+      setMilestoneErrors(milestoneErrorsObj);
+      return;
+    }
 
     setSubmitting(true);
     setFormErrors([]);
