@@ -2,8 +2,13 @@ const Job = require("../models/Job");
 const Proposal = require("../models/Proposal");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
-const { getJobOrThrow, ensureCreator, ensureStatus } = require("../utils/jobAccess");
-const { JOB_STATUS, PROPOSAL_STATUS } = require("../constants/statuses");
+const { getJobOrThrow, ensureCreator } = require("../utils/jobAccess");
+const { PROPOSAL_STATUS } = require("../constants/statuses");
+const {
+  acceptProposal: acceptProposalService,
+  rejectProposal: rejectProposalService,
+  withdrawProposal: withdrawProposalService,
+} = require("../services/proposalService");
 
 const getMyProposals = catchAsync(async (req, res) => {
   const data = await Proposal.find({ freelancer: req.user.id }).populate({
@@ -93,40 +98,14 @@ const acceptProposal = catchAsync(async (req, res, next) => {
 
   // Only allow job owner (creator) to accept proposals
   ensureCreator(job, req.user.id, "You can't accept proposals for this job");
-  ensureStatus(job, JOB_STATUS.OPEN, "Contract is not open for hiring. Please publish your job first.");
-
-  // 2) Accept this proposal
-  proposal.status = PROPOSAL_STATUS.ACCEPTED;
-  await proposal.save();
-
-  // 3) Reject all other pending proposals for this job
-  await Proposal.updateMany(
-    { job: jobId, _id: { $ne: proposal._id }, status: PROPOSAL_STATUS.PENDING },
-    { $set: { status: PROPOSAL_STATUS.REJECTED } }
-  );
-
-  // 4) Update job status + add contractor party
-  const contractorAddress = proposal.freelancer.toString();
-  const updatedJob = await Job.findByIdAndUpdate(
-    jobId,
-    {
-      status: JOB_STATUS.IN_PROGRESS,
-      updatedAt: Date.now(),
-      $addToSet: {
-        parties: {
-          address: contractorAddress,
-          role: "CONTRACTOR",
-        },
-      },
-    },
-    { new: true }
-  );
+  const { proposal: acceptedProposal, job: updatedJob } =
+    await acceptProposalService(proposal, job);
 
   // 5) Response
   res.status(200).json({
     status: "success",
     message: "Proposal accepted and contract activated",
-    acceptedProposal: proposal,
+    acceptedProposal,
     job: updatedJob,
   });
 });
@@ -144,30 +123,12 @@ const rejectProposal = catchAsync(async (req, res, next) => {
   if (!job) throw new AppError("Job not found", 404);
 
   ensureCreator(job, req.user.id, "You can't reject proposals for this job");
-  ensureStatus(job, [JOB_STATUS.OPEN, JOB_STATUS.IN_PROGRESS], "Job is not open for rejection");
-
-  if (proposal.status === PROPOSAL_STATUS.ACCEPTED) {
-    return next(new AppError("Accepted proposals cannot be rejected", 400));
-  }
-
-  if (proposal.status === PROPOSAL_STATUS.WITHDRAWN) {
-    return next(new AppError("Withdrawn proposals cannot be rejected", 400));
-  }
-
-  if (proposal.status === PROPOSAL_STATUS.REJECTED) {
-    return next(new AppError("Proposal is already rejected", 400));
-  }
-
-  proposal.status = PROPOSAL_STATUS.REJECTED;
-  proposal.rejectionReason = typeof reason === "string" ? reason.trim() : undefined;
-  proposal.rejectedAt = Date.now();
-  proposal.updatedAt = Date.now();
-  await proposal.save();
+  const updatedProposal = await rejectProposalService(proposal, job, reason);
 
   res.status(200).json({
     status: "success",
     message: "Proposal rejected",
-    data: proposal,
+    data: updatedProposal,
   });
 });
 
@@ -221,18 +182,12 @@ const withdrawProposal = catchAsync(async (req, res, next) => {
     return next(new AppError("You can only withdraw your own proposals", 403));
   }
 
-  if (proposal.status !== PROPOSAL_STATUS.PENDING) {
-    return next(new AppError("You can only withdraw pending proposals", 400));
-  }
-
-  proposal.status = PROPOSAL_STATUS.WITHDRAWN;
-  proposal.withdrawnAt = Date.now();
-  await proposal.save();
+  const updatedProposal = await withdrawProposalService(proposal);
 
   res.status(200).json({
     status: "success",
     message: "Proposal withdrawn successfully",
-    data: proposal,
+    data: updatedProposal,
   });
 });
 

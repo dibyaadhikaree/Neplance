@@ -1,0 +1,168 @@
+const AppError = require("../utils/appError");
+const {
+  JOB_STATUS,
+  CANCELLATION_STATUS,
+  MILESTONE_STATUS,
+} = require("../constants/statuses");
+const {
+  assertJobCanUpdate,
+  assertJobCanPublish,
+  assertJobCanDelete,
+  assertJobCanMarkCompleted,
+  assertJobCanApproveCompletion,
+  assertJobCanSubmitMilestone,
+  assertJobCanApproveMilestone,
+  assertJobCanRequestCancellation,
+  assertJobCanRespondCancellation,
+} = require("./statusTransitions");
+
+const validateJobUpdate = (job) => {
+  assertJobCanUpdate(job);
+};
+
+const publishJob = async (job) => {
+  assertJobCanPublish(job);
+
+  if (!job.category || !job.budget?.min) {
+    throw new AppError("Job must have category and budget to be published", 400);
+  }
+
+  job.status = JOB_STATUS.OPEN;
+  job.updatedAt = Date.now();
+  await job.save();
+  return job;
+};
+
+const deleteJob = async (job, deleteFn) => {
+  assertJobCanDelete(job);
+  await deleteFn(job._id);
+};
+
+const markCompleted = async (job) => {
+  assertJobCanMarkCompleted(job);
+  job.status = JOB_STATUS.COMPLETED;
+  job.updatedAt = Date.now();
+  await job.save();
+  return job;
+};
+
+const approveCompletion = async (job) => {
+  assertJobCanApproveCompletion(job);
+  job.updatedAt = Date.now();
+  await job.save();
+  return job;
+};
+
+const submitMilestone = async (job, milestoneIndex, evidence) => {
+  if (Number.isNaN(milestoneIndex) || milestoneIndex < 0) {
+    throw new AppError("Invalid milestone index", 400);
+  }
+
+  const milestone = job.milestones?.[milestoneIndex];
+  if (!milestone) {
+    throw new AppError("Milestone not found", 404);
+  }
+
+  assertJobCanSubmitMilestone(job, milestone);
+
+  milestone.status = MILESTONE_STATUS.SUBMITTED;
+  if (typeof evidence === "string" && evidence.trim().length > 0) {
+    milestone.evidence = evidence.trim();
+  }
+  milestone.completedAt = Date.now();
+  job.updatedAt = Date.now();
+  await job.save();
+  return job;
+};
+
+const approveMilestone = async (job, milestoneIndex, approverId) => {
+  if (Number.isNaN(milestoneIndex) || milestoneIndex < 0) {
+    throw new AppError("Invalid milestone index", 400);
+  }
+
+  const milestone = job.milestones?.[milestoneIndex];
+  if (!milestone) {
+    throw new AppError("Milestone not found", 404);
+  }
+
+  assertJobCanApproveMilestone(milestone);
+
+  milestone.status = MILESTONE_STATUS.COMPLETED;
+  milestone.approvedBy = Array.from(
+    new Set([...(milestone.approvedBy || []), approverId.toString()])
+  );
+
+  const allCompleted = (job.milestones || []).every(
+    (item) => item.status === MILESTONE_STATUS.COMPLETED
+  );
+
+  if (allCompleted) {
+    job.status = JOB_STATUS.COMPLETED;
+  }
+
+  job.updatedAt = Date.now();
+  await job.save();
+  return { job, allCompleted };
+};
+
+const requestCancellation = async (job, userId, reason) => {
+  assertJobCanRequestCancellation(job);
+
+  const isCreator = job.creatorAddress?.toString() === userId;
+  const isContractor = (job.parties || []).some(
+    (party) => party.role === "CONTRACTOR" && party.address.toString() === userId
+  );
+
+  if (!isCreator && !isContractor) {
+    throw new AppError("You are not authorized to cancel this job", 403);
+  }
+
+  job.cancellation = {
+    status: CANCELLATION_STATUS.PENDING,
+    initiatedBy: userId,
+    initiatedRole: isCreator ? "CREATOR" : "CONTRACTOR",
+    reason: typeof reason === "string" ? reason.trim() : undefined,
+    requestedAt: Date.now(),
+  };
+  job.updatedAt = Date.now();
+  await job.save();
+  return job;
+};
+
+const respondCancellation = async (job, userId, action) => {
+  assertJobCanRespondCancellation(job, action, userId);
+
+  const isCreator = job.creatorAddress?.toString() === userId;
+  const isContractor = (job.parties || []).some(
+    (party) => party.role === "CONTRACTOR" && party.address.toString() === userId
+  );
+
+  if (!isCreator && !isContractor) {
+    throw new AppError("You are not authorized to respond", 403);
+  }
+
+  const accepted = action === "accept";
+  job.cancellation.status = accepted
+    ? CANCELLATION_STATUS.ACCEPTED
+    : CANCELLATION_STATUS.REJECTED;
+  job.cancellation.respondedBy = userId;
+  job.cancellation.respondedAt = Date.now();
+  if (accepted) {
+    job.status = JOB_STATUS.CANCELLED;
+  }
+  job.updatedAt = Date.now();
+  await job.save();
+  return { job, accepted };
+};
+
+module.exports = {
+  validateJobUpdate,
+  publishJob,
+  deleteJob,
+  markCompleted,
+  approveCompletion,
+  submitMilestone,
+  approveMilestone,
+  requestCancellation,
+  respondCancellation,
+};
