@@ -23,7 +23,18 @@ const getMyProposals = catchAsync(async (req, res) => {
 });
 
 const createProposal = catchAsync(async (req, res) => {
-  const { job: jobId, status, amount, coverLetter, deliveryDays, revisionsIncluded, attachments } = req.body;
+  const {
+    job: jobId,
+    amount,
+    coverLetter,
+    deliveryDays,
+    revisionsIncluded,
+    attachments,
+    status,
+  } = req.body;
+  if (status !== undefined) {
+    throw new AppError("Status cannot be set on proposal creation", 400);
+  }
 
   const job = await Job.findById(jobId);
   if (!job) {
@@ -47,7 +58,7 @@ const createProposal = catchAsync(async (req, res) => {
   const data = await Proposal.create({
     freelancer: req.user.id,
     job: jobId,
-    status,
+    status: PROPOSAL_STATUS.PENDING,
     amount,
     coverLetter,
     deliveryDays,
