@@ -3,6 +3,7 @@ const {
   createProposal,
   getProposalForJob,
   acceptProposal,
+  rejectProposal,
   getMyProposals,
   getProposalById,
   withdrawProposal,
@@ -24,6 +25,7 @@ router.route("/myProposals").get(restrictTo("freelancer"), getMyProposals);
 router.route("/job/:jobId").get(restrictTo("client"), getProposalForJob);
 
 router.route("/:id/accept").patch(restrictTo("client"), acceptProposal);
+router.route("/:id/reject").patch(restrictTo("client"), rejectProposal);
 
 router.route("/:id").get(getProposalById);
 

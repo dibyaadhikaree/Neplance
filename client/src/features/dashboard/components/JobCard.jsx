@@ -494,6 +494,7 @@ export const ProposalCard = ({
     deliveryDays,
     revisionsIncluded,
     attachments,
+    rejectionReason,
   } = proposal;
   const jobTitle = job?.title || "Unknown Contract";
   const creatorLabel = getCreatorLabel(job?.creatorAddress);
@@ -649,6 +650,28 @@ export const ProposalCard = ({
                 ? `${coverLetter.slice(0, 150)}...`
                 : coverLetter}
             </p>
+          </div>
+        )}
+        {status === "rejected" && rejectionReason && (
+          <div
+            style={{
+              marginBottom: "var(--space-3)",
+              padding: "var(--space-3)",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--color-border)",
+              background: "var(--color-bg-secondary)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "var(--text-sm)",
+                color: "var(--color-text-light)",
+                marginBottom: "var(--space-1)",
+              }}
+            >
+              Rejection reason
+            </div>
+            <div style={{ fontSize: "var(--text-sm)" }}>{rejectionReason}</div>
           </div>
         )}
         {attachments?.length > 0 && (

@@ -130,6 +130,46 @@ const acceptProposal = catchAsync(async (req, res, next) => {
   });
 });
 
+const rejectProposal = catchAsync(async (req, res, next) => {
+  const proposalId = req.params.id;
+  const { reason } = req.body;
+
+  const proposal = await Proposal.findById(proposalId).populate("job");
+  if (!proposal) {
+    return next(new AppError("Proposal not found", 404));
+  }
+
+  const job = proposal.job;
+  if (!job) throw new AppError("Job not found", 404);
+
+  ensureCreator(job, req.user.id, "You can't reject proposals for this job");
+  ensureStatus(job, ["OPEN", "IN_PROGRESS"], "Job is not open for rejection");
+
+  if (proposal.status === "accepted") {
+    return next(new AppError("Accepted proposals cannot be rejected", 400));
+  }
+
+  if (proposal.status === "withdrawn") {
+    return next(new AppError("Withdrawn proposals cannot be rejected", 400));
+  }
+
+  if (proposal.status === "rejected") {
+    return next(new AppError("Proposal is already rejected", 400));
+  }
+
+  proposal.status = "rejected";
+  proposal.rejectionReason = typeof reason === "string" ? reason.trim() : undefined;
+  proposal.rejectedAt = Date.now();
+  proposal.updatedAt = Date.now();
+  await proposal.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Proposal rejected",
+    data: proposal,
+  });
+});
+
 const getProposalById = catchAsync(async (req, res, next) => {
   const proposalId = req.params.id;
   const userId = String(req.user.id);
@@ -143,7 +183,9 @@ const getProposalById = catchAsync(async (req, res, next) => {
   const isFreelancer = String(proposal.freelancer) === userId;
 
   if (isFreelancer) {
-    const populatedProposal = await Proposal.findById(proposalId).populate("freelancer", "name email");
+    const populatedProposal = await Proposal.findById(proposalId)
+      .populate("freelancer", "name email")
+      .populate({ path: "job", populate: { path: "creatorAddress", select: "name email" } });
     return res.status(200).json({ status: "success", data: populatedProposal });
   }
 
@@ -159,7 +201,9 @@ const getProposalById = catchAsync(async (req, res, next) => {
     return next(new AppError("You are not authorized to view this proposal", 403));
   }
 
-  const populatedProposal = await Proposal.findById(proposalId).populate("freelancer", "name email");
+  const populatedProposal = await Proposal.findById(proposalId)
+    .populate("freelancer", "name email")
+    .populate({ path: "job", populate: { path: "creatorAddress", select: "name email" } });
   res.status(200).json({ status: "success", data: populatedProposal });
 });
 
@@ -195,6 +239,7 @@ module.exports = {
   createProposal,
   getProposalForJob,
   acceptProposal,
+  rejectProposal,
   getMyProposals,
   getProposalById,
   withdrawProposal,

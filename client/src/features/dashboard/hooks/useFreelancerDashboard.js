@@ -31,7 +31,9 @@ export function useFreelancerDashboard() {
       if (proposalsData.status === "success") {
         const proposals = proposalsData.data;
 
-        setProposedJobs(proposals.filter((p) => p.status === "pending"));
+        setProposedJobs(
+          proposals.filter((p) => ["pending", "rejected"].includes(p.status)),
+        );
 
         const ongoing = proposals
           .filter(

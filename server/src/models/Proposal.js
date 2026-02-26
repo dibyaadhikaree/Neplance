@@ -35,6 +35,11 @@ const proposalSchema = new mongoose.Schema({
     default: false,
   },
   withdrawnAt: Date,
+  rejectedAt: Date,
+  rejectionReason: {
+    type: String,
+    maxlength: 2000,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

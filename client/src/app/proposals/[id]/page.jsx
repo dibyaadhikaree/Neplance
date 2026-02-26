@@ -14,6 +14,9 @@ export default function ProposalDetailPage({ params }) {
   const [proposal, setProposal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectError, setRejectError] = useState("");
   const { user, logout, switchRole } = useAuthGate({ mode: "none" });
 
   useEffect(() => {
@@ -29,6 +32,23 @@ export default function ProposalDetailPage({ params }) {
     };
     fetchProposal();
   }, [id]);
+
+  const handleReject = async () => {
+    setRejectError("");
+    setRejecting(true);
+    try {
+      const response = await apiCall(`/api/proposals/${id}/reject`, {
+        method: "PATCH",
+        body: JSON.stringify({ reason: rejectReason.trim() || undefined }),
+      });
+      setProposal(response.data);
+      setRejectReason("");
+    } catch (err) {
+      setRejectError(err.message || "Failed to reject proposal");
+    } finally {
+      setRejecting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -76,6 +96,24 @@ export default function ProposalDetailPage({ params }) {
     if (statusLower === "rejected") return "badge-error";
     return "";
   };
+
+  const currentUserId = user?.id || user?._id;
+  const creatorId =
+    proposal?.job?.creatorAddress?._id || proposal?.job?.creatorAddress;
+  const jobRoles = Array.isArray(proposal?.job?.parties)
+    ? proposal.job.parties
+    : [];
+  const isCreatorParty = jobRoles.some(
+    (party) =>
+      party.role === "CREATOR" &&
+      String(party.address) === String(currentUserId),
+  );
+  const isClient =
+    currentUserId &&
+    (String(creatorId) === String(currentUserId) || isCreatorParty);
+  const canReject =
+    isClient &&
+    proposal?.status === "pending";
 
   return (
     <>
@@ -269,6 +307,31 @@ export default function ProposalDetailPage({ params }) {
               </div>
             )}
 
+            {proposal.rejectionReason && (
+              <div style={{ marginBottom: "var(--space-6)" }}>
+                <div
+                  style={{
+                    fontSize: "var(--text-sm)",
+                    color: "var(--color-text-light)",
+                    marginBottom: "var(--space-2)",
+                  }}
+                >
+                  Rejection Reason
+                </div>
+                <p
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    lineHeight: "1.6",
+                    background: "var(--color-bg-secondary)",
+                    padding: "var(--space-4)",
+                    borderRadius: "var(--radius)",
+                  }}
+                >
+                  {proposal.rejectionReason}
+                </p>
+              </div>
+            )}
+
             {proposal.attachments?.length > 0 && (
               <div>
                 <div
@@ -302,6 +365,71 @@ export default function ProposalDetailPage({ params }) {
                       📎 Attachment {index + 1}
                     </a>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {canReject && (
+              <div style={{ marginTop: "var(--space-6)" }}>
+                <h3
+                  style={{
+                    fontSize: "var(--text-base)",
+                    fontWeight: "var(--font-weight-semibold)",
+                    marginBottom: "var(--space-2)",
+                  }}
+                >
+                  Reject Proposal
+                </h3>
+                <div
+                  style={{
+                    padding: "var(--space-4)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-bg-secondary)",
+                  }}
+                >
+                  <label
+                    htmlFor="rejectReason"
+                    style={{
+                      display: "block",
+                      marginBottom: "var(--space-2)",
+                      fontWeight: "var(--font-weight-medium)",
+                    }}
+                  >
+                    Rejection Reason
+                  </label>
+                  <textarea
+                    id="rejectReason"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Share why you are rejecting this proposal"
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      padding: "var(--space-3)",
+                      borderRadius: "var(--radius)",
+                      border: "1px solid var(--color-border)",
+                      fontFamily: "inherit",
+                      fontSize: "var(--text-sm)",
+                      resize: "vertical",
+                    }}
+                    disabled={rejecting}
+                  />
+                  {rejectError && (
+                    <p className="card-error" style={{ marginTop: "var(--space-2)" }}>
+                      {rejectError}
+                    </p>
+                  )}
+                  <div style={{ marginTop: "var(--space-3)" }}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleReject}
+                      disabled={rejecting}
+                    >
+                      {rejecting ? "Rejecting..." : "Reject"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
