@@ -148,6 +148,35 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
 
   return (
     <form onSubmit={handleSubmit}>
+      <fieldset className="form-group">
+        <legend className="form-label" style={{ marginBottom: "0.5rem" }}>
+          I want to:
+        </legend>
+        <div className="grid grid-cols-2 gap-4">
+          {ROLES.map((role) => (
+            <RoleButton
+              key={role}
+              role={role}
+              selected={selectedRoles.has(role)}
+              disabled={loading}
+              onClick={toggleRole}
+            />
+          ))}
+        </div>
+        {getFieldError(errors, "roles") && (
+          <p
+            className="form-error"
+            style={{
+              color: "var(--color-error)",
+              fontSize: "0.75rem",
+              marginTop: "0.25rem",
+            }}
+          >
+            {getFieldError(errors, "roles")}
+          </p>
+        )}
+      </fieldset>
+
       <Input
         type="text"
         label="Full Name"
@@ -341,35 +370,6 @@ export const SignupForm = ({ onSubmit, loading = false }) => {
           </div>
         </>
       )}
-
-      <fieldset className="form-group">
-        <legend className="form-label" style={{ marginBottom: "0.5rem" }}>
-          I want to:
-        </legend>
-        <div className="grid grid-cols-2 gap-4">
-          {ROLES.map((role) => (
-            <RoleButton
-              key={role}
-              role={role}
-              selected={selectedRoles.has(role)}
-              disabled={loading}
-              onClick={toggleRole}
-            />
-          ))}
-        </div>
-        {getFieldError(errors, "roles") && (
-          <p
-            className="form-error"
-            style={{
-              color: "var(--color-error)",
-              fontSize: "0.75rem",
-              marginTop: "0.25rem",
-            }}
-          >
-            {getFieldError(errors, "roles")}
-          </p>
-        )}
-      </fieldset>
 
       <Button type="submit" disabled={loading || !isValid}>
         {loading ? "Creating account..." : "Sign Up"}
