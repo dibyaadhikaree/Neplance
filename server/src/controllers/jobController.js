@@ -57,7 +57,9 @@ const createJob = catchAsync(async (req, res) => {
     status,
   });
 
-  assertJobHasMilestones(normalizedDefaults.milestones);
+  if (normalizedDefaults.status !== JOB_STATUS.DRAFT) {
+    assertJobHasMilestones(normalizedDefaults.milestones);
+  }
 
   const normalizedParties = [
     { address: creatorAddress, role: "CREATOR" },
@@ -257,6 +259,21 @@ const getJob = catchAsync(async (req, res) => {
     .populate("hiredFreelancer", "name email");
 
   if (!job) throw new AppError("Job not found", 404);
+
+  const currentUserId = req.user?.id;
+  const creatorId = job.creatorAddress?._id || job.creatorAddress;
+  const isCreator =
+    currentUserId && creatorId && creatorId.toString() === currentUserId.toString();
+  const isParty = currentUserId
+    ? (job.parties || []).some(
+        (party) =>
+          party.address && party.address.toString() === currentUserId.toString(),
+      )
+    : false;
+
+  if (!job.isPublic && !isCreator && !isParty) {
+    throw new AppError("You are not authorized to view this job", 403);
+  }
 
   if (job.isPublic) {
     job.viewCount += 1;
