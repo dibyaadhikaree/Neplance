@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   CategoriesSection,
   HeroSection,
@@ -191,9 +192,9 @@ export default function Home() {
                     </div>
                   </li>
                 </ul>
-                <a href="/signup" className="btn btn-primary btn-lg">
+                <Link href="/signup" className="btn btn-primary btn-lg">
                   Get Started as a Client
-                </a>
+                </Link>
               </div>
               <div
                 className="card"
@@ -513,9 +514,9 @@ export default function Home() {
                   hustle or building a full-time career, Neplance connects you
                   with clients who value your expertise.
                 </p>
-                <a href="/signup" className="btn btn-primary btn-lg">
+                <Link href="/signup" className="btn btn-primary btn-lg">
                   Start Freelancing Today
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -553,12 +554,12 @@ export default function Home() {
                 gap: "var(--space-4)",
               }}
             >
-              <a href="/login" className="btn btn-secondary btn-lg">
+              <Link href="/login" className="btn btn-secondary btn-lg">
                 Log In
-              </a>
-              <a href="/signup" className="btn btn-primary btn-lg">
+              </Link>
+              <Link href="/signup" className="btn btn-primary btn-lg">
                 Sign Up
-              </a>
+              </Link>
             </div>
           </div>
         </section>
