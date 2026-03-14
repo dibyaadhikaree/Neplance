@@ -2,8 +2,8 @@
  * Custom hook for freelancer dashboard data fetching
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { apiCall } from "@/services/api";
+import { useCallback, useState } from "react";
+import { getMyProposals } from "@/lib/client/proposals";
 import { JOB_STATUS, PROPOSAL_STATUS } from "@/shared/constants/statuses";
 
 const EMPTY_STATES = {
@@ -17,10 +17,13 @@ const EMPTY_STATES = {
   },
 };
 
-export function useFreelancerDashboard() {
-  const [proposedJobs, setProposedJobs] = useState([]);
-  const [ongoingJobs, setOngoingJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
+export function useFreelancerDashboard({
+  initialProposedJobs = [],
+  initialOngoingJobs = [],
+} = {}) {
+  const [proposedJobs, setProposedJobs] = useState(initialProposedJobs);
+  const [ongoingJobs, setOngoingJobs] = useState(initialOngoingJobs);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchDashboardData = useCallback(async () => {
@@ -28,7 +31,7 @@ export function useFreelancerDashboard() {
       setLoading(true);
       setError(null);
 
-      const proposalsData = await apiCall("/api/proposals/myProposals");
+      const proposalsData = await getMyProposals();
       if (proposalsData.status === "success") {
         const proposals = proposalsData.data;
 
@@ -61,10 +64,6 @@ export function useFreelancerDashboard() {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
 
   return {
     proposedJobs,

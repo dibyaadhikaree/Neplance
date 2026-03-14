@@ -34,6 +34,20 @@ const generateRefreshToken = (userId) => {
   });
 };
 
+const getAccessCookieOptions = () => {
+  const options = {
+    httpOnly: false,
+    sameSite: "lax",
+    path: "/",
+  };
+
+  if (process.env.NODE_ENV === "production") {
+    options.secure = true;
+  }
+
+  return options;
+};
+
 const getCookieOptions = (expires) => {
   const options = {
     expires,
@@ -55,8 +69,10 @@ const createSendTokens = (user, statusCode, res) => {
 
   const refreshCookieExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const refreshCookieOptions = getCookieOptions(refreshCookieExpiry);
+  const accessCookieOptions = getAccessCookieOptions();
 
   res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+  res.cookie("neplanceAccessToken", accessToken, accessCookieOptions);
 
   user.password = undefined;
 
@@ -122,6 +138,9 @@ const refreshAccessToken = catchAsync(async (req, res, next) => {
   }
 
   const accessToken = generateAccessToken(user._id);
+  const accessCookieOptions = getAccessCookieOptions();
+
+  res.cookie("neplanceAccessToken", accessToken, accessCookieOptions);
 
   res.status(200).json({
     status: "success",
@@ -141,6 +160,11 @@ const logout = (req, res) => {
   }
 
   res.clearCookie("refreshToken", cookieOptions);
+  res.clearCookie("neplanceAccessToken", {
+    sameSite: "lax",
+    path: "/",
+    ...(process.env.NODE_ENV === "production" ? { secure: true } : {}),
+  });
 
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");

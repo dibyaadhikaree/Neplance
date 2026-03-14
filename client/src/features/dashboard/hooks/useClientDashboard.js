@@ -1,16 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
-import { apiCall } from "@/services/api";
+import { useCallback, useState } from "react";
+import { getMyJobs } from "@/lib/client/jobs";
+import { getJobProposals } from "@/lib/client/proposals";
 
-export const useClientDashboard = () => {
-  const [contracts, setContracts] = useState([]);
-  const [proposalsByContract, setProposalsByContract] = useState({});
-  const [loadingContracts, setLoadingContracts] = useState(true);
+export const useClientDashboard = (
+  initialContracts = [],
+  initialProposalsByContract = {},
+) => {
+  const [contracts, setContracts] = useState(initialContracts);
+  const [proposalsByContract, setProposalsByContract] = useState(
+    initialProposalsByContract,
+  );
+  const [loadingContracts, setLoadingContracts] = useState(false);
   const [loadingProposals, setLoadingProposals] = useState(false);
 
   const fetchContracts = useCallback(async () => {
     try {
       setLoadingContracts(true);
-      const jobsData = await apiCall("/api/jobs/myJobs");
+      const jobsData = await getMyJobs();
       if (jobsData.status === "success") {
         setContracts(jobsData.data);
       }
@@ -32,9 +38,7 @@ export const useClientDashboard = () => {
     try {
       const results = await Promise.all(
         contractList.map(async (contract) => {
-          const proposalsData = await apiCall(
-            `/api/proposals/job/${contract._id}`,
-          );
+          const proposalsData = await getJobProposals(contract._id);
           return [contract._id, proposalsData.data || []];
         }),
       );
@@ -46,10 +50,6 @@ export const useClientDashboard = () => {
       setLoadingProposals(false);
     }
   }, []);
-
-  useEffect(() => {
-    fetchContracts();
-  }, [fetchContracts]);
 
   const resetProposals = useCallback(() => {
     setProposalsByContract({});

@@ -4,22 +4,32 @@ import { useState } from "react";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard, ProposalCard } from "@/features/dashboard/components/JobCard";
 import { useFreelancerDashboard } from "@/features/dashboard/hooks/useFreelancerDashboard";
-import { apiCall } from "@/services/api";
-import { Navbar } from "@/shared/navigation/Navbar";
+import { withdrawProposalAction } from "@/lib/actions/proposals";
+import {
+  requestJobCancellation,
+  respondJobCancellation,
+} from "@/lib/client/jobs";
+import { Navbar } from "@/shared/components/Navbar";
 
-export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
+export const FreelancerDashboard = ({
+  initialOngoingJobs,
+  initialProposedJobs,
+  initialUser,
+}) => {
+  const user = initialUser;
   const [activeTab, setActiveTab] = useState("proposals");
 
   const { proposedJobs, ongoingJobs, loading, error, EMPTY_STATES, refetch } =
-    useFreelancerDashboard();
+    useFreelancerDashboard({
+      initialProposedJobs,
+      initialOngoingJobs,
+    });
 
   const handleWithdrawProposal = async (proposal) => {
     if (!confirm("Are you sure you want to withdraw this proposal?")) return;
 
     try {
-      await apiCall(`/api/proposals/${proposal._id}/withdraw`, {
-        method: "PATCH",
-      });
+      await withdrawProposalAction(proposal._id);
       refetch();
     } catch (err) {
       alert(err.message || "Failed to withdraw proposal");
@@ -27,25 +37,19 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
   };
 
   const handleRequestCancellation = async (job, reason) => {
-    await apiCall(`/api/jobs/${job._id}/cancel`, {
-      method: "PATCH",
-      body: JSON.stringify({ reason: reason?.trim() || undefined }),
-    });
+    await requestJobCancellation(job._id, reason);
     refetch();
   };
 
   const handleRespondCancellation = async (job, action) => {
-    await apiCall(`/api/jobs/${job._id}/cancel/respond`, {
-      method: "PATCH",
-      body: JSON.stringify({ action }),
-    });
+    await respondJobCancellation(job._id, action);
     refetch();
   };
 
   if (loading) {
     return (
       <>
-        <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+        <Navbar user={user} />
         <div className="dashboard">
           <div
             className="dashboard-content"
@@ -69,7 +73,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
   if (error) {
     return (
       <>
-        <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+        <Navbar user={user} />
         <div className="dashboard">
           <div
             className="dashboard-content"
@@ -136,7 +140,7 @@ export const FreelancerDashboard = ({ user, onRoleSwitch, onLogout }) => {
 
   return (
     <>
-      <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+      <Navbar user={user} />
 
       <div className="dashboard">
         <div className="dashboard-content">

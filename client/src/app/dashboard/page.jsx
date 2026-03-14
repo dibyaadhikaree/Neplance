@@ -1,27 +1,35 @@
-"use client";
-
 import { ClientDashboard } from "@/features/dashboard/screens/ClientDashboard";
 import { FreelancerDashboard } from "@/features/dashboard/screens/FreelancerDashboard";
-import { useAuthGate } from "@/shared/hooks/useAuthGate";
+import { requireSession } from "@/lib/server/auth";
+import {
+  getClientDashboardDataServer,
+  getFreelancerDashboardDataServer,
+} from "@/lib/server/dashboard";
 
-export default function DashboardPage() {
-  const { user, currentRole, isHydrated, logout, switchRole } = useAuthGate({
-    mode: "require-auth",
-  });
+export default async function DashboardPage() {
+  const { activeRole, user } = await requireSession();
 
-  if (!isHydrated || !user) return null;
+  if (activeRole === "client") {
+    const { contracts, proposalsByContract } =
+      await getClientDashboardDataServer();
 
-  const isFreelancer = (currentRole || "freelancer") === "freelancer";
+    return (
+      <ClientDashboard
+        initialContracts={contracts}
+        initialProposalsByContract={proposalsByContract}
+        initialUser={user}
+      />
+    );
+  }
 
-  const sharedProps = {
-    user,
-    onLogout: logout,
-    onRoleSwitch: switchRole,
-  };
+  const { ongoingJobs, proposedJobs } =
+    await getFreelancerDashboardDataServer();
 
-  return isFreelancer ? (
-    <FreelancerDashboard {...sharedProps} />
-  ) : (
-    <ClientDashboard {...sharedProps} />
+  return (
+    <FreelancerDashboard
+      initialOngoingJobs={ongoingJobs}
+      initialProposedJobs={proposedJobs}
+      initialUser={user}
+    />
   );
 }

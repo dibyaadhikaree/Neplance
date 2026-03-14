@@ -1,21 +1,15 @@
-"use client";
-
 import Link from "next/link";
 import {
   CategoriesSection,
   HeroSection,
   HowItWorksSection,
   TestimonialsSection,
-} from "@/shared/brand/HeroSection";
-import { useAuthGate } from "@/shared/hooks/useAuthGate";
-import { Navbar } from "@/shared/navigation/Navbar";
+} from "@/features/marketing/components/LandingSections";
+import { redirectIfAuthenticated } from "@/lib/server/auth";
+import { Navbar } from "@/shared/components/Navbar";
 
-export default function Home() {
-  const { isHydrated } = useAuthGate({ mode: "redirect-authed" });
-
-  if (!isHydrated) {
-    return null; // Prevent hydration mismatch
-  }
+export default async function Home() {
+  await redirectIfAuthenticated();
 
   return (
     <>

@@ -1,46 +1,50 @@
-import { apiCall } from "@/services/api";
+import { ACCESS_TOKEN_COOKIE, ACTIVE_ROLE_COOKIE } from "@/lib/api/config";
+
+const getCookieValue = (name) => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const encodedName = `${encodeURIComponent(name)}=`;
+  const cookie = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith(encodedName));
+
+  return cookie ? decodeURIComponent(cookie.slice(encodedName.length)) : null;
+};
 
 export const normalizeRoleList = (role) =>
   Array.isArray(role) ? role : role ? [role] : [];
 
 export const getStoredActiveRole = (roleList, fallback) => {
-  const storedRole =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("neplance.activeRole")
-      : null;
+  const storedRole = getCookieValue(ACTIVE_ROLE_COOKIE);
   return roleList.includes(storedRole) ? storedRole : roleList[0] || fallback;
 };
 
 export const persistActiveRole = (role) => {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem("neplance.activeRole", role);
+  if (typeof document !== "undefined" && role) {
+    document.cookie = `${encodeURIComponent(ACTIVE_ROLE_COOKIE)}=${encodeURIComponent(role)}; Path=/; SameSite=Lax`;
+  }
+};
+
+export const clearActiveRole = () => {
+  if (typeof document !== "undefined") {
+    document.cookie = `${encodeURIComponent(ACTIVE_ROLE_COOKIE)}=; Path=/; Max-Age=0; SameSite=Lax`;
   }
 };
 
 export const getAccessToken = () => {
-  if (typeof window !== "undefined") {
-    return window.localStorage.getItem("neplance.accessToken");
-  }
-  return null;
+  return getCookieValue(ACCESS_TOKEN_COOKIE);
 };
 
 export const setAccessToken = (token) => {
-  if (typeof window !== "undefined" && token) {
-    window.localStorage.setItem("neplance.accessToken", token);
+  if (typeof document !== "undefined" && token) {
+    document.cookie = `${encodeURIComponent(ACCESS_TOKEN_COOKIE)}=${encodeURIComponent(token)}; Path=/; SameSite=Lax`;
   }
 };
 
 export const clearAccessToken = () => {
-  if (typeof window !== "undefined") {
-    window.localStorage.removeItem("neplance.accessToken");
-  }
-};
-
-export const logoutRequest = async () => {
-  clearAccessToken();
-  try {
-    await apiCall("/api/auth/logout");
-  } catch (_) {
-    // Ignore logout errors and let callers handle navigation.
+  if (typeof document !== "undefined") {
+    document.cookie = `${encodeURIComponent(ACCESS_TOKEN_COOKIE)}=; Path=/; Max-Age=0; SameSite=Lax`;
   }
 };

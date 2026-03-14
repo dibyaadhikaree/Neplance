@@ -263,11 +263,13 @@ const getJob = catchAsync(async (req, res) => {
   const currentUserId = req.user?.id;
   const creatorId = job.creatorAddress?._id || job.creatorAddress;
   const isCreator =
-    currentUserId && creatorId && creatorId.toString() === currentUserId.toString();
+    currentUserId &&
+    creatorId &&
+    creatorId.toString() === currentUserId.toString();
   const isParty = currentUserId
     ? (job.parties || []).some(
         (party) =>
-          party.address && party.address.toString() === currentUserId.toString(),
+          party.address && party.address.toString() === currentUserId.toString()
       )
     : false;
 
@@ -295,10 +297,23 @@ const updateJob = catchAsync(async (req, res) => {
   validateJobUpdate(job);
 
   const allowedUpdates = [
-    "title", "description", "jobType", "category", "subcategory",
-    "tags", "requiredSkills", "experienceLevel", "budgetType", "budget",
-    "deadline", "isUrgent", "location", "isPublic", "milestones",
-    "terms", "attachments",
+    "title",
+    "description",
+    "jobType",
+    "category",
+    "subcategory",
+    "tags",
+    "requiredSkills",
+    "experienceLevel",
+    "budgetType",
+    "budget",
+    "deadline",
+    "isUrgent",
+    "location",
+    "isPublic",
+    "milestones",
+    "terms",
+    "attachments",
   ];
 
   const updates = {};
@@ -352,13 +367,16 @@ const deleteJob = catchAsync(async (req, res) => {
   });
 });
 
-
 const submitMilestone = catchAsync(async (req, res, next) => {
   const { id: jobId, index } = req.params;
   const { evidence } = req.body;
 
   const job = await getJobOrThrow(jobId);
-  ensureContractor(job, req.user.id, "Only the contractor can submit milestones");
+  ensureContractor(
+    job,
+    req.user.id,
+    "Only the contractor can submit milestones"
+  );
 
   const milestoneIndex = Number(index);
   await submitMilestoneService(job, milestoneIndex, evidence);
@@ -436,7 +454,6 @@ const getJobCategories = catchAsync(async (req, res) => {
     data: categories,
   });
 });
-
 
 module.exports = {
   createJob,

@@ -2,29 +2,35 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { EmptyState } from "@/features/dashboard/components/EmptyState";
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { useClientDashboard } from "@/features/dashboard/hooks/useClientDashboard";
-import { apiCall } from "@/services/api";
+import { createJobAction } from "@/lib/actions/jobs";
+import { acceptProposalAction } from "@/lib/actions/proposals";
+import {
+  deleteJob,
+  publishJob,
+  requestJobCancellation,
+  respondJobCancellation,
+} from "@/lib/client/jobs";
+import { Navbar } from "@/shared/components/Navbar";
+import { Input } from "@/shared/components/UI";
 import {
   JOB_CATEGORIES,
   NEPAL_PROVINCES,
 } from "@/shared/constants/jobCategories";
 import { JOB_STATUS, PROPOSAL_STATUS } from "@/shared/constants/statuses";
-import {
-  jobCreateSchema,
-  validateForm as validateFormSchema,
-} from "@/shared/lib/validation";
-import { Navbar } from "@/shared/navigation/Navbar";
-import { Input } from "@/shared/ui/UI";
 
-export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
+export const ClientDashboard = ({
+  initialContracts,
+  initialProposalsByContract,
+  initialUser,
+}) => {
   const router = useRouter();
+  const user = initialUser;
   const [activeTab, setActiveTab] = useState("create");
-  const [submitting, setSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState([]);
-  const [milestoneErrors, setMilestoneErrors] = useState({});
+  const [submitIntent, setSubmitIntent] = useState("open");
   const [formState, setFormState] = useState({
     title: "",
     description: "",
@@ -55,7 +61,14 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     fetchContracts,
     fetchProposalsForContracts,
     resetProposals,
-  } = useClientDashboard();
+  } = useClientDashboard(initialContracts, initialProposalsByContract);
+  const [actionState, formAction, isPending] = useActionState(createJobAction, {
+    message: "",
+    errors: [],
+    milestoneErrors: {},
+  });
+  const formErrors = actionState?.errors || [];
+  const milestoneErrors = actionState?.milestoneErrors || {};
 
   const formatDateValue = (value) => {
     if (!value) return null;
@@ -74,7 +87,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
   const handleAcceptProposal = async (proposalId) => {
     try {
-      await apiCall(`/api/proposals/${proposalId}/accept`, { method: "PATCH" });
+      await acceptProposalAction(proposalId);
       await fetchContracts();
       if (activeTab === "proposals") {
         await fetchProposalsForContracts(contracts);
@@ -87,7 +100,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   const handlePostDraftJob = async (job) => {
     if (!confirm("Are you sure you want to post this job?")) return;
     try {
-      await apiCall(`/api/jobs/${job._id}/publish`, { method: "PATCH" });
+      await publishJob(job._id);
       await fetchContracts();
     } catch (err) {
       console.error("Failed to post job:", err);
@@ -102,7 +115,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
         : "Are you sure you want to delete this job? This action cannot be undone.";
     if (!confirm(confirmMessage)) return;
     try {
-      await apiCall(`/api/jobs/${job._id}`, { method: "DELETE" });
+      await deleteJob(job._id);
       await fetchContracts();
     } catch (err) {
       console.error("Failed to delete job:", err);
@@ -115,18 +128,12 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
   };
 
   const handleRequestCancellation = async (job, reason) => {
-    await apiCall(`/api/jobs/${job._id}/cancel`, {
-      method: "PATCH",
-      body: JSON.stringify({ reason: reason?.trim() || undefined }),
-    });
+    await requestJobCancellation(job._id, reason);
     await fetchContracts();
   };
 
   const handleRespondCancellation = async (job, action) => {
-    await apiCall(`/api/jobs/${job._id}/cancel/respond`, {
-      method: "PATCH",
-      body: JSON.stringify({ action }),
-    });
+    await respondJobCancellation(job._id, action);
     await fetchContracts();
   };
 
@@ -214,130 +221,6 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
     };
   };
 
-  const resetForm = () => {
-    setFormState({
-      title: "",
-      description: "",
-      jobType: "digital",
-      category: "",
-      subcategory: "",
-      tags: "",
-      requiredSkills: "",
-      experienceLevel: "",
-      budgetType: "fixed",
-      budgetMin: "",
-      budgetMax: "",
-      deadline: "",
-      isUrgent: false,
-      locationCity: "",
-      locationDistrict: "",
-      locationProvince: "",
-      milestones: [
-        { id: Date.now(), title: "", description: "", value: "", dueDate: "" },
-      ],
-    });
-    setFormErrors([]);
-    setMilestoneErrors({});
-  };
-
-  const validateForm = (requireMilestones = true) => {
-    const payload = buildJobPayload(JOB_STATUS.OPEN, {
-      includeMilestones: requireMilestones,
-    });
-
-    const { errors: validationErrors, data } = validateFormSchema(
-      jobCreateSchema,
-      payload,
-    );
-
-    if (validationErrors) {
-      const flatErrors = [];
-      const milestoneErrorsObj = {};
-
-      Object.entries(validationErrors).forEach(([key, value]) => {
-        if (key.startsWith("milestones.")) {
-          const match = key.match(/milestones\.(\d+)\.(.+)/);
-          if (match) {
-            const idx = parseInt(match[1], 10);
-            if (!milestoneErrorsObj[idx]) milestoneErrorsObj[idx] = [];
-            milestoneErrorsObj[idx].push(value);
-          }
-        } else {
-          flatErrors.push(value);
-        }
-      });
-
-      if (
-        requireMilestones &&
-        (!data.milestones || data.milestones.length === 0)
-      ) {
-        flatErrors.push("Add at least one milestone with a title and value.");
-      }
-
-      setFormErrors(flatErrors);
-      setMilestoneErrors(milestoneErrorsObj);
-      return false;
-    }
-
-    setFormErrors([]);
-    setMilestoneErrors({});
-    return true;
-  };
-
-  const handleSaveDraft = async () => {
-    const title = formState.title.trim();
-    if (!title) {
-      setFormErrors(["Job title is required to save as draft."]);
-      return;
-    }
-
-    if (title.length < 5) {
-      setFormErrors(["Job title must be at least 5 characters."]);
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      setFormErrors([]);
-      await apiCall("/api/jobs", {
-        method: "POST",
-        body: JSON.stringify(buildJobPayload(JOB_STATUS.DRAFT)),
-      });
-      resetForm();
-      await fetchContracts();
-      setActiveTab("contracts");
-    } catch (err) {
-      console.error("Failed to save draft:", err);
-      setFormErrors([
-        err?.message || "Failed to save draft. Please try again.",
-      ]);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handlePostJob = async (e) => {
-    e.preventDefault();
-    if (!validateForm(true)) return;
-
-    setSubmitting(true);
-    try {
-      setFormErrors([]);
-      await apiCall("/api/jobs", {
-        method: "POST",
-        body: JSON.stringify(buildJobPayload(JOB_STATUS.OPEN)),
-      });
-      resetForm();
-      await fetchContracts();
-      setActiveTab("contracts");
-    } catch (err) {
-      console.error("Failed to post job:", err);
-      setFormErrors([err?.message || "Failed to post job. Please try again."]);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const ProposalItem = ({ proposal }) => {
     const freelancerLabel =
       proposal.freelancer?.name ||
@@ -418,7 +301,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
   return (
     <>
-      <Navbar user={user} onLogout={onLogout} onRoleSwitch={onRoleSwitch} />
+      <Navbar user={user} />
 
       <div className="dashboard">
         <div className="dashboard-content">
@@ -461,7 +344,30 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
 
           {/* Create Contract tab */}
           {activeTab === "create" && (
-            <form className="card" onSubmit={handlePostJob}>
+            <form className="card" action={formAction}>
+              <input
+                type="hidden"
+                name="payload"
+                value={JSON.stringify(
+                  buildJobPayload(
+                    submitIntent === "draft"
+                      ? JOB_STATUS.DRAFT
+                      : JOB_STATUS.OPEN,
+                    {
+                      includeMilestones: submitIntent !== "draft",
+                    },
+                  ),
+                )}
+              />
+              <input type="hidden" name="intent" value={submitIntent} />
+              {actionState?.message && (
+                <div
+                  className="card-error"
+                  style={{ marginBottom: "var(--space-4)" }}
+                >
+                  <p style={{ margin: 0 }}>{actionState.message}</p>
+                </div>
+              )}
               {formErrors.length > 0 && (
                 <div
                   className="card-error"
@@ -489,7 +395,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onChange={(e) => handleFormChange("title", e.target.value)}
                     placeholder="e.g. Landing page redesign"
                     required
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                 </div>
               </div>
@@ -501,7 +407,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                   handleFormChange("description", e.target.value)
                 }
                 placeholder="Describe the work scope"
-                disabled={submitting}
+                disabled={isPending}
               />
 
               <div
@@ -528,7 +434,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onChange={(e) =>
                       handleFormChange("jobType", e.target.value)
                     }
-                    disabled={submitting}
+                    disabled={isPending}
                     style={{
                       width: "100%",
                       padding: "var(--space-2)",
@@ -558,7 +464,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onChange={(e) =>
                       handleFormChange("category", e.target.value)
                     }
-                    disabled={submitting}
+                    disabled={isPending}
                     required
                     style={{
                       width: "100%",
@@ -583,7 +489,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                       handleFormChange("subcategory", e.target.value)
                     }
                     placeholder="e.g. Frontend"
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                 </div>
               </div>
@@ -601,7 +507,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     value={formState.tags}
                     onChange={(e) => handleFormChange("tags", e.target.value)}
                     placeholder="e.g. React, Node.js, MongoDB"
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                 </div>
                 <div style={{ flex: "1", minWidth: "200px" }}>
@@ -612,7 +518,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                       handleFormChange("requiredSkills", e.target.value)
                     }
                     placeholder="e.g. JavaScript, CSS"
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                 </div>
                 <div style={{ flex: "1", minWidth: "150px" }}>
@@ -632,7 +538,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onChange={(e) =>
                       handleFormChange("experienceLevel", e.target.value)
                     }
-                    disabled={submitting}
+                    disabled={isPending}
                     style={{
                       width: "100%",
                       padding: "var(--space-2)",
@@ -673,7 +579,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onChange={(e) =>
                       handleFormChange("budgetType", e.target.value)
                     }
-                    disabled={submitting}
+                    disabled={isPending}
                     style={{
                       width: "100%",
                       padding: "var(--space-2)",
@@ -695,7 +601,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     }
                     placeholder="5000"
                     required
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                 </div>
                 <div style={{ flex: "1", minWidth: "150px" }}>
@@ -707,7 +613,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                       handleFormChange("budgetMax", e.target.value)
                     }
                     placeholder="10000"
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                 </div>
                 <div style={{ flex: "1", minWidth: "150px" }}>
@@ -718,7 +624,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onChange={(e) =>
                       handleFormChange("deadline", e.target.value)
                     }
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                 </div>
                 <div
@@ -736,7 +642,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                     onChange={(e) =>
                       handleFormChange("isUrgent", e.target.checked)
                     }
-                    disabled={submitting}
+                    disabled={isPending}
                   />
                   <label htmlFor="isUrgent" style={{ cursor: "pointer" }}>
                     Urgent
@@ -763,7 +669,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                         handleFormChange("locationCity", e.target.value)
                       }
                       placeholder="Kathmandu"
-                      disabled={submitting}
+                      disabled={isPending}
                     />
                   </div>
                   <div style={{ flex: "1", minWidth: "150px" }}>
@@ -774,7 +680,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                         handleFormChange("locationDistrict", e.target.value)
                       }
                       placeholder="Kathmandu"
-                      disabled={submitting}
+                      disabled={isPending}
                     />
                   </div>
                   <div style={{ flex: "1", minWidth: "150px" }}>
@@ -794,7 +700,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                       onChange={(e) =>
                         handleFormChange("locationProvince", e.target.value)
                       }
-                      disabled={submitting}
+                      disabled={isPending}
                       style={{
                         width: "100%",
                         padding: "var(--space-2)",
@@ -852,7 +758,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                       onChange={(e) =>
                         handleMilestoneChange(index, "title", e.target.value)
                       }
-                      disabled={submitting}
+                      disabled={isPending}
                     />
                     <Input
                       label="Description"
@@ -864,7 +770,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                           e.target.value,
                         )
                       }
-                      disabled={submitting}
+                      disabled={isPending}
                     />
                     <div style={{ display: "flex", gap: "var(--space-4)" }}>
                       <Input
@@ -874,7 +780,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                         onChange={(e) =>
                           handleMilestoneChange(index, "value", e.target.value)
                         }
-                        disabled={submitting}
+                        disabled={isPending}
                       />
                       <Input
                         label="Due Date"
@@ -887,7 +793,7 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                             e.target.value,
                           )
                         }
-                        disabled={submitting}
+                        disabled={isPending}
                       />
                     </div>
                     {formState.milestones.length > 1 && (
@@ -915,17 +821,22 @@ export const ClientDashboard = ({ user, onLogout, onRoleSwitch }) => {
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  onClick={handleSaveDraft}
-                  disabled={submitting}
+                  onClick={() => setSubmitIntent("draft")}
+                  disabled={isPending}
                 >
-                  {submitting ? "Saving..." : "Save as Draft"}
+                  {isPending && submitIntent === "draft"
+                    ? "Saving..."
+                    : "Save as Draft"}
                 </button>
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={submitting}
+                  disabled={isPending}
+                  onClick={() => setSubmitIntent("open")}
                 >
-                  {submitting ? "Posting..." : "Post Job"}
+                  {isPending && submitIntent === "open"
+                    ? "Posting..."
+                    : "Post Job"}
                 </button>
               </div>
             </form>
