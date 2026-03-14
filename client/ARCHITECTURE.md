@@ -17,12 +17,10 @@
 - `src/lib`
 
   - Framework and data plumbing.
-  - `api/client.js` is for browser-side requests.
   - `api/server.js` is for server-side requests.
-  - `client/*` contains browser-side domain helpers.
-  - `server/*` contains server-side domain helpers for pages and layouts.
-  - `actions/*` contains server actions where they genuinely improve a flow.
-  - `auth/useSessionUser.js` contains lightweight client session state for interactive components.
+  - `server/*` contains server-side data helpers for pages and layouts.
+  - `actions/*` contains server actions for mutations.
+  - `api/*` should stay low-level and server-facing.
 
 - `src/shared`
 
@@ -40,7 +38,7 @@
 - Default to server pages in `app`.
 - Add `"use client"` only to interactive feature components.
 - Pages call helpers from `lib/server`.
-- Client components call helpers from `lib/client`.
-- Use server actions for simple server-owned mutations, but do not force them onto flows that are better handled in client components.
+- Mutations should go through `lib/actions` first.
+- Client components should mostly manage UI state, not own data fetching or auth logic.
 - Shared code belongs in `shared` only if it is used across multiple features.
 - If code belongs to one product area, keep it inside that feature.

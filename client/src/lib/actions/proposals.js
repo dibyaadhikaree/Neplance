@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { successResult } from "@/lib/actions/result";
 import { apiServerRequest } from "@/lib/api/server";
 import { requireSession } from "@/lib/server/auth";
 import { getProposalByIdServer } from "@/lib/server/proposals";
@@ -86,7 +87,7 @@ export async function createProposalMutationAction(payload) {
   revalidatePath("/dashboard");
   revalidatePath(`/jobs/${submitData.job}`);
 
-  return response?.data || response;
+  return successResult(response?.data || response);
 }
 
 export async function resubmitProposalAction(_previousState, formData) {
@@ -147,7 +148,7 @@ export async function acceptProposalAction(proposalId) {
   }
   revalidatePath(`/proposals/${proposalId}`);
 
-  return proposal;
+  return successResult(proposal);
 }
 
 export async function rejectProposalAction(proposalId, reason) {
@@ -167,7 +168,7 @@ export async function rejectProposalAction(proposalId, reason) {
   }
   revalidatePath(`/proposals/${proposalId}`);
 
-  return proposal;
+  return successResult(proposal);
 }
 
 export async function withdrawProposalAction(proposalId) {
@@ -186,5 +187,5 @@ export async function withdrawProposalAction(proposalId) {
   }
   revalidatePath(`/proposals/${proposalId}`);
 
-  return proposal;
+  return successResult(proposal);
 }

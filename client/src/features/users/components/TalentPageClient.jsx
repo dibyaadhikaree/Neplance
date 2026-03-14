@@ -1,34 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getFreelancers } from "@/lib/client/users";
+import { useState } from "react";
 import { Navbar } from "@/shared/components/Navbar";
 
-export function TalentPageClient({ initialUser }) {
+export function TalentPageClient({ initialFreelancers = [], initialUser }) {
   const user = initialUser;
-  const [freelancers, setFreelancers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [freelancers] = useState(initialFreelancers);
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchFreelancers = async () => {
-      try {
-        setLoading(true);
-        const data = await getFreelancers();
-        if (data.status === "success") {
-          setFreelancers(data.data || []);
-        }
-      } catch (_) {
-        setFreelancers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFreelancers();
-  }, []);
 
   const normalizedQuery = searchQuery.toLowerCase();
   const filtered = freelancers.filter((freelancer) => {
@@ -86,19 +66,7 @@ export function TalentPageClient({ initialUser }) {
         </section>
 
         <div className="container section-sm">
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "var(--space-16)" }}>
-              <div
-                style={{
-                  fontSize: "var(--text-xl)",
-                  fontWeight: "var(--font-weight-semibold)",
-                  color: "var(--color-primary)",
-                }}
-              >
-                Loading freelancers...
-              </div>
-            </div>
-          ) : filtered.length > 0 ? (
+          {filtered.length > 0 ? (
             <div className="grid grid-cols-3" style={{ gap: "var(--space-4)" }}>
               {filtered.map((freelancer) => (
                 <article key={freelancer._id} className="card">

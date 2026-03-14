@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { JobCard } from "@/features/dashboard/components/JobCard";
 import { JobModal } from "@/features/dashboard/components/JobModal";
 import {
@@ -9,50 +9,32 @@ import {
   submitMilestoneAction,
 } from "@/lib/actions/jobs";
 import { createProposalMutationAction } from "@/lib/actions/proposals";
-import { listOpenJobs } from "@/lib/client/jobs";
 import { Navbar } from "@/shared/components/Navbar";
 import {
   EXPERIENCE_LEVELS,
   JOB_CATEGORIES,
 } from "@/shared/constants/jobCategories";
 
-export function JobsPageClient({ initialUser }) {
+export function JobsPageClient({
+  initialJobs = [],
+  initialSearchParams = {},
+  initialUser,
+}) {
   const user = initialUser;
   const [selectedJob, setSelectedJob] = useState(null);
   const [modalMode, setModalMode] = useState("view");
-  const [loading, setLoading] = useState(true);
-  const [jobs, setJobs] = useState([]);
   const [searchFilters, setSearchFilters] = useState({
-    category: "",
-    jobType: "",
-    experienceLevel: "",
-    search: "",
+    category: initialSearchParams.category || "",
+    jobType: initialSearchParams.jobType || "",
+    experienceLevel: initialSearchParams.experienceLevel || "",
+    search: initialSearchParams.search || "",
   });
-  const [isSearching, setIsSearching] = useState(false);
   const [isSubmittingProposal, startProposalTransition] = useTransition();
   const [isSubmittingMilestone, startMilestoneSubmitTransition] =
     useTransition();
   const [isApprovingMilestone, startMilestoneApproveTransition] =
     useTransition();
   const router = useRouter();
-
-  const fetchJobs = useCallback(async (params = "") => {
-    setLoading(true);
-    try {
-      const response = await listOpenJobs(params);
-      if (response.status === "success") {
-        setJobs(response.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch jobs:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
 
   const handleOpenProposalModal = (job) => {
     if (!user) {
@@ -79,15 +61,15 @@ export function JobsPageClient({ initialUser }) {
 
   const handleSubmitMilestone = async (jobId, index, evidence) => {
     startMilestoneSubmitTransition(async () => {
-      const updatedJob = await submitMilestoneAction(jobId, index, evidence);
-      setSelectedJob(updatedJob);
+      const result = await submitMilestoneAction(jobId, index, evidence);
+      setSelectedJob(result.data);
     });
   };
 
   const handleApproveMilestone = async (jobId, index) => {
     startMilestoneApproveTransition(async () => {
-      const updatedJob = await approveMilestoneAction(jobId, index);
-      setSelectedJob(updatedJob);
+      const result = await approveMilestoneAction(jobId, index);
+      setSelectedJob(result.data);
     });
   };
 
@@ -97,6 +79,7 @@ export function JobsPageClient({ initialUser }) {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
+
     if (searchFilters.category) {
       params.append("category", searchFilters.category);
     }
@@ -110,8 +93,8 @@ export function JobsPageClient({ initialUser }) {
       params.append("search", searchFilters.search);
     }
 
-    setIsSearching(true);
-    fetchJobs(params.toString()).finally(() => setIsSearching(false));
+    const query = params.toString();
+    router.push(query ? `/jobs?${query}` : "/jobs");
   };
 
   const clearFilters = () => {
@@ -121,7 +104,7 @@ export function JobsPageClient({ initialUser }) {
       experienceLevel: "",
       search: "",
     });
-    fetchJobs();
+    router.push("/jobs");
   };
 
   return (
@@ -253,15 +236,13 @@ export function JobsPageClient({ initialUser }) {
                   type="button"
                   className="btn btn-primary"
                   onClick={handleSearch}
-                  disabled={isSearching}
                 >
-                  {isSearching ? "Searching..." : "Search"}
+                  Search
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost"
                   onClick={clearFilters}
-                  disabled={isSearching}
                 >
                   Clear
                 </button>
@@ -271,26 +252,9 @@ export function JobsPageClient({ initialUser }) {
         </section>
 
         <div className="container section-sm">
-          {loading ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "var(--space-16)",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "var(--text-xl)",
-                  fontWeight: "var(--font-weight-semibold)",
-                  color: "var(--color-primary)",
-                }}
-              >
-                Loading jobs...
-              </div>
-            </div>
-          ) : jobs.length > 0 ? (
+          {initialJobs.length > 0 ? (
             <div className="cards-list">
-              {jobs.map((job) => (
+              {initialJobs.map((job) => (
                 <JobCard
                   key={job._id}
                   job={job}

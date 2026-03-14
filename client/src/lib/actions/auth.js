@@ -156,6 +156,7 @@ export async function loginAction(formData) {
     email: String(formData.get("email") || ""),
     password: String(formData.get("password") || ""),
   };
+
   const { errors, data } = validateForm(loginSchema, payload);
 
   if (errors) {

@@ -1,8 +1,14 @@
 import { TalentPageClient } from "@/features/users/components/TalentPageClient";
 import { requireCurrentUser } from "@/lib/server/auth";
+import { getFreelancersServer } from "@/lib/server/users";
 
 export default async function TalentPage() {
-  const user = await requireCurrentUser();
+  const [user, freelancers] = await Promise.all([
+    requireCurrentUser(),
+    getFreelancersServer(),
+  ]);
 
-  return <TalentPageClient initialUser={user} />;
+  return (
+    <TalentPageClient initialFreelancers={freelancers} initialUser={user} />
+  );
 }

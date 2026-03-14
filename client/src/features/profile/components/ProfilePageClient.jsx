@@ -10,8 +10,7 @@ import {
   approveMilestoneAction,
   submitMilestoneAction,
 } from "@/lib/actions/jobs";
-import { logoutAction } from "@/lib/actions/session";
-import { checkDeleteEligibility, deleteMyProfile } from "@/lib/client/users";
+import { deleteAccountAction } from "@/lib/actions/users";
 import { Navbar } from "@/shared/components/Navbar";
 
 export function ProfilePageClient({
@@ -26,10 +25,7 @@ export function ProfilePageClient({
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateError, setDeactivateError] = useState("");
-  const [deleteEligibility, setDeleteEligibility] = useState(
-    initialDeleteEligibility,
-  );
-  const [checkingEligibility, setCheckingEligibility] = useState(false);
+  const [deleteEligibility] = useState(initialDeleteEligibility);
   const [completedJobs] = useState(initialCompletedJobs);
   const [isSubmittingMilestone, startMilestoneSubmitTransition] =
     useTransition();
@@ -41,15 +37,15 @@ export function ProfilePageClient({
 
   const handleSubmitMilestone = async (jobId, index, evidence) => {
     startMilestoneSubmitTransition(async () => {
-      const updatedJob = await submitMilestoneAction(jobId, index, evidence);
-      setSelectedJob(updatedJob);
+      const result = await submitMilestoneAction(jobId, index, evidence);
+      setSelectedJob(result.data);
     });
   };
 
   const handleApproveMilestone = async (jobId, index) => {
     startMilestoneApproveTransition(async () => {
-      const updatedJob = await approveMilestoneAction(jobId, index);
-      setSelectedJob(updatedJob);
+      const result = await approveMilestoneAction(jobId, index);
+      setSelectedJob(result.data);
     });
   };
 
@@ -64,26 +60,14 @@ export function ProfilePageClient({
     return values.length ? values.join(", ") : "N/A";
   }, [user]);
 
-  const refreshDeleteEligibility = async () => {
-    setCheckingEligibility(true);
-    try {
-      const response = await checkDeleteEligibility();
-      setDeleteEligibility(response);
-    } finally {
-      setCheckingEligibility(false);
-    }
-  };
-
   const handleDeactivateAccount = async () => {
     setIsDeactivating(true);
     try {
-      await deleteMyProfile();
-      await logoutAction();
+      await deleteAccountAction();
     } catch (error) {
       setDeactivateError(error.message || "Failed to deactivate account.");
       setIsDeactivating(false);
       setShowDeactivateModal(false);
-      await refreshDeleteEligibility();
     }
   };
 
@@ -536,9 +520,7 @@ export function ProfilePageClient({
                 Once you deactivate your account, you will not be able to log in
                 or access your profile. Your data will be permanently deleted.
               </p>
-              {checkingEligibility ? (
-                <p className="text-light">Checking eligibility...</p>
-              ) : deleteEligibility?.canDelete ? (
+              {deleteEligibility?.canDelete ? (
                 <button
                   type="button"
                   className="btn"

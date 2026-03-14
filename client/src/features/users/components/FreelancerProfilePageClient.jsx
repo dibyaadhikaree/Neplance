@@ -2,38 +2,15 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getFreelancerById } from "@/lib/client/users";
 import { Navbar } from "@/shared/components/Navbar";
 
-export function FreelancerProfilePageClient({ freelancerId, initialUser }) {
+export function FreelancerProfilePageClient({
+  initialFreelancer,
+  initialUser,
+}) {
   const user = initialUser;
-  const [freelancer, setFreelancer] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const freelancer = initialFreelancer;
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchFreelancer = async () => {
-      try {
-        setLoading(true);
-        const data = await getFreelancerById(freelancerId);
-        if (data.status === "success") {
-          setFreelancer(data.data);
-        } else {
-          setError(data.message || "Freelancer not found");
-        }
-      } catch (_err) {
-        setError("Failed to load freelancer profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (freelancerId) {
-      fetchFreelancer();
-    }
-  }, [freelancerId]);
 
   const profileLocation = (() => {
     if (!freelancer?.location) return "N/A";
@@ -46,31 +23,7 @@ export function FreelancerProfilePageClient({ freelancerId, initialUser }) {
     return values.length ? values.join(", ") : "N/A";
   })();
 
-  if (loading) {
-    return (
-      <>
-        <Navbar user={user} />
-        <div className="dashboard">
-          <div
-            className="container section-sm"
-            style={{ textAlign: "center", padding: "var(--space-16)" }}
-          >
-            <div
-              style={{
-                fontSize: "var(--text-xl)",
-                fontWeight: "var(--font-weight-semibold)",
-                color: "var(--color-primary)",
-              }}
-            >
-              Loading profile...
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (error || !freelancer) {
+  if (!freelancer) {
     return (
       <>
         <Navbar user={user} />
@@ -86,7 +39,7 @@ export function FreelancerProfilePageClient({ freelancerId, initialUser }) {
               className="text-light"
               style={{ marginBottom: "var(--space-6)" }}
             >
-              {error || "This profile may not exist or has been deactivated."}
+              This profile may not exist or has been deactivated.
             </p>
             <button
               type="button"

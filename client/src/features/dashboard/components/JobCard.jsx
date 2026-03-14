@@ -480,10 +480,7 @@ export const JobCard = ({
   );
 };
 
-export const ProposalCard = ({
-  proposal,
-  onWithdraw,
-}) => {
+export const ProposalCard = ({ proposal, onWithdraw }) => {
   const {
     job,
     amount,

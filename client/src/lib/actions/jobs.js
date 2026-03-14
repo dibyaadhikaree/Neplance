@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { successResult } from "@/lib/actions/result";
 import { apiServerRequest } from "@/lib/api/server";
 import { requireSession } from "@/lib/server/auth";
 import { getJobByIdServer } from "@/lib/server/jobs";
@@ -250,7 +251,7 @@ export async function submitMilestoneAction(jobId, index, evidence) {
   revalidatePath("/dashboard");
   revalidatePath(`/jobs/${jobId}`);
 
-  return job;
+  return successResult(job);
 }
 
 export async function approveMilestoneAction(jobId, index) {
@@ -265,7 +266,7 @@ export async function approveMilestoneAction(jobId, index) {
   revalidatePath("/dashboard");
   revalidatePath(`/jobs/${jobId}`);
 
-  return job;
+  return successResult(job);
 }
 
 export async function requestJobCancellationAction(jobId, reason) {
@@ -281,7 +282,35 @@ export async function requestJobCancellationAction(jobId, reason) {
   revalidatePath("/dashboard");
   revalidatePath(`/jobs/${jobId}`);
 
-  return job;
+  return successResult(job);
+}
+
+export async function publishJobAction(jobId) {
+  await requireSession();
+
+  await apiServerRequest(`/api/jobs/${jobId}/publish`, {
+    method: "PATCH",
+  });
+
+  const job = await getJobByIdServer(jobId);
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/jobs/${jobId}`);
+
+  return successResult(job);
+}
+
+export async function deleteJobAction(jobId) {
+  await requireSession();
+
+  await apiServerRequest(`/api/jobs/${jobId}`, {
+    method: "DELETE",
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/jobs/${jobId}`);
+
+  return successResult();
 }
 
 export async function respondJobCancellationAction(jobId, action) {
@@ -297,5 +326,5 @@ export async function respondJobCancellationAction(jobId, action) {
   revalidatePath("/dashboard");
   revalidatePath(`/jobs/${jobId}`);
 
-  return job;
+  return successResult(job);
 }
