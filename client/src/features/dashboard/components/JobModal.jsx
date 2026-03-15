@@ -1,13 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Button, Input } from "@/shared/components/UI";
 import { JOB_STATUS, MILESTONE_STATUS } from "@/shared/constants/statuses";
-import {
-  getFieldError,
-  proposalSchema,
-  validateForm,
-} from "@/shared/lib/validation";
-import { Button, Input } from "@/shared/ui/UI";
 import {
   formatBudget,
   formatLocation,
@@ -16,6 +11,11 @@ import {
   getMilestoneTotal,
   hasMilestones,
 } from "@/shared/utils/job";
+import {
+  getFieldError,
+  proposalSchema,
+  validateForm,
+} from "@/shared/validation";
 
 const formatDate = (date) => {
   if (!date) return null;
