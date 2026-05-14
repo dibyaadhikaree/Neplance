@@ -21,12 +21,12 @@ Neplance addresses both. It supports digital *and* on-site job posting in one un
 
 ```
 Client account:
-  Email:    [add demo client credentials]
-  Password:
+  Email:    maya@email.com  
+  Password: password123
 
 Freelancer account:
-  Email:    [add demo freelancer credentials]
-  Password:
+  Email:    daya@email.com  
+  Password: password123
 ```
 
 > You can also register your own account from the signup page.
